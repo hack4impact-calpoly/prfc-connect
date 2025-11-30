@@ -2,10 +2,20 @@ import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient } from "@/generated/prisma/client";
 
 function createAdapter() {
-  const url = new URL(process.env.DATABASE_URL!);
+  if (!process.env.DATABASE_URL) {
+    throw new Error("DATABASE_URL environment variable is required");
+  }
+
+  let url: URL;
+  try {
+    url = new URL(process.env.DATABASE_URL);
+  } catch {
+    throw new Error("DATABASE_URL is malformed");
+  }
+
   return new PrismaMariaDb({
     host: url.hostname,
-    port: parseInt(url.port, 10) || 3306,
+    port: url.port ? parseInt(url.port, 10) : 3306,
     user: url.username,
     password: url.password,
     database: url.pathname.slice(1),
