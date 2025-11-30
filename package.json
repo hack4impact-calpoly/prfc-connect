@@ -10,7 +10,11 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "test": "echo 'Install jest (or another unit test suite) to use this command.'",
-    "prepare": "husky"
+    "prepare": "husky",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "docker:reset": "docker-compose down -v && docker-compose up -d"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",
