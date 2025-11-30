@@ -3,11 +3,11 @@ import { z } from "zod";
 export const ReferralSchema = z.object({
   id: z.number().int().positive(),
   createdAt: z.date(),
-  memberName: z.string().min(1),
-  memberEmail: z.string().email(),
-  prospectName: z.string().min(1),
-  prospectEmail: z.string().email(),
-  referralCode: z.string().min(1),
+  memberName: z.string().min(1).max(255),
+  memberEmail: z.string().email().max(255),
+  prospectName: z.string().min(1).max(255),
+  prospectEmail: z.string().email().max(255),
+  referralCode: z.string().min(1).max(100),
   redeemed: z.boolean(),
 });
 
@@ -19,14 +19,14 @@ export const CreateReferralSchema = ReferralSchema.omit({
 });
 
 export const ProspectSchema = z.object({
-  prospectName: z.string().min(1),
-  prospectEmail: z.string().email(),
+  prospectName: z.string().min(1).max(255),
+  prospectEmail: z.string().email().max(255),
 });
 
 export const ReferralFormSchema = z.object({
-  memberName: z.string().min(1),
-  memberEmail: z.string().email(),
-  referralCode: z.string().min(1),
+  memberName: z.string().min(1).max(255),
+  memberEmail: z.string().email().max(255),
+  referralCode: z.string().min(1).max(100),
   prospects: z.array(ProspectSchema).min(1).max(5),
 });
 
@@ -35,9 +35,9 @@ export const UpdateRedeemedSchema = z.object({
 });
 
 export const ChecksumSchema = z.object({
-  nm: z.string().min(1),
-  em: z.string().email(),
-  ref: z.string().min(1),
+  nm: z.string().min(1).max(255),
+  em: z.string().email().max(255),
+  ref: z.string().min(1).max(100),
   cs: z.string().min(1),
 });
 
