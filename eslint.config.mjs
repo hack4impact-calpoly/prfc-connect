@@ -37,6 +37,15 @@ export default [
   },
   eslintConfigPrettier,
   {
+    files: ["**/*.config.js", "**/*.config.cjs"],
+    languageOptions: {
+      sourceType: "commonjs",
+    },
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
+    },
+  },
+  {
     ignores: [".next/**", "node_modules/**", "out/**", "build/**", "next-env.d.ts"],
   },
 ];
