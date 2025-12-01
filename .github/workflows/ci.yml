@@ -33,7 +33,7 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: "mysql://ci:ci@localhost:3306/ci"
 
       - name: Run tests
         run: npm test
