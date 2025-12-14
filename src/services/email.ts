@@ -1,3 +1,4 @@
+import "server-only";
 import nodemailer from "nodemailer";
 import path from "path";
 import type { Prospect } from "@/schema/referral";

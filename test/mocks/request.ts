@@ -1,6 +1,14 @@
 import { NextRequest } from "next/server";
 
-export function createMockRequest(cookies?: Record<string, string>): NextRequest {
+interface MockRequestOptions {
+  cookies?: Record<string, string>;
+  headers?: Record<string, string>;
+  body?: unknown;
+}
+
+export function createMockRequest(options: MockRequestOptions = {}): NextRequest {
+  const { cookies, headers, body } = options;
+
   return {
     cookies: {
       get: jest.fn((name: string) => {
@@ -8,5 +16,9 @@ export function createMockRequest(cookies?: Record<string, string>): NextRequest
         return value ? { name, value } : undefined;
       }),
     },
+    headers: {
+      get: jest.fn((name: string) => headers?.[name] ?? null),
+    },
+    json: jest.fn().mockResolvedValue(body ?? {}),
   } as unknown as NextRequest;
 }

@@ -75,9 +75,14 @@ export function ReferralForm() {
         })),
       };
 
+      const idempotencyKey = crypto.randomUUID();
+
       const response = await fetch("/api/referral", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": idempotencyKey,
+        },
         body: JSON.stringify(referralData),
       });
 
