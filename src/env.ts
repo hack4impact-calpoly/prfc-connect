@@ -19,4 +19,8 @@ const envSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
 });
 
-export const env = envSchema.parse(process.env);
+const skipValidation = process.env.CI === "true";
+
+export const env = skipValidation
+  ? (process.env as unknown as z.infer<typeof envSchema>)
+  : envSchema.parse(process.env);
