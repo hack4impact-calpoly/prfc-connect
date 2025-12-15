@@ -17,7 +17,7 @@ import { type Density, columnDisplayLabels } from "./data-table-types";
 interface DataTableToolbarProps {
   table: Table<ApiReferral>;
   density: Density;
-  onDensityChange: (d: Density) => void;
+  onDensityChange: (density: Density) => void;
   onToggleFilterPanel: () => void;
   columnSearch: string;
   onColumnSearchChange: (search: string) => void;
@@ -37,8 +37,8 @@ export function DataTableToolbar({
 }: DataTableToolbarProps) {
   const allColumnsVisible = table
     .getAllColumns()
-    .filter((c) => c.getCanHide())
-    .every((c) => c.getIsVisible());
+    .filter((column) => column.getCanHide())
+    .every((column) => column.getIsVisible());
 
   const filteredColumns = table
     .getAllColumns()
@@ -93,7 +93,7 @@ export function DataTableToolbar({
                 type="text"
                 placeholder="Search"
                 value={columnSearch}
-                onChange={(e) => onColumnSearchChange(e.target.value)}
+                onChange={(event) => onColumnSearchChange(event.target.value)}
                 className="border-none outline-none text-sm w-full"
               />
             </div>

@@ -7,6 +7,19 @@ describe("ReferralSchema", () => {
     expect(ReferralSchema.safeParse(referralCharlie).success).toBe(true);
   });
 
+  it("coerces ISO string dates from JSON responses", () => {
+    const asJsonResponse = {
+      ...referralCharlie,
+      createdAt: "2024-03-15T14:32:17.000Z",
+      updatedAt: "2024-03-15T14:32:17.000Z",
+    };
+
+    const parsed = ReferralSchema.parse(asJsonResponse);
+
+    expect(parsed.createdAt).toBeInstanceOf(Date);
+    expect(parsed.updatedAt).toBeInstanceOf(Date);
+  });
+
   it("rejects negative id", () => {
     const bad = { ...referralCharlie, id: -1 };
     expect(ReferralSchema.safeParse(bad).success).toBe(false);

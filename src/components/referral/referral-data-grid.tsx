@@ -185,7 +185,7 @@ export function ReferralDataGrid() {
 
   const placeholderRows = useMemo(() => Array(10).fill({} as ApiReferral), []);
   const skeletonColumns: ColumnDef<ApiReferral>[] = useMemo(
-    () => columns.map((col) => ({ ...col, cell: () => <Skeleton className="h-4 w-full" /> })),
+    () => columns.map((column) => ({ ...column, cell: () => <Skeleton className="h-4 w-full" /> })),
     [columns],
   );
 
@@ -220,7 +220,9 @@ export function ReferralDataGrid() {
     setShowFilterPanel(false);
   }, []);
 
-  const hiddenColumnCount = table.getAllColumns().filter((c) => c.getCanHide() && !c.getIsVisible()).length;
+  const hiddenColumnCount = table
+    .getAllColumns()
+    .filter((column) => column.getCanHide() && !column.getIsVisible()).length;
   const isFiltered = columnFilters.length > 0;
 
   const exportToPDF = useCallback(() => {
@@ -301,7 +303,7 @@ export function ReferralDataGrid() {
               type="text"
               placeholder="Search…"
               value={globalFilter}
-              onChange={(e) => setGlobalFilter(e.target.value)}
+              onChange={(event) => setGlobalFilter(event.target.value)}
               className="border-none shadow-none focus-visible:ring-0 w-40 p-0 h-auto text-sm"
               aria-label="Search referrals"
             />

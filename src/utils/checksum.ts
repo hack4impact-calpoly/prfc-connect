@@ -1,10 +1,9 @@
-export function calculateChecksum(s: string): string {
-  let chk = 0x12345678;
-  const len = s.length;
+export function calculateChecksum(input: string): string {
+  let hash = 0x12345678;
 
-  for (let i = 0; i < len; i++) {
-    chk += s.charCodeAt(i) * (i + 1);
+  for (let i = 0; i < input.length; i++) {
+    hash += input.charCodeAt(i) * (i + 1);
   }
 
-  return (chk & 0xffffffff).toString(16);
+  return (hash & 0xffffffff).toString(16);
 }

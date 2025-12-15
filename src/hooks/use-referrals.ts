@@ -34,8 +34,8 @@ export function useReferrals(): UseReferralsReturn {
       const validated = z.array(ApiReferralSchema).parse(json);
       setData(validated);
       hasFetched.current = true;
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error("Unknown error");
+    } catch (caughtError) {
+      const error = caughtError instanceof Error ? caughtError : new Error("Unknown error");
       setError(error);
       console.error("[useReferrals] Fetch error:", error);
     } finally {
@@ -48,14 +48,16 @@ export function useReferrals(): UseReferralsReturn {
   }, [fetchReferrals]);
 
   const toggleRedeemed = useCallback(async (id: number, currentValue: boolean) => {
-    // Optimistic update
-    setData((prev) => prev.map((ref) => (ref.id === id ? { ...ref, redeemed: !currentValue } : ref)));
+    setData((prev) =>
+      prev.map((referral) => (referral.id === id ? { ...referral, redeemed: !currentValue } : referral)),
+    );
 
     const result = await toggleRedeemedAction(id);
 
     if (!result.success) {
-      // Revert on failure
-      setData((prev) => prev.map((ref) => (ref.id === id ? { ...ref, redeemed: currentValue } : ref)));
+      setData((prev) =>
+        prev.map((referral) => (referral.id === id ? { ...referral, redeemed: currentValue } : referral)),
+      );
       console.error("[useReferrals] Toggle error:", result.error);
     }
   }, []);

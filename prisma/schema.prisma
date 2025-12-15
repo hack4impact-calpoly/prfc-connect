@@ -10,14 +10,14 @@ datasource db {
 model Referral {
   id            Int      @id @default(autoincrement())
   createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
   memberName    String   @map("member_name") @db.VarChar(255)
   memberEmail   String   @map("member_email") @db.VarChar(255)
   prospectName  String   @map("prospect_name") @db.VarChar(255)
   prospectEmail String   @map("prospect_email") @db.VarChar(255)
-  referralCode  String   @map("referral_code") @db.VarChar(100)
+  referralCode  String   @unique @map("referral_code") @db.VarChar(100)
   redeemed      Boolean  @default(false)
 
-  @@index([referralCode])
   @@index([memberEmail])
   @@index([createdAt])
   @@map("referral")

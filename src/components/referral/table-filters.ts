@@ -16,15 +16,15 @@ export interface ColumnFilterValue {
   operator: FilterOperator;
 }
 
-const ops: Record<FilterOperator, (cellVal: string, filterVal: string) => boolean> = {
-  contains: (c, f) => c.includes(f),
-  doesNotContain: (c, f) => !c.includes(f),
-  equals: (c, f) => c === f,
-  doesNotEqual: (c, f) => c !== f,
-  startsWith: (c, f) => c.startsWith(f),
-  endsWith: (c, f) => c.endsWith(f),
-  isEmpty: (c) => c === "",
-  isNotEmpty: (c) => c !== "",
+const filterOperations: Record<FilterOperator, (cellValue: string, filterText: string) => boolean> = {
+  contains: (cellValue, filterText) => cellValue.includes(filterText),
+  doesNotContain: (cellValue, filterText) => !cellValue.includes(filterText),
+  equals: (cellValue, filterText) => cellValue === filterText,
+  doesNotEqual: (cellValue, filterText) => cellValue !== filterText,
+  startsWith: (cellValue, filterText) => cellValue.startsWith(filterText),
+  endsWith: (cellValue, filterText) => cellValue.endsWith(filterText),
+  isEmpty: (cellValue) => cellValue === "",
+  isNotEmpty: (cellValue) => cellValue !== "",
 };
 
 export const operatorFilter: FilterFn<ApiReferral> = (
@@ -34,7 +34,7 @@ export const operatorFilter: FilterFn<ApiReferral> = (
 ): boolean => {
   const cell = String(row.getValue(columnId) ?? "").toLowerCase();
   const text = filterValue.text.toLowerCase();
-  return ops[filterValue.operator](cell, text);
+  return filterOperations[filterValue.operator](cell, text);
 };
 
 operatorFilter.autoRemove = (value: ColumnFilterValue) => !value?.text || value.text.trim() === "";

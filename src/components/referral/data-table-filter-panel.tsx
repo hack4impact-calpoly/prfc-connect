@@ -42,23 +42,26 @@ export function DataTableFilterPanel({
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          {filterableColumns.map((col) => (
-            <SelectItem key={col.id} value={col.id}>
-              {col.label}
+          {filterableColumns.map((filterColumn) => (
+            <SelectItem key={filterColumn.id} value={filterColumn.id}>
+              {filterColumn.label}
             </SelectItem>
           ))}
         </SelectContent>
       </Select>
 
       <span className="text-sm text-gray-600">Operator</span>
-      <Select value={filterOperator} onValueChange={(v) => onOperatorChange(v as FilterOperator)}>
+      <Select
+        value={filterOperator}
+        onValueChange={(selectedOperator) => onOperatorChange(selectedOperator as FilterOperator)}
+      >
         <SelectTrigger className="w-36 h-8 text-sm">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          {filterOperators.map((op) => (
-            <SelectItem key={op.value} value={op.value}>
-              {op.label}
+          {filterOperators.map((operator) => (
+            <SelectItem key={operator.value} value={operator.value}>
+              {operator.label}
             </SelectItem>
           ))}
         </SelectContent>
@@ -69,7 +72,7 @@ export function DataTableFilterPanel({
         type="text"
         placeholder="Filter value"
         value={filterValue}
-        onChange={(e) => onValueChange(e.target.value)}
+        onChange={(event) => onValueChange(event.target.value)}
         className="w-36 h-8 text-sm"
       />
     </div>

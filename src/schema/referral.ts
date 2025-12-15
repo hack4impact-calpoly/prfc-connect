@@ -2,7 +2,8 @@ import { z } from "zod";
 
 export const ReferralSchema = z.object({
   id: z.number().int().positive(),
-  createdAt: z.date(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
   memberName: z.string().min(1).max(255),
   memberEmail: z.string().email().max(255),
   prospectName: z.string().min(1).max(255),
@@ -14,6 +15,7 @@ export const ReferralSchema = z.object({
 export const CreateReferralSchema = ReferralSchema.omit({
   id: true,
   createdAt: true,
+  updatedAt: true,
 }).extend({
   redeemed: z.boolean().default(false),
 });

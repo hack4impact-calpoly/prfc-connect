@@ -25,7 +25,7 @@ interface DataTableMobileDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   density: Density;
-  onDensityChange: (d: Density) => void;
+  onDensityChange: (density: Density) => void;
   filterColumn: string;
   filterOperator: FilterOperator;
   filterValue: string;
@@ -111,21 +111,24 @@ export function DataTableMobileDrawer({
                   <SelectValue placeholder="Column" />
                 </SelectTrigger>
                 <SelectContent>
-                  {filterableColumns.map((col) => (
-                    <SelectItem key={col.id} value={col.id}>
-                      {col.label}
+                  {filterableColumns.map((column) => (
+                    <SelectItem key={column.id} value={column.id}>
+                      {column.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              <Select value={filterOperator} onValueChange={(v) => onFilterOperatorChange(v as FilterOperator)}>
+              <Select
+                value={filterOperator}
+                onValueChange={(selectedOperator) => onFilterOperatorChange(selectedOperator as FilterOperator)}
+              >
                 <SelectTrigger className="w-full min-h-[44px]">
                   <SelectValue placeholder="Operator" />
                 </SelectTrigger>
                 <SelectContent>
-                  {filterOperators.map((op) => (
-                    <SelectItem key={op.value} value={op.value}>
-                      {op.label}
+                  {filterOperators.map((operator) => (
+                    <SelectItem key={operator.value} value={operator.value}>
+                      {operator.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -134,7 +137,7 @@ export function DataTableMobileDrawer({
                 type="text"
                 placeholder="Filter value"
                 value={filterValue}
-                onChange={(e) => onFilterValueChange(e.target.value)}
+                onChange={(event) => onFilterValueChange(event.target.value)}
                 className="w-full min-h-[44px]"
               />
               {isFiltered && (
@@ -148,22 +151,22 @@ export function DataTableMobileDrawer({
           <div className="space-y-3">
             <h3 className="font-medium text-prfc-blue">Table Density</h3>
             <div className="flex flex-col gap-2">
-              {(["compact", "standard", "comfortable"] as Density[]).map((d) => (
+              {(["compact", "standard", "comfortable"] as Density[]).map((densityOption) => (
                 <label
-                  key={d}
+                  key={densityOption}
                   className={cn(
                     "flex items-center gap-3 min-h-[44px] px-3 rounded-lg cursor-pointer",
-                    density === d ? "bg-gray-100" : "hover:bg-gray-50",
+                    density === densityOption ? "bg-gray-100" : "hover:bg-gray-50",
                   )}
                 >
                   <input
                     type="radio"
                     name="density"
-                    checked={density === d}
-                    onChange={() => onDensityChange(d)}
+                    checked={density === densityOption}
+                    onChange={() => onDensityChange(densityOption)}
                     className="h-4 w-4"
                   />
-                  <span className="capitalize">{d}</span>
+                  <span className="capitalize">{densityOption}</span>
                 </label>
               ))}
             </div>

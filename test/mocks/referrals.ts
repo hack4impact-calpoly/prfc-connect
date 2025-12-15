@@ -13,6 +13,7 @@ export const prospectLucy = {
 export const referralCharlie: Referral = {
   id: 1,
   createdAt: new Date("2024-03-15T14:32:17Z"),
+  updatedAt: new Date("2024-03-15T14:32:17Z"),
   memberName: memberCharlie.name,
   memberEmail: memberCharlie.email,
   prospectName: prospectLucy.name,
@@ -24,6 +25,7 @@ export const referralCharlie: Referral = {
 export const referralLinusRedeemed: Referral = {
   id: 2,
   createdAt: new Date("2024-03-14T09:15:42Z"),
+  updatedAt: new Date("2024-03-16T11:23:08Z"),
   memberName: "Linus Van Pelt",
   memberEmail: "linus.vanpelt@outlook.com",
   prospectName: "Sally Brown",
@@ -35,6 +37,7 @@ export const referralLinusRedeemed: Referral = {
 export const referralSchroeder: Referral = {
   id: 3,
   createdAt: new Date("2024-03-13T16:45:03Z"),
+  updatedAt: new Date("2024-03-13T16:45:03Z"),
   memberName: "Schroeder Piano",
   memberEmail: "schroeder@hotmail.com",
   prospectName: "Peppermint Patty",

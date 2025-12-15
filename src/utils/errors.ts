@@ -16,7 +16,7 @@ export class AppError extends Error {
   }
 }
 
-const errorStatusMap: Record<ErrorCode, number> = {
+export const errorStatusMap: Record<ErrorCode, number> = {
   VALIDATION_ERROR: 400,
   NOT_FOUND: 404,
   UNAUTHORIZED: 401,
@@ -31,7 +31,7 @@ export function transformError(error: unknown): AppError {
   }
 
   if (error instanceof ZodError) {
-    const messages = error.issues.map((e) => `${e.path.join(".")}: ${e.message}`);
+    const messages = error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`);
     return new AppError("VALIDATION_ERROR", messages.join(", "), {
       issues: error.issues,
     });

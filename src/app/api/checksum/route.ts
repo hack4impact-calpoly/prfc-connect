@@ -6,12 +6,12 @@ import { AppError, apiErrorHandler } from "@/utils/errors";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { nm, em, ref, cs } = ChecksumSchema.parse(body);
+    const { memberName, memberEmail, referralCode, checksum } = ChecksumSchema.parse(body);
 
-    const cleanedName = nm.replace(/\s+/g, "");
-    const generatedChecksum = calculateChecksum(`${em}${cleanedName}${ref}`);
+    const nameWithoutSpaces = memberName.replace(/\s+/g, "");
+    const expectedChecksum = calculateChecksum(`${memberEmail}${nameWithoutSpaces}${referralCode}`);
 
-    if (generatedChecksum !== cs) {
+    if (expectedChecksum !== checksum) {
       throw new AppError("VALIDATION_ERROR", "Checksum mismatch");
     }
 

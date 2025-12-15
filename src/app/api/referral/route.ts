@@ -5,7 +5,7 @@ import { sendReferralEmails } from "@/services/email";
 import { rateLimiter } from "@/lib/rate-limit";
 import { getIdempotentResponse, setIdempotentResponse } from "@/lib/idempotency";
 import { validateOrigin } from "@/lib/csrf";
-import { apiErrorHandler } from "@/utils/errors";
+import { transformError, errorStatusMap } from "@/utils/errors";
 
 const ACCESS_COOKIE = "prfc_database_access";
 
@@ -67,7 +67,17 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(responseBody, { status: 201 });
   } catch (error) {
-    return apiErrorHandler(error);
+    const appError = transformError(error);
+    const status = errorStatusMap[appError.code];
+    const errorBody = { error: { code: appError.code, message: appError.message } };
+
+    console.error(`[${appError.code}] ${appError.message}`, appError.context);
+
+    if (idempotencyKey) {
+      await setIdempotentResponse(idempotencyKey, status, errorBody);
+    }
+
+    return NextResponse.json(errorBody, { status });
   }
 }
 
@@ -75,13 +85,16 @@ export async function GET(req: NextRequest) {
   const hasAccess = req.cookies.get(ACCESS_COOKIE);
 
   if (hasAccess?.value !== "verified") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: { code: "UNAUTHORIZED", message: "Unauthorized" } }, { status: 401 });
   }
 
   try {
     const referrals = await getAllReferrals();
     return NextResponse.json(referrals, { status: 200 });
   } catch (error) {
-    return apiErrorHandler(error);
+    const appError = transformError(error);
+    const status = errorStatusMap[appError.code];
+    console.error(`[${appError.code}] ${appError.message}`, appError.context);
+    return NextResponse.json({ error: { code: appError.code, message: appError.message } }, { status });
   }
 }

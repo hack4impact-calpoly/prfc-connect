@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface Prospect {
@@ -30,6 +31,9 @@ export function ReferralForm() {
   const [errorMessage, setErrorMessage] = useState("");
   const [showConfirmation, setShowConfirmation] = useState(false);
 
+  // Idempotency key persists across retries, regenerated only on success
+  const idempotencyKeyRef = useRef<string>(crypto.randomUUID());
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setErrorMessage("");
@@ -42,12 +46,10 @@ export function ReferralForm() {
       }
     }
 
-    const em = referrerEmail;
-    const nm = `${referrerFirstName} ${referrerLastName}`;
-    const ref = referralCode;
-    const cs = searchParams?.get("cs");
+    const memberFullName = `${referrerFirstName} ${referrerLastName}`;
+    const urlChecksum = searchParams?.get("cs");
 
-    if (!cs) {
+    if (!urlChecksum) {
       setErrorMessage("Invalid URL: Missing checksum.");
       return;
     }
@@ -56,7 +58,12 @@ export function ReferralForm() {
       const checksumResponse = await fetch("/api/checksum", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ em, nm, ref, cs }),
+        body: JSON.stringify({
+          memberName: memberFullName,
+          memberEmail: referrerEmail,
+          referralCode,
+          checksum: urlChecksum,
+        }),
       });
 
       if (!checksumResponse.ok) {
@@ -66,22 +73,20 @@ export function ReferralForm() {
       }
 
       const referralData = {
-        memberName: nm.trim(),
-        memberEmail: em,
-        referralCode: ref,
+        memberName: memberFullName.trim(),
+        memberEmail: referrerEmail,
+        referralCode,
         prospects: prospects.map((prospect) => ({
           prospectName: prospect.fullName.trim(),
           prospectEmail: prospect.email,
         })),
       };
 
-      const idempotencyKey = crypto.randomUUID();
-
       const response = await fetch("/api/referral", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Idempotency-Key": idempotencyKey,
+          "Idempotency-Key": idempotencyKeyRef.current,
         },
         body: JSON.stringify(referralData),
       });
@@ -90,6 +95,7 @@ export function ReferralForm() {
         setProspects([{ email: "", fullName: "" }]);
         setYourEmail("");
         setShowConfirmation(true);
+        idempotencyKeyRef.current = crypto.randomUUID();
       } else {
         const errorBody = await response.json();
         setErrorMessage(errorBody.error?.message || "Failed to submit the form. Please try again!");
@@ -142,10 +148,14 @@ export function ReferralForm() {
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-7 w-full">
         <div className="flex flex-row gap-2 items-start w-full">
+          <Label htmlFor="referrer-email" className="sr-only">
+            Referrer Email
+          </Label>
           <Input
+            id="referrer-email"
             type="email"
             value={yourEmail}
-            onChange={(e) => setYourEmail(e.target.value)}
+            onChange={(event) => setYourEmail(event.target.value)}
             placeholder="Referrer's Email Address"
             className="flex-1 min-w-0 px-[18px] py-3 rounded-lg border-2 border-prfc-brown bg-white"
             readOnly
@@ -164,20 +174,32 @@ export function ReferralForm() {
                 <Image src="/assets/trash.png" alt="Delete" width={18} height={18} />
               </button>
               <div className="flex flex-col md:flex-row md:items-center w-full gap-2">
-                <Input
-                  type="text"
-                  value={prospect.fullName}
-                  onChange={(e) => handleProspectChange(index, "fullName", e.target.value)}
-                  placeholder="Enter Referee Full Name"
-                  className="flex-1 min-w-0 px-[18px] py-3 rounded-lg border-2 border-prfc-brown bg-white"
-                />
-                <Input
-                  type="email"
-                  value={prospect.email}
-                  onChange={(e) => handleProspectChange(index, "email", e.target.value)}
-                  placeholder="Enter Referee Email Address"
-                  className="flex-1 min-w-0 px-[18px] py-3 rounded-lg border-2 border-prfc-brown bg-white"
-                />
+                <div className="flex-1 min-w-0">
+                  <Label htmlFor={`prospect-name-${index}`} className="sr-only">
+                    Prospect {index + 1} Full Name
+                  </Label>
+                  <Input
+                    id={`prospect-name-${index}`}
+                    type="text"
+                    value={prospect.fullName}
+                    onChange={(event) => handleProspectChange(index, "fullName", event.target.value)}
+                    placeholder="Enter Referee Full Name"
+                    className="w-full px-[18px] py-3 rounded-lg border-2 border-prfc-brown bg-white"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <Label htmlFor={`prospect-email-${index}`} className="sr-only">
+                    Prospect {index + 1} Email
+                  </Label>
+                  <Input
+                    id={`prospect-email-${index}`}
+                    type="email"
+                    value={prospect.email}
+                    onChange={(event) => handleProspectChange(index, "email", event.target.value)}
+                    placeholder="Enter Referee Email Address"
+                    className="w-full px-[18px] py-3 rounded-lg border-2 border-prfc-brown bg-white"
+                  />
+                </div>
               </div>
             </div>
           ))}
