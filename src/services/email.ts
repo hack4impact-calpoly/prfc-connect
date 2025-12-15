@@ -3,14 +3,15 @@ import nodemailer from "nodemailer";
 import path from "path";
 import type { Prospect } from "@/schema/referral";
 import { AppError } from "@/utils/errors";
+import { env } from "@/env";
 
 const transport = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT) || 587,
-  secure: process.env.SMTP_SECURE === "true",
+  host: env.SMTP_HOST,
+  port: env.SMTP_PORT,
+  secure: env.SMTP_SECURE,
   auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
+    user: env.SMTP_USER,
+    pass: env.SMTP_PASS,
   },
 });
 
@@ -30,7 +31,7 @@ export async function sendReferralEmails({
   try {
     for (const prospect of prospects) {
       const mail = {
-        from: process.env.FROM_EMAIL,
+        from: env.FROM_EMAIL,
         to: prospect.prospectEmail,
         subject: "You've Been Invited!",
         html: generateEmailHtml(prospect.prospectName, memberName, referralCode),

@@ -1,28 +1,22 @@
-function required(key: string): string {
-  const value = process.env[key];
-  if (!value) {
-    throw new Error(`Missing required environment variable: ${key}`);
-  }
-  return value;
-}
+import { z } from "zod";
 
-function optional(key: string): string | undefined {
-  return process.env[key];
-}
+const envSchema = z.object({
+  DATABASE_URL: z.url(),
 
-export const env = {
-  DATABASE_URL: required("DATABASE_URL"),
-  DATABASE_PASSWORD: required("DATABASE_PASSWORD"),
+  SMTP_HOST: z.string().min(1),
+  SMTP_PORT: z.coerce.number().default(587),
+  SMTP_SECURE: z
+    .string()
+    .default("false")
+    .transform((v) => v === "true"),
+  SMTP_USER: z.string().min(1),
+  SMTP_PASS: z.string().min(1),
+  FROM_EMAIL: z.email(),
 
-  SMTP_HOST: required("SMTP_HOST"),
-  SMTP_PORT: optional("SMTP_PORT") ?? "587",
-  SMTP_SECURE: optional("SMTP_SECURE") === "true",
-  SMTP_USER: required("SMTP_USER"),
-  SMTP_PASS: required("SMTP_PASS"),
-  FROM_EMAIL: required("FROM_EMAIL"),
+  UPSTASH_REDIS_REST_URL: z.url().optional(),
+  UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
 
-  UPSTASH_REDIS_REST_URL: optional("UPSTASH_REDIS_REST_URL"),
-  UPSTASH_REDIS_REST_TOKEN: optional("UPSTASH_REDIS_REST_TOKEN"),
+  NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+});
 
-  NODE_ENV: optional("NODE_ENV") ?? "development",
-} as const;
+export const env = envSchema.parse(process.env);

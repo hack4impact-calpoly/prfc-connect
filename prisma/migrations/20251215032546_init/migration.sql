@@ -10,8 +10,8 @@ CREATE TABLE `referral` (
     `referral_code` VARCHAR(100) NOT NULL,
     `redeemed` BOOLEAN NOT NULL DEFAULT false,
 
-    UNIQUE INDEX `referral_referral_code_key`(`referral_code`),
     INDEX `referral_member_email_idx`(`member_email`),
     INDEX `referral_created_at_idx`(`created_at`),
+    INDEX `referral_referral_code_idx`(`referral_code`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

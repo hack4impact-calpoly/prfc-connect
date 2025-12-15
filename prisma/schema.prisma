@@ -15,10 +15,11 @@ model Referral {
   memberEmail   String   @map("member_email") @db.VarChar(255)
   prospectName  String   @map("prospect_name") @db.VarChar(255)
   prospectEmail String   @map("prospect_email") @db.VarChar(255)
-  referralCode  String   @unique @map("referral_code") @db.VarChar(100)
+  referralCode  String   @map("referral_code") @db.VarChar(100)
   redeemed      Boolean  @default(false)
 
   @@index([memberEmail])
   @@index([createdAt])
+  @@index([referralCode])
   @@map("referral")
 }

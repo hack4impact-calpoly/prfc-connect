@@ -1,18 +1,10 @@
 import "server-only";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient } from "@/generated/prisma/client";
+import { env } from "@/env";
 
 function createAdapter() {
-  if (!process.env.DATABASE_URL) {
-    throw new Error("DATABASE_URL environment variable is required");
-  }
-
-  let url: URL;
-  try {
-    url = new URL(process.env.DATABASE_URL);
-  } catch {
-    throw new Error("DATABASE_URL is malformed");
-  }
+  const url = new URL(env.DATABASE_URL);
 
   return new PrismaMariaDb({
     host: url.hostname,
@@ -34,9 +26,9 @@ export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
     adapter: createAdapter(),
-    log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
+    log: env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
   });
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+if (env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
 export default prisma;
