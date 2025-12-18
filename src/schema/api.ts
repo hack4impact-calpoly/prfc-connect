@@ -3,14 +3,14 @@ import { ReferralSchema, ProspectSchema } from "./referral";
 
 export const ReferralFormSchema = z.object({
   memberName: z.string().min(1).max(255),
-  memberEmail: z.string().email().max(255),
+  memberEmail: z.string().max(255).pipe(z.email()),
   referralCode: z.string().min(1).max(100),
   prospects: z.array(ProspectSchema).min(1).max(5),
 });
 
 export const ChecksumSchema = z.object({
   memberName: z.string().min(1).max(255),
-  memberEmail: z.string().email().max(255),
+  memberEmail: z.string().max(255).pipe(z.email()),
   referralCode: z.string().min(1).max(100),
   checksum: z.string().min(1),
 });

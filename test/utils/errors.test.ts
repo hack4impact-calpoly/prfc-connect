@@ -23,7 +23,7 @@ describe("transformError", () => {
   });
 
   it("converts ZodError to VALIDATION_ERROR", () => {
-    const schema = z.object({ email: z.string().email() });
+    const schema = z.object({ email: z.email() });
     let caught: unknown;
     try {
       schema.parse({ email: "bad" });
