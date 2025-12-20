@@ -1,0 +1,52 @@
+name: Bug Report
+description: Report a bug
+title: "[Bug]: "
+labels: ["bug", "triage"]
+
+body:
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: What's wrong?
+      placeholder: "The referral form submits but doesn't show a success message."
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      placeholder: "Success toast should appear after form submission."
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction-steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to /
+        2. Fill out the referral form
+        3. Click Submit
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - "Blocking - Can't use the app"
+        - "High - Major feature broken"
+        - "Medium - Annoying but have workaround"
+        - "Low - Minor visual issue"
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Screenshots, error messages, or relevant context
+    validations:
+      required: false

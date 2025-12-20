@@ -6,6 +6,7 @@ export const ErrorCodeSchema = z.enum([
   "DATABASE_ERROR",
   "EMAIL_ERROR",
   "UNAUTHORIZED",
+  "FORBIDDEN",
   "INTERNAL_ERROR",
 ]);
 

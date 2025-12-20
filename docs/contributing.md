@@ -1,30 +1,140 @@
 # Contributing
 
-Here are all of the steps you should follow whenever contributing to this repo!
+This guide covers everything you need to contribute to PRFC Connect.
 
-## Making Changes
+## Prerequisites
 
-1. Before you start making changes, always make sure you're on the main branch, then `git pull` and `npm i` to make sure your code is up to date
-2. Create a branch `git checkout -b <name-of-branch>`
-3. Make changes to the code
-4. `npm run lint` to ensure code standards. (running `npm run lint:fix` will fix most of the styling errors)
+Before contributing, make sure you have completed the [Getting Started](getting-started.md) guide and can run the app locally.
 
-## Commiting Changes
+## Development Workflow
 
-When interacting with Git/GitHub, feel free to use the command line, VSCode extension, or Github desktop. These steps assume you have already made a branch using `git checkout -b <branch-name>` and you have made all neccessary code changes for the provided task.
+### 1. Start Fresh
 
-1. View diffs of each file you changed using the VSCode Github extension (3rd icon on far left bar of VSCode) or GitHub Desktop
-2. `git add .` (to stage all files) or `git add <file-name>` (to stage specific file)
-3. `git commit -m "<type>[optional scope]: <description>"` or
-   `git commit -m "<type>[optional scope]: <description>" -m "[optional body]"` or
-   `git commit` to get a message prompt
-4. `git push -u origin <name-of-branch>`
+Always start from an up-to-date `develop` branch.
 
-## Making Pull Requests
+```bash
+git checkout develop
+git pull origin develop
+npm install
+```
 
-1. Go to the Pull Requests tab on [github.com](https://github.com/)
-2. Find your PR, fill out the PR template
-3. (If applicable, provide a screenshot of your work in the comment area)
-4. Link your PR to the corresponding **Issue**
-5. Request a reviewer to check your code
-6. Once approved, your code is ready to be merged in 🎉
+### 2. Create a Branch
+
+Create a branch with a short, descriptive name.
+
+```bash
+git checkout -b add-export-button
+```
+
+Good branch names: `add-export-button`, `fix-email-validation`, `update-readme`
+
+Bad branch names: `john-branch`, `fix`, `test123`
+
+### 3. Make Changes
+
+Write your code. Run the app locally to verify your changes work.
+
+```bash
+npm run dev
+```
+
+### 4. Check Your Work
+
+Before committing, run the same checks that CI will run.
+
+```bash
+npm run lint        # Check code style
+npm run build       # Verify production build
+npm test            # Run tests
+```
+
+Fix any errors before continuing. Running `npm run lint:fix` will auto-fix most style issues.
+
+### 5. Commit Your Changes
+
+Stage and commit with a descriptive message following [conventional commits](https://www.conventionalcommits.org/).
+
+```bash
+git add .
+git commit -m "feat: add PDF export button to referral table"
+```
+
+**Commit types:**
+
+- `feat:` new feature
+- `fix:` bug fix
+- `docs:` documentation only
+- `refactor:` code change that doesn't add feature or fix bug
+- `test:` adding or updating tests
+- `chore:` maintenance tasks
+
+### 6. Push and Create PR
+
+Push your branch and open a pull request.
+
+```bash
+git push -u origin add-export-button
+```
+
+Go to GitHub, open a PR against `develop`, and fill out the template. Link your PR to the related issue by adding `Closes #123` in the description.
+
+### 7. Code Review
+
+Request a review from a tech lead. Address any feedback by pushing additional commits to your branch.
+
+## CI/CD Pipeline
+
+Every push and pull request runs automated checks through GitHub Actions.
+
+**What runs:**
+
+1. Install dependencies
+2. Run database migrations
+3. Lint code
+4. Type check
+5. Build the app
+6. Run tests
+
+This runs on both Node 20.x and 22.x to ensure compatibility.
+
+**If CI fails:**
+
+| Failure           | How to Fix                              |
+| ----------------- | --------------------------------------- |
+| Lint failed       | Run `npm run lint:fix` locally          |
+| Type check failed | Run `npx tsc --noEmit` locally          |
+| Build failed      | Run `npm run build` locally, fix errors |
+| Tests failed      | Run `npm test` locally, check output    |
+
+Always run checks locally before pushing to catch issues early.
+
+## Security Notes
+
+GitHub Dependabot may flag vulnerabilities in dependencies. As of December 2025, known alerts are addressed:
+
+| Package   | CVE                            | Status                                         |
+| --------- | ------------------------------ | ---------------------------------------------- |
+| `next`    | CVE-2025-55184, CVE-2025-55183 | Patched in 15.5.7+ (we use 15.5.9)             |
+| `glob`    | CVE-2025-64756                 | CLI-only vulnerability; library API unaffected |
+| `js-yaml` | CVE-2025-64718                 | Patched in 3.14.2+, 4.1.1+ (both in use)       |
+
+Run `npm audit` to check for new vulnerabilities. Dependabot and npm audit use different databases, so alerts may differ.
+
+## Code Review
+
+**Who reviews:** Tech leads review all PRs.
+
+**Timeline:** Expect feedback within 24 hours. If you haven't heard back, ping in Slack.
+
+**What reviewers look for:**
+
+- Code works and solves the issue
+- No obvious bugs or security issues
+- Code is readable
+- Tests pass
+
+Once approved, a tech lead will merge your PR.
+
+## Questions?
+
+Stuck on something? Ask in Slack before spending hours debugging alone.

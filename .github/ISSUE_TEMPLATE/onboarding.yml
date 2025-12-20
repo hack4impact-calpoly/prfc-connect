@@ -1,0 +1,44 @@
+name: Onboarding
+description: First exercise for new developers
+title: "[Onboarding]: "
+labels: ["onboarding"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Welcome to the team! This issue tracks your first exercise.
+
+        See [docs/first-exercise.md](https://github.com/hack4impact-calpoly/prfc-connect/blob/develop/docs/first-exercise.md) for instructions.
+
+  - type: input
+    id: developer-name
+    attributes:
+      label: Developer name
+      placeholder: "First Last"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: explore
+    attributes:
+      label: Explore the codebase
+      description: Future tasks will require knowledge of the project. Use this time to browse.
+      options:
+        - label: Read the project README
+        - label: Read docs/architecture.md
+        - label: Browse the `src/` directory structure
+        - label: Look at an existing component (e.g., `src/components/referral/`)
+        - label: Look at an existing test (e.g., `test/services/referral.test.ts`)
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Build your team page
+      options:
+        - label: Created team page in `src/app/team/[lastname]/page.tsx`
+        - label: Added button with useState counter
+        - label: Created test file in `test/team/[lastname].test.tsx`
+        - label: Tests pass locally (`npm test`)
+        - label: Added name to README team list
+        - label: Opened PR and assigned tech lead for review

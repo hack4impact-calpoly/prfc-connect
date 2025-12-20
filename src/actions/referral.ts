@@ -5,7 +5,7 @@ import { ReferralFormSchema } from "@/schema/api";
 import { createManyReferrals, toggleReferralRedeemed } from "@/services/referral";
 import { sendReferralEmails } from "@/services/email";
 import { transformError } from "@/utils/errors";
-import { verifyDatabaseAccess } from "@/lib/auth";
+import { requireAdmin } from "@/lib/dal";
 
 export interface ActionResult {
   success: boolean;
@@ -53,7 +53,7 @@ export async function submitReferrals(formData: FormData): Promise<ActionResult>
 
 export async function toggleRedeemed(id: number): Promise<ActionResult> {
   try {
-    await verifyDatabaseAccess();
+    await requireAdmin();
     await toggleReferralRedeemed(id);
     revalidatePath("/referral-database");
     return { success: true };

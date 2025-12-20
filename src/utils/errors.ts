@@ -20,6 +20,7 @@ export const errorStatusMap: Record<ErrorCode, number> = {
   VALIDATION_ERROR: 400,
   NOT_FOUND: 404,
   UNAUTHORIZED: 401,
+  FORBIDDEN: 403,
   DATABASE_ERROR: 500,
   EMAIL_ERROR: 500,
   INTERNAL_ERROR: 500,

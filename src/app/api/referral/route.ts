@@ -5,9 +5,8 @@ import { sendReferralEmails } from "@/services/email";
 import { rateLimiter } from "@/lib/rate-limit";
 import { getIdempotentResponse, setIdempotentResponse } from "@/lib/idempotency";
 import { validateOrigin } from "@/lib/csrf";
+import { requireAdmin } from "@/lib/dal";
 import { transformError, errorStatusMap } from "@/utils/errors";
-
-const ACCESS_COOKIE = "prfc_database_access";
 
 export async function POST(req: NextRequest) {
   if (!validateOrigin(req)) {
@@ -81,14 +80,9 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET(req: NextRequest) {
-  const hasAccess = req.cookies.get(ACCESS_COOKIE);
-
-  if (hasAccess?.value !== "verified") {
-    return NextResponse.json({ error: { code: "UNAUTHORIZED", message: "Unauthorized" } }, { status: 401 });
-  }
-
+export async function GET() {
   try {
+    await requireAdmin();
     const referrals = await getAllReferrals();
     return NextResponse.json(referrals, { status: 200 });
   } catch (error) {

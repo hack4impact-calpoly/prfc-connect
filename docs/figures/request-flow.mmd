@@ -1,0 +1,15 @@
+flowchart TD
+    Browser["Browser"]
+    Middleware["Next.js Middleware<br/>(rate limiting, auth)"]
+    Router["App Router<br/>(pages, layouts)"]
+    Actions["Server Actions / API Routes"]
+    Services["Services<br/>(business logic)"]
+    Prisma["Prisma ORM"]
+    MySQL[("MySQL")]
+
+    Browser --> Middleware
+    Middleware --> Router
+    Router --> Actions
+    Actions --> Services
+    Services --> Prisma
+    Prisma --> MySQL

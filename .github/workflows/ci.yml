@@ -44,8 +44,14 @@ jobs:
       - name: Run migrations
         run: npx prisma migrate deploy
 
+      - name: Generate Prisma client
+        run: npx prisma generate
+
       - name: Run linter
         run: npm run lint
+
+      - name: Type check
+        run: npx tsc --noEmit
 
       - name: Build
         run: npm run build

@@ -1,11 +1,17 @@
 import "server-only";
-import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient } from "@/generated/prisma/client";
+import { PrismaMariaDb } from "@prisma/adapter-mariadb";
+import { PrismaTiDBCloud } from "@tidbcloud/prisma-adapter";
 import { env } from "@/env";
 
 function createAdapter() {
-  const url = new URL(env.DATABASE_URL);
+  // TiDB serverless uses HTTPS, avoiding connection pool exhaustion in Vercel
+  if (process.env.VERCEL) {
+    return new PrismaTiDBCloud({ url: env.DATABASE_URL });
+  }
 
+  // Local/CI uses TCP connection to Docker MySQL
+  const url = new URL(env.DATABASE_URL);
   return new PrismaMariaDb({
     host: url.hostname,
     port: url.port ? parseInt(url.port, 10) : 3306,

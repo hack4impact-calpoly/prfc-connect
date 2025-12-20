@@ -1,0 +1,55 @@
+name: Feature Request
+description: Add new functionality
+title: "[Feature]: "
+labels: ["feature", "triage"]
+
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What needs to be built?
+      placeholder: "Add a filter dropdown to the referral database page."
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance criteria
+      placeholder: |
+        - Filter dropdown shows all available status options
+        - Selecting a filter updates the table
+        - Filter persists on page refresh
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - "Critical - Needed for core functionality"
+        - "High - Would significantly improve workflow"
+        - "Medium - Nice to have"
+        - "Low - Small quality of life improvement"
+    validations:
+      required: true
+
+  - type: textarea
+    id: documentation
+    attributes:
+      label: Documentation
+      description: Links to relevant docs, examples, or references
+      placeholder: |
+        - [React Select](https://react.dev/reference/react-dom/components/select)
+        - See `src/components/referral/data-table-toolbar.tsx` for existing filter pattern
+    validations:
+      required: false
+
+  - type: textarea
+    id: technical-notes
+    attributes:
+      label: Technical notes
+      description: Implementation hints or dependencies
+    validations:
+      required: false

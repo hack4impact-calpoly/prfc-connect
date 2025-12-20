@@ -17,32 +17,45 @@ import {
   mockValidateOrigin,
 } from "../mocks";
 import { GET, POST } from "@/app/api/referral/route";
+import { AppError } from "@/utils/errors";
+
+jest.mock("@/lib/dal", () => ({
+  requireAdmin: jest.fn(),
+}));
+
+import { requireAdmin } from "@/lib/dal";
+
+const mockRequireAdmin = requireAdmin as jest.MockedFunction<typeof requireAdmin>;
 
 describe("GET /api/referral", () => {
-  it("returns all referrals as JSON", async () => {
-    prismaMock.referral.findMany.mockResolvedValue(allReferrals);
-    const req = createMockRequest({ cookies: { prfc_database_access: "verified" } });
+  beforeEach(() => {
+    mockRequireAdmin.mockReset();
+  });
 
-    const response = await GET(req);
+  it("returns all referrals as JSON", async () => {
+    mockRequireAdmin.mockResolvedValue({ ownerid: 100184, isAdmin: true });
+    prismaMock.referral.findMany.mockResolvedValue(allReferrals);
+
+    const response = await GET();
     const data = await response.json();
 
     expect(response.status).toBe(200);
     expect(data).toHaveLength(3);
   });
 
-  it("returns 401 without valid cookie", async () => {
-    const req = createMockRequest();
+  it("returns 401 without valid session", async () => {
+    mockRequireAdmin.mockRejectedValue(new AppError("UNAUTHORIZED", "Authentication required"));
 
-    const response = await GET(req);
+    const response = await GET();
 
     expect(response.status).toBe(401);
   });
 
   it("returns 500 on database error", async () => {
+    mockRequireAdmin.mockResolvedValue({ ownerid: 100184, isAdmin: true });
     prismaMock.referral.findMany.mockRejectedValue(new Error("Connection lost"));
-    const req = createMockRequest({ cookies: { prfc_database_access: "verified" } });
 
-    const response = await GET(req);
+    const response = await GET();
 
     expect(response.status).toBe(500);
   });

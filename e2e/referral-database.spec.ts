@@ -1,23 +1,29 @@
 import { test, expect } from "@playwright/test";
 
-test.describe("Referral Database Page", () => {
-  test("redirects without password", async ({ page }) => {
-    const response = await page.goto("/referral-database");
+async function loginAsAdmin(page: import("@playwright/test").Page) {
+  await page.goto("/dev/mock-portal");
+  await page.getByLabel("Owner ID").fill("100184");
+  await page.getByLabel("Admin access").check();
+  await page.getByRole("button", { name: "Enter PRFC Connect" }).click();
+  await page.waitForURL("/");
+  await page.goto("/referral-database");
+}
 
+test.describe("Referral Database Page", () => {
+  test("redirects without session", async ({ page }) => {
+    const response = await page.goto("/referral-database");
     expect(response?.url()).not.toContain("/referral-database");
   });
 
-  test("shows data grid with valid password", async ({ page }) => {
-    test.skip(!process.env.DATABASE_PASSWORD, "DATABASE_PASSWORD env var required");
-    await page.goto(`/referral-database?pass=${process.env.DATABASE_PASSWORD}`);
+  test("shows data grid after login", async ({ page }) => {
+    await loginAsAdmin(page);
 
     await expect(page.getByRole("table")).toBeVisible();
     await expect(page.getByText(/member name/i)).toBeVisible();
   });
 
   test("search filters table rows", async ({ page }) => {
-    test.skip(!process.env.DATABASE_PASSWORD, "DATABASE_PASSWORD env var required");
-    await page.goto(`/referral-database?pass=${process.env.DATABASE_PASSWORD}`);
+    await loginAsAdmin(page);
 
     const searchInput = page.getByPlaceholder(/search/i);
     await searchInput.fill("test");
@@ -26,8 +32,7 @@ test.describe("Referral Database Page", () => {
   });
 
   test("toggle switch updates redeemed status", async ({ page }) => {
-    test.skip(!process.env.DATABASE_PASSWORD, "DATABASE_PASSWORD env var required");
-    await page.goto(`/referral-database?pass=${process.env.DATABASE_PASSWORD}`);
+    await loginAsAdmin(page);
 
     const firstSwitch = page.getByRole("switch").first();
     const initialChecked = await firstSwitch.isChecked();

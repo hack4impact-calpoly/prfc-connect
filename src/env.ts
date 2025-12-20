@@ -16,6 +16,9 @@ const envSchema = z.object({
   UPSTASH_REDIS_REST_URL: z.url().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
 
+  // Shared secret for HMAC token validation with PRFC portal
+  PRFC_PORTAL_SECRET: z.string().min(32).optional(),
+
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
 });
 

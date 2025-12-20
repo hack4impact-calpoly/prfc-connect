@@ -1,28 +1,26 @@
-## Developer: {Full Name}
+## Developer: {Your Name}
 
-Closes #{ISSUE NUMBER HERE}
+Closes #{ISSUE_NUMBER}
 
-### Pull Request Summary
+## What changed?
 
-{Describe the purpose of your pull request}
+{Brief description of what you built or fixed}
 
-### Modifications
+## How to test
 
-{list out the files created/modified and a brief description of what was changed}
+{Steps for reviewers to verify your changes work}
 
-### Testing Considerations
+1. ...
+2. ...
+3. ...
 
-{list out what you have tested and what the reviewer should verify}
+## Screenshots
 
-### Pull Request Checklist
+{Optional: Add screenshots or screen recording}
 
-- [ ] Code is neat, readable, and works
-- [ ] Comments are appropriate
-- [ ] The commit messages follows our [guidelines](https://h4i.notion.site/Conventional-Commits-593452ad1179489399ad3bd696ef772a)
-- [ ] The developer name is specified
-- [ ] The summary is completed
-- [ ] Assign reviewers
+## Checklist
 
-### Screenshots/Screencast
-
-{put screenshots of your change, or even better a screencast displaying the functionality}
+- [ ] Code works and is readable
+- [ ] Tested locally
+- [ ] Commits follow [conventional commits](https://www.conventionalcommits.org/)
+- [ ] Assigned reviewers
