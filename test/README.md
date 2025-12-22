@@ -4,8 +4,9 @@
 
 ```bash
 npm test              # Run all tests
-npm test -- --watch   # Watch mode
+npm run test:watch    # Watch mode
 npm run test:coverage # Coverage report
+npm run test:ui       # Vitest browser UI
 npm run test:e2e      # Playwright E2E tests
 npm run test:e2e:ui   # Interactive Playwright UI
 ```
@@ -48,4 +49,4 @@ import { prismaMock } from "../mocks/prisma";
 
 Mirror the `src/` structure. If you're testing `src/services/referral.ts`, create `test/services/referral.test.ts`.
 
-Use `@jest-environment node` for server-side code (services, API routes). Components use the default jsdom environment.
+Server-side tests (services, API routes, actions) run in node environment automatically via `environmentMatchGlobs` in `vitest.config.mts`. Components use the default jsdom environment.

@@ -1,23 +1,21 @@
-/**
- * @jest-environment node
- */
+import { vi, type MockedFunction } from "vitest";
 import { prismaMock } from "../mocks/prisma";
 import "../mocks/email";
 import { referralCharlie, formWithTwoProspects } from "../mocks/referrals";
 import { AppError } from "@/utils/errors";
 
-jest.mock("next/cache", () => ({
-  revalidatePath: jest.fn(),
+vi.mock("next/cache", () => ({
+  revalidatePath: vi.fn(),
 }));
 
-jest.mock("@/lib/dal", () => ({
-  requireAdmin: jest.fn(),
+vi.mock("@/lib/dal", () => ({
+  requireAdmin: vi.fn(),
 }));
 
 import { submitReferrals, toggleRedeemed } from "@/actions/referral";
 import { requireAdmin } from "@/lib/dal";
 
-const mockRequireAdmin = requireAdmin as jest.MockedFunction<typeof requireAdmin>;
+const mockRequireAdmin = requireAdmin as MockedFunction<typeof requireAdmin>;
 
 function createFormData(data: Record<string, string>): FormData {
   const formData = new FormData();

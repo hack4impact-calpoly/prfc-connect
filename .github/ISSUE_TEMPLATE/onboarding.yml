@@ -7,34 +7,49 @@ body:
   - type: markdown
     attributes:
       value: |
-        Welcome to the team! This issue tracks your first exercise.
+        Welcome to the team! This is your first exercise to get familiar with the codebase and workflow.
 
-        See [docs/first-exercise.md](https://github.com/hack4impact-calpoly/prfc-connect/blob/develop/docs/first-exercise.md) for instructions.
+        **Timeline:** 2 weeks of self-study — no hard deadline, just learning.
 
   - type: input
     id: developer-name
     attributes:
-      label: Developer name
+      label: Developer Name
       placeholder: "First Last"
     validations:
       required: true
 
-  - type: checkboxes
-    id: explore
+  - type: markdown
     attributes:
-      label: Explore the codebase
-      description: Future tasks will require knowledge of the project. Use this time to browse.
-      options:
-        - label: Read the project README
-        - label: Read docs/architecture.md
-        - label: Browse the `src/` directory structure
-        - label: Look at an existing component (e.g., `src/components/referral/`)
-        - label: Look at an existing test (e.g., `test/services/referral.test.ts`)
+      value: |
+        ## Your Task
+
+        Create your own team page with a button counter. See `docs/first-exercise.md` for detailed instructions.
+
+        ### What to Build
+
+        1. **Team page** — `src/app/team/[yourlastname]/page.tsx`
+           - Your name, role, and a fun fact
+           - A button with click counter using `useState`
+
+        2. **Test file** — `test/team/[yourlastname].test.tsx`
+           - Test that your page renders your name
+           - Test that the counter increments on click
+
+        3. **README update** — Add your name to the team list
+
+        ### Resources
+
+        - Example page: `src/app/team/rutledge/page.tsx`
+        - Example test: `test/team/rutledge.test.tsx`
+        - [React useState Hook](https://react.dev/reference/react/useState)
+        - [Vitest Testing](https://vitest.dev/guide/)
+        - [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/)
 
   - type: checkboxes
     id: checklist
     attributes:
-      label: Build your team page
+      label: Completion Checklist
       options:
         - label: Created team page in `src/app/team/[lastname]/page.tsx`
         - label: Added button with useState counter

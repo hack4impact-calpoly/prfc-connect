@@ -1,6 +1,3 @@
-/**
- * @jest-environment node
- */
 import "../mocks/email";
 import { emailTransportMock } from "../mocks";
 import { sendReferralEmails } from "@/services/email";

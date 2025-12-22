@@ -1,6 +1,4 @@
-/**
- * @jest-environment node
- */
+import { vi, type MockedFunction } from "vitest";
 import "../mocks/email";
 import "../mocks/rate-limit";
 import "../mocks/idempotency";
@@ -19,13 +17,13 @@ import {
 import { GET, POST } from "@/app/api/referral/route";
 import { AppError } from "@/utils/errors";
 
-jest.mock("@/lib/dal", () => ({
-  requireAdmin: jest.fn(),
+vi.mock("@/lib/dal", () => ({
+  requireAdmin: vi.fn(),
 }));
 
 import { requireAdmin } from "@/lib/dal";
 
-const mockRequireAdmin = requireAdmin as jest.MockedFunction<typeof requireAdmin>;
+const mockRequireAdmin = requireAdmin as MockedFunction<typeof requireAdmin>;
 
 describe("GET /api/referral", () => {
   beforeEach(() => {

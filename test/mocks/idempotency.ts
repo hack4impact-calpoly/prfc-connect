@@ -1,7 +1,9 @@
-const mockGetIdempotentResponse = jest.fn().mockResolvedValue(null);
-const mockSetIdempotentResponse = jest.fn().mockResolvedValue(undefined);
+import { vi } from "vitest";
 
-jest.mock("@/lib/idempotency", () => ({
+const mockGetIdempotentResponse = vi.fn().mockResolvedValue(null);
+const mockSetIdempotentResponse = vi.fn().mockResolvedValue(undefined);
+
+vi.mock("@/lib/idempotency", () => ({
   getIdempotentResponse: mockGetIdempotentResponse,
   setIdempotentResponse: mockSetIdempotentResponse,
 }));

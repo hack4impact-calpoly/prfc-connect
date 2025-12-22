@@ -1,6 +1,3 @@
-/**
- * @jest-environment node
- */
 import { prismaMock } from "../mocks/prisma";
 import { referralCharlie, referralLinusRedeemed, createReferralInput, allReferrals } from "../mocks/referrals";
 import {

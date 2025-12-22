@@ -27,7 +27,12 @@ jobs:
         node-version: [20.x, 22.x]
 
     env:
+      CI: "true"
       DATABASE_URL: "mysql://root:root@localhost:3306/prfc_ci"
+      SMTP_HOST: "smtp.test.com"
+      SMTP_USER: "test"
+      SMTP_PASS: "test"
+      FROM_EMAIL: "test@test.com"
 
     steps:
       - uses: actions/checkout@v4

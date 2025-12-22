@@ -60,16 +60,16 @@ Your tests should verify:
 
 **Documentation:**
 
-- [Jest: Testing React Apps](https://jestjs.io/docs/tutorial-react) - Jest testing fundamentals
+- [Vitest](https://vitest.dev/guide/) - Vitest testing fundamentals
 - [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) - testing React components
-- [Next.js: Testing with Jest](https://nextjs.org/docs/app/guides/testing/jest) - Next.js specific setup
+- [Next.js: Testing with Vitest](https://nextjs.org/docs/app/guides/testing/vitest) - Next.js specific setup
 
 Refer to `test/team/rutledge.test.tsx` to see the testing patterns used in this project.
 
 Run your tests:
 
 ```bash
-npm test -- --testPathPattern="team/[yourlastname]"
+npm test -- team/[yourlastname]
 ```
 
 ## Step 5: Update the README
@@ -106,7 +106,7 @@ git push -u origin add-team-page-[yourlastname]
 Once your PR is merged, you've completed onboarding. You now know how to:
 
 - Create React components with hooks
-- Write tests with Jest and React Testing Library
+- Write tests with Vitest and React Testing Library
 - Follow the contribution workflow
 
 Stuck? Ask in Slack.

@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { NextRequest } from "next/server";
 
 interface MockRequestOptions {
@@ -11,14 +12,14 @@ export function createMockRequest(options: MockRequestOptions = {}): NextRequest
 
   return {
     cookies: {
-      get: jest.fn((name: string) => {
+      get: vi.fn((name: string) => {
         const value = cookies?.[name];
         return value ? { name, value } : undefined;
       }),
     },
     headers: {
-      get: jest.fn((name: string) => headers?.[name] ?? null),
+      get: vi.fn((name: string) => headers?.[name] ?? null),
     },
-    json: jest.fn().mockResolvedValue(body ?? {}),
+    json: vi.fn().mockResolvedValue(body ?? {}),
   } as unknown as NextRequest;
 }

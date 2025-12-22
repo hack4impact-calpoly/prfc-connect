@@ -13,7 +13,7 @@ Use GitHub Actions with this pipeline order:
 1. **Lint** - ESLint catches style and syntax issues
 2. **Type check** - TypeScript catches type errors
 3. **Build** - Verifies production build works
-4. **Test** - Jest runs unit and integration tests
+4. **Test** - Vitest runs unit and integration tests
 
 Checks run on every push and pull request. Cheap checks run first so failures are caught quickly.
 

@@ -1,6 +1,8 @@
-const mockValidateOrigin = jest.fn().mockReturnValue(true);
+import { vi } from "vitest";
 
-jest.mock("@/lib/csrf", () => ({
+const mockValidateOrigin = vi.fn().mockReturnValue(true);
+
+vi.mock("@/lib/csrf", () => ({
   validateOrigin: mockValidateOrigin,
 }));
 

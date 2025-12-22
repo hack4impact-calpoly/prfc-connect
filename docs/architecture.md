@@ -17,8 +17,17 @@ PRFC Connect is a Next.js application that handles member referrals and will exp
 | Styling       | Tailwind CSS   | Utility classes              |
 | Components    | shadcn/ui      | Pre-built UI primitives      |
 | Validation    | Zod            | Runtime type checking        |
-| Email         | Nodemailer     | SMTP delivery                |
+| Email         | Nodemailer     | SMTP delivery (Resend relay) |
 | Rate Limiting | Upstash Redis  | Request throttling           |
+
+**Planned Additions (Contact Groups):**
+
+| Layer           | Technology              | Purpose                    |
+| --------------- | ----------------------- | -------------------------- |
+| SMS             | Twilio                  | A2P 10DLC compliant SMS    |
+| List Rendering  | @tanstack/react-virtual | Handle 400+ member lists   |
+| Fuzzy Search    | fuse.js                 | Client-side member search  |
+| Email Templates | React Email             | Type-safe email components |
 
 ## Request Flow
 
@@ -38,9 +47,23 @@ src/lib/db.ts            -> database connection
 
 ### API Routes
 
+**Current:**
+
 - `POST /api/referral` - External referral creation
 - `GET /api/referral` - Admin database access (requires admin session)
 - `POST /api/checksum` - Referral code validation
+
+**Upcoming (Contact Groups):**
+
+| Endpoint                   | Method         | Purpose                          |
+| -------------------------- | -------------- | -------------------------------- |
+| `/api/groups`              | GET/POST       | List/create groups               |
+| `/api/groups/[id]`         | GET/PUT/DELETE | Single group operations          |
+| `/api/groups/[id]/members` | GET/POST       | Manage group members             |
+| `/api/messages`            | POST           | Send message to group            |
+| `/api/unsubscribe/[token]` | GET/POST       | One-click email unsubscribe      |
+| `/api/webhooks/email`      | POST           | Resend bounce/complaint webhooks |
+| `/api/webhooks/sms`        | POST           | Twilio delivery status webhooks  |
 
 ### Token Authentication
 
@@ -106,7 +129,7 @@ src/
 
 ## Database
 
-Single model for now:
+### Current: Referral
 
 ```prisma
 model Referral {
@@ -122,7 +145,24 @@ model Referral {
 }
 ```
 
-Contact Groups will add: `ContactGroup`, `ContactGroupMember`, `AuditLog`.
+### Upcoming: Contact Groups
+
+Six models will be added for Contact Groups with email/SMS messaging:
+
+| Model                | Purpose                                          |
+| -------------------- | ------------------------------------------------ |
+| `ContactGroup`       | Group metadata (name, description, owner)        |
+| `ContactGroupMember` | Membership with notification preferences         |
+| `SmsConsent`         | TCPA-required consent records (5-year retention) |
+| `EmailSuppression`   | Hard bounces, complaints, unsubscribes           |
+| `Message`            | Message history with delivery counts             |
+| `MessageRecipient`   | Per-recipient delivery status tracking           |
+
+**Compliance Requirements:**
+
+- **SMS (TCPA + A2P 10DLC):** Double opt-in, quiet hours (8 AM - 9 PM), 5-year consent retention
+- **Email (CAN-SPAM):** One-click unsubscribe, physical address required
+- **Retention:** Messages 3 years, consent 5 years, members duration + 3 years
 
 ## Security
 
