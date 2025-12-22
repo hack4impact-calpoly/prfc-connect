@@ -116,6 +116,7 @@
   },
   "overrides": {
     "hono": "^4.10.3",
-    "valibot": "^1.2.0"
+    "valibot": "^1.2.0",
+    "@react-email/code-block": "0.1.0"
   }
 }
