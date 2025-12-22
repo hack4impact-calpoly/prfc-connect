@@ -95,7 +95,7 @@ Every push and pull request runs automated checks through GitHub Actions.
 5. Build the app
 6. Run tests
 
-This runs on both Node 20.x and 22.x to ensure compatibility.
+This runs on Node 22.x.
 
 **If CI fails:**
 

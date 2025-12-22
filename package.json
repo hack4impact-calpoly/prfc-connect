@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=20.19.0",
+    "node": ">=22.0.0",
     "npm": ">=10.0.0"
   },
   "scripts": {
@@ -116,8 +116,6 @@
   },
   "overrides": {
     "hono": "^4.10.3",
-    "valibot": "^1.2.0",
-    "@react-email/code-block": "0.1.0",
-    "@react-email/markdown": "0.0.16"
+    "valibot": "^1.2.0"
   }
 }
