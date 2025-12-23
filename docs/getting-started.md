@@ -53,7 +53,7 @@ fnm use
 Verify you're on the right version:
 
 ```bash
-node -v  # Should show v20.x
+node -v  # Should show v22.x
 ```
 
 ### 3. Install Dependencies
