@@ -23,7 +23,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { ApiReferral } from "@/schema/api";
 import { operatorFilter, type FilterOperator, type ColumnFilterValue } from "./table-filters";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useReferrals } from "@/hooks/use-referrals";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -53,7 +53,6 @@ export function ReferralDataGrid() {
   const [filterValue, setFilterValue] = useState("");
   const [columnSearch, setColumnSearch] = useState("");
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
-  const { toast } = useToast();
 
   useEffect(() => {
     try {
@@ -94,9 +93,9 @@ export function ReferralDataGrid() {
 
   useEffect(() => {
     if (error) {
-      toast({ title: "Failed to load referrals", variant: "destructive" });
+      toast.error("Failed to load referrals");
     }
-  }, [error, toast]);
+  }, [error]);
 
   useEffect(() => {
     if (isMobile && showFilterPanel) {
