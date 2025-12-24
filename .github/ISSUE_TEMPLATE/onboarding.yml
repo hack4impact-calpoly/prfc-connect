@@ -57,3 +57,10 @@ body:
         - label: Tests pass locally (`npm test`)
         - label: Added name to README team list
         - label: Opened PR and assigned tech lead for review
+
+  - type: markdown
+    attributes:
+      value: |
+        ## What's Next
+
+        After this exercise, you'll work in pairs on real issues. Pairs are formed before Sprint 1 and stay together all quarter. Pairing is encouraged but not required. See [Contributing](docs/contributing.md) for the pair workflow.

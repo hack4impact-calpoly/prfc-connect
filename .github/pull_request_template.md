@@ -1,4 +1,7 @@
-## Developer: {Your Name}
+## Developer(s)
+
+{Your Name}
+{Partner Name, if pair}
 
 Closes #{ISSUE_NUMBER}
 
@@ -23,4 +26,5 @@ Closes #{ISSUE_NUMBER}
 - [ ] Code works and is readable
 - [ ] Tested locally
 - [ ] Commits follow [conventional commits](https://www.conventionalcommits.org/)
+- [ ] Commits include Co-Authored-By (if pair)
 - [ ] Assigned reviewers
