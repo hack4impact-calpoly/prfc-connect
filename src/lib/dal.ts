@@ -25,9 +25,9 @@ export interface Session {
 }
 
 function verifyHmac(payload: string, signature: string, secret: string): boolean {
-  const expected = createHmac("sha256", secret).update(payload).digest("hex");
+  if (signature.length !== 8) return false;
 
-  if (signature.length !== expected.length) return false;
+  const expected = createHmac("sha256", secret).update(payload).digest("hex").slice(0, 8);
 
   return timingSafeEqual(Buffer.from(signature, "utf8"), Buffer.from(expected, "utf8"));
 }
@@ -81,6 +81,6 @@ export async function requireAdmin(): Promise<Session> {
 export function generateToken(ownerid: number, isAdmin: boolean): string {
   const timestamp = Date.now().toString();
   const payload = `${ownerid}|${isAdmin ? "1" : "0"}|${timestamp}`;
-  const signature = createHmac("sha256", getSecret()).update(payload).digest("hex");
+  const signature = createHmac("sha256", getSecret()).update(payload).digest("hex").slice(0, 8);
   return `${payload}|${signature}`;
 }

@@ -76,7 +76,7 @@ ownerid|isAdmin|timestamp|hmac_signature
 - `ownerid`: Member ID from PRFC portal
 - `isAdmin`: `1` for admin, `0` for regular member
 - `timestamp`: Token creation time (60-minute expiry)
-- `hmac_signature`: HMAC-SHA256 with shared secret
+- `hmac_signature`: 32-bit HMAC with shared secret
 
 The token arrives via POST to `/auth/callback`, gets validated, and stored in an httpOnly cookie.
 
