@@ -52,6 +52,7 @@ model ContactGroupMember {
 
   group ContactGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
+  @@unique([groupId, memberId])
   @@index([groupId, notifyEmail])
   @@index([groupId, notifySms])
   @@index([memberId])
@@ -84,10 +85,10 @@ enum EmailSuppressionReason {
 }
 
 model EmailSuppression {
-  id        Int                    @id @default(autoincrement())
-  email     String                 @unique @db.VarChar(255)
-  reason    EmailSuppressionReason
-  bouncedAt DateTime               @default(now()) @map("bounced_at")
+  id           Int                    @id @default(autoincrement())
+  email        String                 @unique @db.VarChar(255)
+  reason       EmailSuppressionReason
+  suppressedAt DateTime               @default(now()) @map("suppressed_at")
 
   @@map("email_suppression")
 }
@@ -128,6 +129,7 @@ model MessageRecipient {
 
   message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
 
+  @@unique([messageId, memberId, channel])
   @@index([messageId])
   @@index([memberId])
   @@index([messageId, status])
