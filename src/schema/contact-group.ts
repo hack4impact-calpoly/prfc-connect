@@ -15,7 +15,7 @@ export const CreateContactGroupSchema = ContactGroupSchema.omit({
   updatedAt: true,
   ownerid: true,
 }).extend({
-  description: z.string().max(500).optional(),
+  description: z.string().max(500).nullish(),
 });
 
 export const UpdateContactGroupSchema = CreateContactGroupSchema.partial();
