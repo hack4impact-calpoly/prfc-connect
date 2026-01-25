@@ -4,7 +4,7 @@ This guide covers everything you need to contribute to PRFC Connect.
 
 ## Prerequisites
 
-Before contributing, make sure you have completed the [Getting Started](getting-started.md) guide and can run the app locally.
+Before contributing, make sure you have completed the [Getting Started](/docs/getting-started.md) guide and can run the app locally.
 
 ## Development Workflow
 
@@ -81,32 +81,6 @@ Go to GitHub, open a PR against `develop`, and fill out the template. Link your 
 ### 7. Code Review
 
 Request a review from a tech lead. Address any feedback by pushing additional commits to your branch.
-
-## Working in Pairs
-
-Most issues are worked on by pairs. Pairing is encouraged but not required. You can opt out anytime.
-
-### How Pairs Work
-
-Both partners assign themselves to the issue on GitHub. Work together during the same session each week. One person drives, the other navigates. Switch roles as you go.
-
-### Branch and Commits
-
-One branch per issue, shared by both partners. Add Co-Authored-By to your commits so both get credit:
-
-```bash
-git commit -m "feat: add member selector component
-
-Co-Authored-By: Jane Smith <jane@example.com>"
-```
-
-### Pull Requests
-
-List both developers in the PR description. The template has a field for this. Both partners should review the PR before requesting tech lead review.
-
-### Opting Out
-
-If you prefer to work solo, let a tech lead know. Some issues are better suited for individual work anyway. You can switch between solo and pair work between sprints.
 
 ## CI/CD Pipeline
 
