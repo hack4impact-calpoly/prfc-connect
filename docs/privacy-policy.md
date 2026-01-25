@@ -13,7 +13,7 @@ We collect the following information when you use PRFC Connect:
 - **Member information:** Name, email address, phone number (if provided), and member ID from your Co-op account
 - **Referral information:** Names and email addresses of prospects you refer
 - **Contact group data:** Group membership and communication preferences
-- **SMS consent records:** Phone number, consent timestamp, the disclosure text you agreed to, and IP address
+- **SMS consent records:** Phone number, consent timestamp, the consent message you agreed to, and IP address
 - **Engagement data:** Message delivery status for troubleshooting
 
 ---
@@ -84,13 +84,13 @@ We may share information with service providers who help deliver messages (such 
 
 ## Data Retention
 
-| Data Type              | Retention Period                                         |
-| ---------------------- | -------------------------------------------------------- |
-| Member information     | Duration of membership + 3 years                         |
-| Referral records       | 3 years                                                  |
-| Message history        | 3 years                                                  |
-| SMS consent records    | 5 years (TCPA requirement)                               |
-| Email suppression list | Permanent (to prevent future sends to invalid addresses) |
+| Data Type              | Retention Period                                               |
+| ---------------------- | -------------------------------------------------------------- |
+| Member information     | Duration of membership + 3 years                               |
+| Referral records       | 3 years                                                        |
+| Message history        | 3 years                                                        |
+| SMS consent records    | 5 years (TCPA requirement)                                     |
+| Email suppression list | Permanent (to prevent sends to bounced or opted-out addresses) |
 
 ---
 
