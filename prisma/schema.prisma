@@ -23,3 +23,117 @@ model Referral {
   @@index([referralCode])
   @@map("referral")
 }
+
+model ContactGroup {
+  id          Int      @id @default(autoincrement())
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  name        String   @db.VarChar(100)
+  description String?  @db.VarChar(500)
+  ownerid     Int
+
+  members  ContactGroupMember[]
+  messages Message[]
+
+  @@index([ownerid])
+  @@map("contact_group")
+}
+
+model ContactGroupMember {
+  id                Int       @id @default(autoincrement())
+  groupId           Int       @map("group_id")
+  memberId          Int       @map("member_id")
+  notifyEmail       Boolean   @default(true) @map("notify_email")
+  notifySms         Boolean   @default(false) @map("notify_sms")
+  addedAt           DateTime  @default(now()) @map("added_at")
+  addedBy           Int       @map("added_by")
+  unsubscribedAt    DateTime? @map("unsubscribed_at")
+  unsubscribeMethod String?   @map("unsubscribe_method") @db.VarChar(50)
+
+  group ContactGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, memberId])
+  @@index([groupId, notifyEmail])
+  @@index([groupId, notifySms])
+  @@index([memberId])
+  @@map("contact_group_member")
+}
+
+model SmsConsent {
+  id             Int       @id @default(autoincrement())
+  memberId       Int       @map("member_id")
+  phone          String    @db.VarChar(20)
+  consentedAt    DateTime  @default(now()) @map("consented_at")
+  consentMethod  String    @map("consent_method") @db.VarChar(50)
+  consentText    String    @map("consent_text") @db.Text
+  consentPurpose String    @map("consent_purpose") @db.VarChar(100)
+  ipAddress      String?   @map("ip_address") @db.VarChar(45)
+  revokedAt      DateTime? @map("revoked_at")
+  revokeMethod   String?   @map("revoke_method") @db.VarChar(50)
+  revokeMessage  String?   @map("revoke_message") @db.VarChar(500)
+
+  @@index([memberId])
+  @@index([phone])
+  @@index([consentedAt])
+  @@map("sms_consent")
+}
+
+enum EmailSuppressionReason {
+  hard_bounce
+  complaint
+  unsubscribe
+}
+
+model EmailSuppression {
+  id           Int                    @id @default(autoincrement())
+  email        String                 @unique @db.VarChar(255)
+  reason       EmailSuppressionReason
+  suppressedAt DateTime               @default(now()) @map("suppressed_at")
+
+  @@map("email_suppression")
+}
+
+model Message {
+  id          Int      @id @default(autoincrement())
+  groupId     Int?     @map("group_id")
+  senderId    Int      @map("sender_id")
+  subject     String   @db.VarChar(200)
+  body        String   @db.Text
+  sentAt      DateTime @default(now()) @map("sent_at")
+  emailCount  Int      @default(0) @map("email_count")
+  smsCount    Int      @default(0) @map("sms_count")
+  failedCount Int      @default(0) @map("failed_count")
+  isBlast     Boolean  @default(false) @map("is_blast")
+
+  group      ContactGroup?      @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  recipients MessageRecipient[]
+
+  @@index([groupId])
+  @@index([senderId])
+  @@index([sentAt])
+  @@index([groupId, sentAt])
+  @@index([isBlast, sentAt])
+  @@map("message")
+}
+
+model MessageRecipient {
+  id          Int       @id @default(autoincrement())
+  messageId   Int       @map("message_id")
+  memberId    Int       @map("member_id")
+  channel     String    @db.VarChar(10)
+  status      String    @default("pending") @db.VarChar(20)
+  externalId  String?   @map("external_id") @db.VarChar(100)
+  sentAt      DateTime? @map("sent_at")
+  deliveredAt DateTime? @map("delivered_at")
+  error       String?   @db.VarChar(500)
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, memberId, channel])
+  @@index([messageId])
+  @@index([memberId])
+  @@index([messageId, status])
+  @@index([memberId, sentAt])
+  @@index([externalId])
+  @@map("message_recipient")
+}

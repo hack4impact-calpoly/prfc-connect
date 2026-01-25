@@ -24,6 +24,15 @@ export const errorStatusMap: Record<ErrorCode, number> = {
   DATABASE_ERROR: 500,
   EMAIL_ERROR: 500,
   INTERNAL_ERROR: 500,
+  RATE_LIMITED: 429,
+  GROUP_NOT_FOUND: 404,
+  GROUP_ACCESS_DENIED: 403,
+  MEMBER_ALREADY_IN_GROUP: 400,
+  MEMBER_NOT_IN_GROUP: 404,
+  INVALID_MEMBER_ID: 400,
+  SMS_CONSENT_REQUIRED: 403,
+  MESSAGE_SEND_FAILED: 500,
+  BLAST_NOT_AUTHORIZED: 403,
 };
 
 export function transformError(error: unknown): AppError {
