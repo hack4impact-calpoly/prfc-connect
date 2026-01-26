@@ -2,6 +2,9 @@ import "server-only";
 import prisma from "@/lib/db";
 import { AppError, transformError } from "@/utils/errors";
 import type { ContactGroup, ContactGroupMember } from "@/generated/prisma/client";
+import type { CreateContactGroup, UpdateContactGroup, GroupMember, UpdateNotification } from "@/schema/contact-group";
+
+type NotificationPreferences = Pick<UpdateNotification, "notifyEmail" | "notifySms">;
 
 export interface GroupWithCount extends ContactGroup {
   memberCount: number;
@@ -84,10 +87,7 @@ export async function isGroupOwner(groupId: number, ownerid: number): Promise<bo
   }
 }
 
-export async function createGroup(
-  data: { name: string; description?: string | null },
-  ownerid: number,
-): Promise<ContactGroup> {
+export async function createGroup(data: CreateContactGroup, ownerid: number): Promise<ContactGroup> {
   try {
     return await prisma.contactGroup.create({
       data: {
@@ -101,10 +101,7 @@ export async function createGroup(
   }
 }
 
-export async function updateGroup(
-  id: number,
-  data: { name?: string; description?: string | null },
-): Promise<ContactGroup> {
+export async function updateGroup(id: number, data: UpdateContactGroup): Promise<ContactGroup> {
   try {
     return await prisma.contactGroup.update({
       where: { id },
@@ -129,7 +126,7 @@ export async function addMemberToGroup(
   groupId: number,
   memberId: number,
   addedBy: number,
-  preferences: { notifyEmail?: boolean; notifySms?: boolean } = {},
+  preferences: NotificationPreferences = {},
 ): Promise<ContactGroupMember> {
   try {
     return await prisma.contactGroupMember.create({
@@ -148,7 +145,7 @@ export async function addMemberToGroup(
 
 export async function addMembersToGroup(
   groupId: number,
-  members: Array<{ memberId: number; notifyEmail?: boolean; notifySms?: boolean }>,
+  members: GroupMember[],
   addedBy: number,
 ): Promise<{ count: number }> {
   try {
@@ -157,8 +154,8 @@ export async function addMembersToGroup(
         groupId,
         memberId: m.memberId,
         addedBy,
-        notifyEmail: m.notifyEmail ?? true,
-        notifySms: m.notifySms ?? false,
+        notifyEmail: m.notifyEmail,
+        notifySms: m.notifySms,
       })),
       skipDuplicates: true,
     });
@@ -182,7 +179,7 @@ export async function removeMemberFromGroup(groupId: number, memberId: number): 
 export async function updateMemberNotifications(
   groupId: number,
   memberId: number,
-  preferences: { notifyEmail?: boolean; notifySms?: boolean },
+  preferences: NotificationPreferences,
 ): Promise<ContactGroupMember> {
   try {
     return await prisma.contactGroupMember.update({
