@@ -54,7 +54,7 @@ export async function updateContactGroup(groupId: number, formData: FormData): P
 
     const validated = UpdateContactGroupSchema.parse({
       name: formData.get("name") || undefined,
-      description: formData.get("description"),
+      description: formData.get("description") || null,
     });
 
     await updateGroup(groupId, validated);
@@ -92,16 +92,15 @@ export async function addMembers(input: {
 }): Promise<ActionResult<{ count: number }>> {
   try {
     const session = await verifySession();
+    const validated = AddMembersSchema.parse(input);
 
-    if (!session.isAdmin && !(await isGroupOwner(input.groupId, session.ownerid))) {
+    if (!session.isAdmin && !(await isGroupOwner(validated.groupId, session.ownerid))) {
       return { success: false, error: "You do not have permission to add members to this group" };
     }
 
-    const validated = AddMembersSchema.parse(input);
-
     const result = await addMembersToGroup(validated.groupId, validated.members, session.ownerid);
 
-    revalidatePath(`/groups/${input.groupId}`);
+    revalidatePath(`/groups/${validated.groupId}`);
     return { success: true, data: result };
   } catch (error) {
     const appError = transformError(error);
@@ -135,19 +134,18 @@ export async function updateNotifications(input: {
 }): Promise<ActionResult> {
   try {
     const session = await verifySession();
+    const validated = UpdateNotificationSchema.parse(input);
 
-    if (!session.isAdmin && !(await isGroupOwner(input.groupId, session.ownerid))) {
+    if (!session.isAdmin && !(await isGroupOwner(validated.groupId, session.ownerid))) {
       return { success: false, error: "You do not have permission to update notification preferences" };
     }
-
-    const validated = UpdateNotificationSchema.parse(input);
 
     await updateMemberNotifications(validated.groupId, validated.memberId, {
       notifyEmail: validated.notifyEmail,
       notifySms: validated.notifySms,
     });
 
-    revalidatePath(`/groups/${input.groupId}`);
+    revalidatePath(`/groups/${validated.groupId}`);
     return { success: true };
   } catch (error) {
     const appError = transformError(error);
