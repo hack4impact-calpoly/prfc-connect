@@ -30,6 +30,7 @@ The PRFC Connect team consists of 18 Cal Poly students. Over the course of about
 - [Rinah Ng](https://www.linkedin.com/in/rinah-ng-083711333) - Designer
 - [Anney Haong](https://www.linkedin.com/in/anneyhaong/) - Designer
 - [First Last](https://www.linkedin.com/in/your-profile/) - Software Developer
+- [Ethan Ma](https://www.linkedin.com/in/ethan-ma-389568319/) - Software Developer
 
 ## Documentation
 
