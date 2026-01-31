@@ -14,5 +14,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/referral-database/:path*", "/contact-groups/:path*"],
+  matcher: ["/referral-database/:path*", "/groups/:path*"],
 };
