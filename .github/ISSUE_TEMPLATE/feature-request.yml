@@ -13,29 +13,6 @@ body:
       required: true
 
   - type: textarea
-    id: acceptance-criteria
-    attributes:
-      label: Acceptance criteria
-      placeholder: |
-        - Filter dropdown shows all available status options
-        - Selecting a filter updates the table
-        - Filter persists on page refresh
-    validations:
-      required: true
-
-  - type: dropdown
-    id: priority
-    attributes:
-      label: Priority
-      options:
-        - "Critical - Needed for core functionality"
-        - "High - Would significantly improve workflow"
-        - "Medium - Nice to have"
-        - "Low - Small quality of life improvement"
-    validations:
-      required: true
-
-  - type: textarea
     id: documentation
     attributes:
       label: Documentation
@@ -53,3 +30,14 @@ body:
       description: Implementation hints or dependencies
     validations:
       required: false
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance criteria
+      placeholder: |
+        - Filter dropdown shows all available status options
+        - Selecting a filter updates the table
+        - Filter persists on page refresh
+    validations:
+      required: true

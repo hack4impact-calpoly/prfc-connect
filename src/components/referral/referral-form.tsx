@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-interface Prospect {
+// Component-specific UI state (different from API schema Prospect type)
+interface ProspectFormFields {
   email: string;
   fullName: string;
 }
@@ -27,7 +28,7 @@ export function ReferralForm() {
 
   // Lazy initialization for yourEmail (gets cleared on success)
   const [yourEmail, setYourEmail] = useState(() => searchParams?.get("em") || "");
-  const [prospects, setProspects] = useState<Prospect[]>([{ email: "", fullName: "" }]);
+  const [prospects, setProspects] = useState<ProspectFormFields[]>([{ email: "", fullName: "" }]);
   const [errorMessage, setErrorMessage] = useState("");
   const [showConfirmation, setShowConfirmation] = useState(false);
 
