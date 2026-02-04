@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 
 const AUTH_COOKIE = "prfc_auth";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const hasSession = request.cookies.get(AUTH_COOKIE);
 
   if (hasSession?.value) {
