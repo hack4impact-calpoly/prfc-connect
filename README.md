@@ -23,6 +23,18 @@ The platform will expand to include contact groups, allowing members to organize
 
 The PRFC Connect team consists of 18 Cal Poly students. Over the course of about 9 months, we work as a team to deploy this web application.
 
+- [Austin Lee](https://www.linkedin.com/in/austinlee17/) - Project Manager
+- [Kevin Rutledge](https://www.linkedin.com/in/rutledge-kevin/) - Tech Lead
+- [Sue Sue](https://www.linkedin.com/in/sue-sue/) - Tech Lead
+- [Mylinh Duong](https://www.linkedin.com/in/mylinh-duong) - Designer
+- [Rinah Ng](https://www.linkedin.com/in/rinah-ng-083711333) - Designer
+- [Anney Haong](https://www.linkedin.com/in/anneyhaong/) - Designer
+- [Kyle Lin](https://www.linkedin.com/in/kyle-lin-584235295/) - Software Developer
+- [Snehil Kakani](https://www.linkedin.com/in/snehilkakani/) - Software Developer
+- [First Last](https://www.linkedin.com/in/your-profile/) - Software Developer
+- [Ethan Ma](https://www.linkedin.com/in/ethan-ma-389568319/) - Software Developer
+- [Saurish Suman](https://www.linkedin.com/in/saurish-suman/) - Software Developer
+- [Karson Chen](https://www.linkedin.com/in/karson-chen-3b989a27a) - Software Developer
 - [Sam Phan](https://www.linkedin.com/in/sam-phan-a3683b284) - Software Developer
 
 ## Documentation
