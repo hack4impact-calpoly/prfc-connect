@@ -6,11 +6,7 @@ import { createManyReferrals, toggleReferralRedeemed } from "@/services/referral
 import { sendReferralEmails } from "@/services/email";
 import { transformError } from "@/utils/errors";
 import { requireAdmin } from "@/lib/dal";
-
-export interface ActionResult {
-  success: boolean;
-  error?: string;
-}
+import type { ActionResult } from "@/lib/action-types";
 
 export async function submitReferrals(formData: FormData): Promise<ActionResult> {
   try {

@@ -18,12 +18,7 @@ import {
   updateMemberNotifications,
 } from "@/services/contact-group";
 import { transformError } from "@/utils/errors";
-
-export interface ActionResult<T = void> {
-  success: boolean;
-  data?: T;
-  error?: string;
-}
+import type { ActionResult } from "@/lib/action-types";
 
 export async function createContactGroup(formData: FormData): Promise<ActionResult<{ id: number }>> {
   try {
