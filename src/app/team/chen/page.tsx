@@ -1,4 +1,4 @@
-export default function RutledgePage() {
+export default function ChenPage() {
   return (
     <div className="min-h-screen bg-background p-8">
       <div className="mx-auto max-w-2xl">
