@@ -161,12 +161,12 @@ export async function sendMessage(input: {
 }): Promise<ActionResult<MessageResult>> {
   try {
     const session = await verifySession();
-    const validated = ComposeMessageSchema.parse(input);
 
-    if (!session.isAdmin && !(await isGroupOwner(validated.groupId, session.ownerid))) {
+    if (!session.isAdmin && !(await isGroupOwner(input.groupId, session.ownerid))) {
       return { success: false, error: "You do not have permission to send messages to this group" };
     }
 
+    const validated = ComposeMessageSchema.parse(input);
     const result = await sendGroupMessage(validated, session.ownerid);
 
     return { success: true, data: result };

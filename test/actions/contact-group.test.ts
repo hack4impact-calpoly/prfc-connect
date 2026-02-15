@@ -364,6 +364,40 @@ describe("sendMessage", () => {
     expect(result.error).toContain("do not have permission");
     expect(mockSendGroupMessage).not.toHaveBeenCalled();
   });
+
+  it("returns validation error for invalid input", async () => {
+    mockVerifySession.mockResolvedValue({ ownerid: 10, isAdmin: false });
+    mockIsGroupOwner.mockResolvedValue(true);
+
+    const result = await sendMessage({
+      groupId: 3,
+      subject: "",
+      body: "Body text",
+      sendEmail: true,
+      sendSms: false,
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBeDefined();
+    expect(mockSendGroupMessage).not.toHaveBeenCalled();
+  });
+
+  it("returns error when service throws", async () => {
+    mockVerifySession.mockResolvedValue({ ownerid: 10, isAdmin: false });
+    mockIsGroupOwner.mockResolvedValue(true);
+    mockSendGroupMessage.mockRejectedValue(new AppError("MESSAGE_SEND_FAILED", "Email delivery failed"));
+
+    const result = await sendMessage({
+      groupId: 3,
+      subject: "Hello",
+      body: "Body text",
+      sendEmail: true,
+      sendSms: false,
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("Email delivery failed");
+  });
 });
 
 describe("sendBlast", () => {
@@ -413,5 +447,37 @@ describe("sendBlast", () => {
     expect(result.success).toBe(false);
     expect(result.error).toContain("do not have permission");
     expect(mockSendBlastMessage).not.toHaveBeenCalled();
+  });
+
+  it("returns validation error for invalid confirmation text", async () => {
+    mockVerifySession.mockResolvedValue({ ownerid: 99, isAdmin: true });
+
+    const result = await sendBlast({
+      subject: "Update",
+      body: "Blast body",
+      sendEmail: true,
+      sendSms: false,
+      confirmationText: "WRONG TEXT" as "SEND TO ALL",
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBeDefined();
+    expect(mockSendBlastMessage).not.toHaveBeenCalled();
+  });
+
+  it("returns error when service throws", async () => {
+    mockVerifySession.mockResolvedValue({ ownerid: 99, isAdmin: true });
+    mockSendBlastMessage.mockRejectedValue(new AppError("MESSAGE_SEND_FAILED", "Blast delivery failed"));
+
+    const result = await sendBlast({
+      subject: "Update",
+      body: "Blast body",
+      sendEmail: true,
+      sendSms: false,
+      confirmationText: "SEND TO ALL",
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("Blast delivery failed");
   });
 });
