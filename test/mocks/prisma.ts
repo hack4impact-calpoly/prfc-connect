@@ -14,3 +14,8 @@ beforeEach(() => {
 });
 
 export const prismaMock = prisma as unknown as DeepMockProxy<PrismaClient>;
+
+export function mockInteractiveTransaction() {
+  prismaMock.$transaction.mockImplementation(((fn: (tx: typeof prismaMock) => Promise<unknown>) =>
+    fn(prismaMock)) as never);
+}

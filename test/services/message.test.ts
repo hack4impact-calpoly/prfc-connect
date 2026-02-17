@@ -1,5 +1,5 @@
-import { vi, beforeEach, describe, it, expect } from "vitest";
-import { prismaMock } from "../mocks/prisma";
+import { vi } from "vitest";
+import { prismaMock, mockInteractiveTransaction } from "../mocks/prisma";
 import { mockMembers } from "@/lib/mock-members";
 import { isQuietHours, validateSmsAllowed, sendGroupMessage, sendBlastMessage } from "@/services/message";
 import { AppError } from "@/utils/errors";
@@ -32,6 +32,11 @@ const testBlastMessage: Message = {
   isBlast: true,
 };
 
+const envMock = vi.hoisted(() => ({
+  SMS_ENABLED: false as boolean,
+  FROM_EMAIL: "no-reply@prfc.coop",
+}));
+
 // Mock modules
 vi.mock("@/services/contact-group", () => ({
   getGroupRecipients: vi.fn(),
@@ -47,60 +52,74 @@ vi.mock("@/lib/api/member-api", () => ({
 }));
 
 vi.mock("@/env", () => ({
-  env: {
-    SMS_ENABLED: false,
-    FROM_EMAIL: "no-reply@prfc.coop",
-  },
+  env: envMock,
 }));
 
 import { getGroupRecipients } from "@/services/contact-group";
 import { sendGroupEmails } from "@/services/email";
 import { getMemberDetails, getAllActiveMemberIds } from "@/lib/api/member-api";
-import { env } from "@/env";
 
 describe("isQuietHours", () => {
   beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
     vi.useRealTimers();
   });
 
-  it("returns true during quiet hours (8 PM - 8 AM Pacific)", () => {
+  it("returns true during quiet hours (9 PM Pacific)", () => {
     // 9 PM Pacific = 5 AM UTC next day (during PST)
-    vi.useFakeTimers();
     vi.setSystemTime(new Date("2024-01-15T05:00:00Z"));
-
-    const result = isQuietHours();
-
-    expect(result).toBe(true);
-    vi.useRealTimers();
+    expect(isQuietHours()).toBe(true);
   });
 
-  it("returns false during business hours (8 AM - 8 PM Pacific)", () => {
+  it("returns false during business hours (10 AM Pacific)", () => {
     // 10 AM Pacific = 6 PM UTC (during PST)
-    vi.useFakeTimers();
     vi.setSystemTime(new Date("2024-01-15T18:00:00Z"));
+    expect(isQuietHours()).toBe(false);
+  });
 
-    const result = isQuietHours();
+  it("returns false at exactly 8:00 AM Pacific (first non-quiet hour)", () => {
+    // 8 AM Pacific = 4 PM UTC (during PST, UTC-8)
+    vi.setSystemTime(new Date("2024-01-15T16:00:00Z"));
+    expect(isQuietHours()).toBe(false);
+  });
 
-    expect(result).toBe(false);
-    vi.useRealTimers();
+  it("returns true at 7:59 AM Pacific (last quiet hour)", () => {
+    // 7:59 AM Pacific = 3:59 PM UTC (during PST)
+    vi.setSystemTime(new Date("2024-01-15T15:59:00Z"));
+    expect(isQuietHours()).toBe(true);
+  });
+
+  it("returns true at exactly 8:00 PM Pacific (first quiet hour)", () => {
+    // 8 PM Pacific = 4 AM UTC next day (during PST)
+    vi.setSystemTime(new Date("2024-01-16T04:00:00Z"));
+    expect(isQuietHours()).toBe(true);
+  });
+
+  it("returns false at 7:59 PM Pacific (last non-quiet hour)", () => {
+    // 7:59 PM Pacific = 3:59 AM UTC next day (during PST)
+    vi.setSystemTime(new Date("2024-01-16T03:59:00Z"));
+    expect(isQuietHours()).toBe(false);
   });
 });
 
 describe("validateSmsAllowed", () => {
   beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
     vi.useRealTimers();
   });
 
   it("throws FORBIDDEN during quiet hours", () => {
     // 9 PM Pacific = 5 AM UTC next day (during PST)
-    vi.useFakeTimers();
     vi.setSystemTime(new Date("2024-01-15T05:00:00Z"));
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (env as any).SMS_ENABLED = true;
+    envMock.SMS_ENABLED = true;
 
-    expect(() => validateSmsAllowed()).toThrow(AppError);
-    expect(() => validateSmsAllowed()).toThrow("SMS messages cannot be sent during quiet hours");
-
+    expect.assertions(3);
     try {
       validateSmsAllowed();
     } catch (error) {
@@ -108,20 +127,14 @@ describe("validateSmsAllowed", () => {
       expect((error as AppError).code).toBe("FORBIDDEN");
       expect((error as AppError).context).toEqual({ reason: "QUIET_HOURS" });
     }
-
-    vi.useRealTimers();
   });
 
   it("throws FORBIDDEN when SMS_ENABLED=false", () => {
     // 10 AM Pacific = 6 PM UTC (during PST)
-    vi.useFakeTimers();
     vi.setSystemTime(new Date("2024-01-15T18:00:00Z"));
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (env as any).SMS_ENABLED = false;
+    envMock.SMS_ENABLED = false;
 
-    expect(() => validateSmsAllowed()).toThrow(AppError);
-    expect(() => validateSmsAllowed()).toThrow("SMS functionality is currently disabled");
-
+    expect.assertions(3);
     try {
       validateSmsAllowed();
     } catch (error) {
@@ -129,187 +142,102 @@ describe("validateSmsAllowed", () => {
       expect((error as AppError).code).toBe("FORBIDDEN");
       expect((error as AppError).context).toEqual({ reason: "SMS_DISABLED" });
     }
-
-    vi.useRealTimers();
   });
 });
 
 describe("sendGroupMessage", () => {
   const testRecipients = [mockMembers[1], mockMembers[2], mockMembers[3]];
+  const defaultInput = {
+    groupId: 5,
+    subject: "Test Subject",
+    body: "Test Body",
+    sendEmail: true,
+    sendSms: false,
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.useRealTimers();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (env as any).SMS_ENABLED = false;
+    envMock.SMS_ENABLED = false;
+    mockInteractiveTransaction();
   });
 
   it("creates Message record with correct data", async () => {
-    const input = {
-      groupId: 5,
-      subject: "Test Subject",
-      body: "Test Body",
-      sendEmail: true,
-      sendSms: false,
-    };
-
     vi.mocked(getGroupRecipients).mockResolvedValue([100002, 100003, 100004]);
     vi.mocked(getMemberDetails).mockResolvedValue(testRecipients);
     vi.mocked(sendGroupEmails).mockResolvedValue({ sent: 3, failed: 0, suppressed: 0 });
-
-    const createdMessage = {
-      ...testMessage,
-      id: 1,
-      groupId: 5,
-      senderId: 100001,
-      subject: "Test Subject",
-      body: "Test Body",
-      emailCount: 3,
-      smsCount: 0,
-      failedCount: 0,
-      isBlast: false,
-    };
-
-    prismaMock.$transaction.mockImplementation(async (callback) => {
-      return callback({
-        message: {
-          create: vi.fn().mockResolvedValue(createdMessage),
-        },
-        messageRecipient: {
-          createMany: vi.fn().mockResolvedValue({ count: 3 }),
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any);
-    });
-
-    prismaMock.messageRecipient.updateMany.mockResolvedValue({ count: 3 });
-    prismaMock.message.update.mockResolvedValue(createdMessage);
-
-    const result = await sendGroupMessage(input, 100001);
-
-    expect(result.messageId).toBe(1);
-  });
-
-  it("creates MessageRecipient records for email recipients", async () => {
-    const input = {
-      groupId: 5,
-      subject: "Test Subject",
-      body: "Test Body",
-      sendEmail: true,
-      sendSms: false,
-    };
-
-    vi.mocked(getGroupRecipients).mockResolvedValue([100002, 100003, 100004]);
-    vi.mocked(getMemberDetails).mockResolvedValue(testRecipients);
-    vi.mocked(sendGroupEmails).mockResolvedValue({ sent: 3, failed: 0, suppressed: 0 });
-
-    let capturedRecipients: Array<{ messageId: number; memberId: number; channel: string; status: string }> = [];
-
-    prismaMock.$transaction.mockImplementation(async (callback) => {
-      return callback({
-        message: {
-          create: vi.fn().mockResolvedValue({ ...testMessage, id: 1 }),
-        },
-        messageRecipient: {
-          createMany: vi.fn().mockImplementation((args) => {
-            capturedRecipients = args.data;
-            return { count: 3 };
-          }),
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any);
-    });
-
+    prismaMock.message.create.mockResolvedValue({ ...testMessage, id: 1 });
+    prismaMock.messageRecipient.createMany.mockResolvedValue({ count: 3 });
     prismaMock.messageRecipient.updateMany.mockResolvedValue({ count: 3 });
     prismaMock.message.update.mockResolvedValue(testMessage);
 
-    await sendGroupMessage(input, 100001);
+    const result = await sendGroupMessage(defaultInput, 100001);
 
-    expect(capturedRecipients).toEqual([
-      {
-        messageId: 1,
-        memberId: 100002,
-        channel: "email",
-        status: "pending",
+    expect(result.messageId).toBe(1);
+    expect(prismaMock.message.create).toHaveBeenCalledWith({
+      data: {
+        groupId: 5,
+        senderId: 100001,
+        subject: "Test Subject",
+        body: "Test Body",
+        emailCount: 3,
+        smsCount: 0,
+        failedCount: 0,
+        isBlast: false,
       },
-      {
-        messageId: 1,
-        memberId: 100003,
-        channel: "email",
-        status: "pending",
-      },
-      {
-        messageId: 1,
-        memberId: 100004,
-        channel: "email",
-        status: "pending",
-      },
-    ]);
+    });
   });
 
-  it("respects sendEmail flag", async () => {
-    const input = {
-      groupId: 5,
-      subject: "Test Subject",
-      body: "Test Body",
-      sendEmail: false,
-      sendSms: false,
-    };
+  it("creates MessageRecipient records for email recipients", async () => {
+    vi.mocked(getGroupRecipients).mockResolvedValue([100002, 100003, 100004]);
+    vi.mocked(getMemberDetails).mockResolvedValue(testRecipients);
+    vi.mocked(sendGroupEmails).mockResolvedValue({ sent: 3, failed: 0, suppressed: 0 });
+    prismaMock.message.create.mockResolvedValue({ ...testMessage, id: 1 });
+    prismaMock.messageRecipient.createMany.mockResolvedValue({ count: 3 });
+    prismaMock.messageRecipient.updateMany.mockResolvedValue({ count: 3 });
+    prismaMock.message.update.mockResolvedValue(testMessage);
 
-    await expect(sendGroupMessage(input, 100001)).rejects.toThrow(
-      "At least one delivery method (email or SMS) must be selected",
+    await sendGroupMessage(defaultInput, 100001);
+
+    expect(prismaMock.messageRecipient.createMany).toHaveBeenCalledWith({
+      data: [
+        { messageId: 1, memberId: 100002, channel: "email", status: "pending" },
+        { messageId: 1, memberId: 100003, channel: "email", status: "pending" },
+        { messageId: 1, memberId: 100004, channel: "email", status: "pending" },
+      ],
+    });
+  });
+
+  it("throws when no delivery method selected", async () => {
+    await expect(sendGroupMessage({ ...defaultInput, sendEmail: false, sendSms: false }, 100001)).rejects.toMatchObject(
+      {
+        code: "VALIDATION_ERROR",
+      },
     );
   });
 
   it("throws when no recipients found", async () => {
-    const input = {
-      groupId: 5,
-      subject: "Test Subject",
-      body: "Test Body",
-      sendEmail: true,
-      sendSms: false,
-    };
-
     vi.mocked(getGroupRecipients).mockResolvedValue([]);
 
-    await expect(sendGroupMessage(input, 100001)).rejects.toThrow("No recipients found for selected delivery methods");
+    await expect(sendGroupMessage(defaultInput, 100001)).rejects.toMatchObject({
+      code: "VALIDATION_ERROR",
+    });
   });
 
   it("updates failedCount when emails fail", async () => {
-    const input = {
-      groupId: 5,
-      subject: "Test Subject",
-      body: "Test Body",
-      sendEmail: true,
-      sendSms: false,
-    };
-
     vi.mocked(getGroupRecipients).mockResolvedValue([100002, 100003, 100004]);
     vi.mocked(getMemberDetails).mockResolvedValue(testRecipients);
     vi.mocked(sendGroupEmails).mockResolvedValue({ sent: 1, failed: 2, suppressed: 0 });
-
-    prismaMock.$transaction.mockImplementation(async (callback) => {
-      return callback({
-        message: {
-          create: vi.fn().mockResolvedValue({ ...testMessage, id: 1 }),
-        },
-        messageRecipient: {
-          createMany: vi.fn().mockResolvedValue({ count: 3 }),
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any);
-    });
-
+    prismaMock.message.create.mockResolvedValue({ ...testMessage, id: 1 });
+    prismaMock.messageRecipient.createMany.mockResolvedValue({ count: 3 });
     prismaMock.messageRecipient.updateMany.mockResolvedValue({ count: 2 });
     prismaMock.message.update.mockResolvedValue({ ...testMessage, failedCount: 2 });
 
-    const result = await sendGroupMessage(input, 100001);
+    const result = await sendGroupMessage(defaultInput, 100001);
 
     expect(prismaMock.message.update).toHaveBeenCalledWith({
       where: { id: 1 },
       data: { failedCount: 2 },
     });
-
     expect(result.failedCount).toBe(2);
     expect(result.emailCount).toBe(1);
   });
@@ -317,118 +245,70 @@ describe("sendGroupMessage", () => {
 
 describe("sendBlastMessage", () => {
   const allMemberIds = mockMembers.map((m) => m.ownerid);
+  const defaultInput = {
+    subject: "Blast Message",
+    body: "This is a blast message",
+    sendEmail: true,
+    sendSms: false,
+    confirmationText: "SEND TO ALL" as const,
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.useRealTimers();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (env as any).SMS_ENABLED = false;
+    envMock.SMS_ENABLED = false;
+    mockInteractiveTransaction();
   });
 
-  it("sets isBlast=true and groupId=null", async () => {
-    const input = {
-      subject: "Blast Message",
-      body: "This is a blast message",
-      sendEmail: true,
-      sendSms: false,
-      confirmationText: "SEND TO ALL" as const,
-    };
-
+  it("creates Message with isBlast=true and groupId=null", async () => {
     vi.mocked(getAllActiveMemberIds).mockResolvedValue(allMemberIds);
     vi.mocked(getMemberDetails).mockResolvedValue([...mockMembers]);
     vi.mocked(sendGroupEmails).mockResolvedValue({ sent: 389, failed: 0, suppressed: 0 });
-
-    const createdMessage = { ...testBlastMessage, id: 2 };
-
-    prismaMock.$transaction.mockImplementation(async (callback) => {
-      return callback({
-        message: {
-          create: vi.fn().mockResolvedValue(createdMessage),
-        },
-        messageRecipient: {
-          createMany: vi.fn().mockResolvedValue({ count: 389 }),
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any);
-    });
-
+    prismaMock.message.create.mockResolvedValue({ ...testBlastMessage, id: 2 });
+    prismaMock.messageRecipient.createMany.mockResolvedValue({ count: 389 });
     prismaMock.messageRecipient.updateMany.mockResolvedValue({ count: 389 });
     prismaMock.message.update.mockResolvedValue(testBlastMessage);
 
-    const result = await sendBlastMessage(input, 100001);
+    const result = await sendBlastMessage(defaultInput, 100001);
 
     expect(result.messageId).toBe(2);
+    expect(prismaMock.message.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        isBlast: true,
+        groupId: null,
+      }),
+    });
   });
 
   it("sends to all active members", async () => {
-    const input = {
-      subject: "Blast Message",
-      body: "This is a blast message",
-      sendEmail: true,
-      sendSms: false,
-      confirmationText: "SEND TO ALL" as const,
-    };
-
     vi.mocked(getAllActiveMemberIds).mockResolvedValue(allMemberIds);
     vi.mocked(getMemberDetails).mockResolvedValue([...mockMembers]);
     vi.mocked(sendGroupEmails).mockResolvedValue({ sent: 389, failed: 0, suppressed: 0 });
-
-    prismaMock.$transaction.mockImplementation(async (callback) => {
-      return callback({
-        message: {
-          create: vi.fn().mockResolvedValue({ ...testBlastMessage, id: 2 }),
-        },
-        messageRecipient: {
-          createMany: vi.fn().mockResolvedValue({ count: 389 }),
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any);
-    });
-
+    prismaMock.message.create.mockResolvedValue({ ...testBlastMessage, id: 2 });
+    prismaMock.messageRecipient.createMany.mockResolvedValue({ count: 389 });
     prismaMock.messageRecipient.updateMany.mockResolvedValue({ count: 389 });
     prismaMock.message.update.mockResolvedValue(testBlastMessage);
 
-    await sendBlastMessage(input, 100001);
+    await sendBlastMessage(defaultInput, 100001);
 
     expect(getAllActiveMemberIds).toHaveBeenCalled();
     expect(getMemberDetails).toHaveBeenCalledWith(allMemberIds);
   });
 
   it("updates failedCount when emails fail", async () => {
-    const input = {
-      subject: "Blast Message",
-      body: "This is a blast message",
-      sendEmail: true,
-      sendSms: false,
-      confirmationText: "SEND TO ALL" as const,
-    };
-
     vi.mocked(getAllActiveMemberIds).mockResolvedValue(allMemberIds);
     vi.mocked(getMemberDetails).mockResolvedValue([...mockMembers]);
     vi.mocked(sendGroupEmails).mockResolvedValue({ sent: 350, failed: 39, suppressed: 0 });
-
-    prismaMock.$transaction.mockImplementation(async (callback) => {
-      return callback({
-        message: {
-          create: vi.fn().mockResolvedValue({ ...testBlastMessage, id: 2 }),
-        },
-        messageRecipient: {
-          createMany: vi.fn().mockResolvedValue({ count: 389 }),
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any);
-    });
-
+    prismaMock.message.create.mockResolvedValue({ ...testBlastMessage, id: 2 });
+    prismaMock.messageRecipient.createMany.mockResolvedValue({ count: 389 });
     prismaMock.messageRecipient.updateMany.mockResolvedValue({ count: 39 });
     prismaMock.message.update.mockResolvedValue({ ...testBlastMessage, failedCount: 39 });
 
-    const result = await sendBlastMessage(input, 100001);
+    const result = await sendBlastMessage(defaultInput, 100001);
 
     expect(prismaMock.message.update).toHaveBeenCalledWith({
       where: { id: 2 },
       data: { failedCount: 39 },
     });
-
     expect(result.failedCount).toBe(39);
     expect(result.emailCount).toBe(350);
   });
