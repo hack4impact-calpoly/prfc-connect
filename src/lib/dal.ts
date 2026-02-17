@@ -70,6 +70,17 @@ export const verifySession = cache(async (): Promise<Session> => {
   return session;
 });
 
+export const getSession = cache(async (): Promise<Session | null> => {
+  const cookieStore = await cookies();
+  const authCookie = cookieStore.get(AUTH_COOKIE);
+
+  if (!authCookie?.value) {
+    return null;
+  }
+
+  return validateToken(authCookie.value, getSecret());
+});
+
 export async function requireAdmin(): Promise<Session> {
   const session = await verifySession();
   if (!session.isAdmin) {

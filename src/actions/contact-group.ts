@@ -7,6 +7,8 @@ import {
   UpdateContactGroupSchema,
   AddMembersSchema,
   UpdateNotificationSchema,
+  ComposeMessageSchema,
+  BlastMessageSchema,
 } from "@/schema/contact-group";
 import {
   createGroup,
@@ -17,8 +19,10 @@ import {
   removeMemberFromGroup,
   updateMemberNotifications,
 } from "@/services/contact-group";
+import { sendGroupMessage, sendBlastMessage } from "@/services/message";
 import { transformError } from "@/utils/errors";
 import type { ActionResult } from "@/lib/action-types";
+import type { MessageResult } from "@/services/message";
 
 export async function createContactGroup(formData: FormData): Promise<ActionResult<{ id: number }>> {
   try {
@@ -142,6 +146,54 @@ export async function updateNotifications(input: {
 
     revalidatePath(`/groups/${validated.groupId}`);
     return { success: true };
+  } catch (error) {
+    const appError = transformError(error);
+    return { success: false, error: appError.message };
+  }
+}
+
+export async function sendMessage(input: {
+  groupId: number;
+  subject: string;
+  body: string;
+  sendEmail?: boolean;
+  sendSms?: boolean;
+}): Promise<ActionResult<MessageResult>> {
+  try {
+    const session = await verifySession();
+
+    if (!session.isAdmin && !(await isGroupOwner(input.groupId, session.ownerid))) {
+      return { success: false, error: "You do not have permission to send messages to this group" };
+    }
+
+    const validated = ComposeMessageSchema.parse(input);
+    const result = await sendGroupMessage(validated, session.ownerid);
+
+    return { success: true, data: result };
+  } catch (error) {
+    const appError = transformError(error);
+    return { success: false, error: appError.message };
+  }
+}
+
+export async function sendBlast(input: {
+  subject: string;
+  body: string;
+  sendEmail?: boolean;
+  sendSms?: boolean;
+  confirmationText: "SEND TO ALL";
+}): Promise<ActionResult<MessageResult>> {
+  try {
+    const session = await verifySession();
+
+    if (!session.isAdmin) {
+      return { success: false, error: "You do not have permission to send blast messages" };
+    }
+
+    const validated = BlastMessageSchema.parse(input);
+    const result = await sendBlastMessage(validated, session.ownerid);
+
+    return { success: true, data: result };
   } catch (error) {
     const appError = transformError(error);
     return { success: false, error: appError.message };
