@@ -1,8 +1,8 @@
-import { vi, type MockedFunction } from "vitest";
 import "../mocks/email";
 import "../mocks/rate-limit";
 import "../mocks/idempotency";
 import "../mocks/csrf";
+import "../mocks/dal";
 import {
   prismaMock,
   createMockRequest,
@@ -13,17 +13,10 @@ import {
   rateLimiterMock,
   mockGetIdempotentResponse,
   mockValidateOrigin,
+  mockRequireAdmin,
 } from "../mocks";
 import { GET, POST } from "@/app/api/referral/route";
 import { AppError } from "@/utils/errors";
-
-vi.mock("@/lib/dal", () => ({
-  requireAdmin: vi.fn(),
-}));
-
-import { requireAdmin } from "@/lib/dal";
-
-const mockRequireAdmin = requireAdmin as MockedFunction<typeof requireAdmin>;
 
 describe("GET /api/referral", () => {
   beforeEach(() => {

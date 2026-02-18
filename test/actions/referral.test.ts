@@ -1,21 +1,11 @@
-import { vi, type MockedFunction } from "vitest";
-import { prismaMock } from "../mocks/prisma";
+import "../mocks/next-cache";
+import "../mocks/dal";
 import "../mocks/email";
+import { prismaMock, mockRequireAdmin } from "../mocks";
 import { referralCharlie, formWithTwoProspects } from "../mocks/referrals";
 import { AppError } from "@/utils/errors";
 
-vi.mock("next/cache", () => ({
-  revalidatePath: vi.fn(),
-}));
-
-vi.mock("@/lib/dal", () => ({
-  requireAdmin: vi.fn(),
-}));
-
 import { submitReferrals, toggleRedeemed } from "@/actions/referral";
-import { requireAdmin } from "@/lib/dal";
-
-const mockRequireAdmin = requireAdmin as MockedFunction<typeof requireAdmin>;
 
 function createFormData(data: Record<string, string>): FormData {
   const formData = new FormData();

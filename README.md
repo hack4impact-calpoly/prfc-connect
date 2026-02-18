@@ -31,7 +31,6 @@ The PRFC Connect team consists of 18 Cal Poly students. Over the course of about
 - [Anney Haong](https://www.linkedin.com/in/anneyhaong/) - Designer
 - [Kyle Lin](https://www.linkedin.com/in/kyle-lin-584235295/) - Software Developer
 - [Snehil Kakani](https://www.linkedin.com/in/snehilkakani/) - Software Developer
-- [First Last](https://www.linkedin.com/in/your-profile/) - Software Developer
 - [Ethan Ma](https://www.linkedin.com/in/ethan-ma-389568319/) - Software Developer
 - [Saurish Suman](https://www.linkedin.com/in/saurish-suman/) - Software Developer
 - [Karson Chen](https://www.linkedin.com/in/karson-chen-3b989a27a) - Software Developer

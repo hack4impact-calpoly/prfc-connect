@@ -18,6 +18,7 @@ export default defineConfig({
       ["test/actions/**", "node"],
       ["test/api/**", "node"],
       ["test/utils/errors.test.ts", "node"],
+      ["test/auth/**", "node"],
     ],
     coverage: {
       provider: "v8",
