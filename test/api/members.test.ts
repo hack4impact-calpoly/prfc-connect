@@ -27,7 +27,6 @@ describe("GET /api/members", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Default: allow requests
     vi.mocked(membersRateLimiter!.limit).mockResolvedValue({
       success: true,
       limit: 100,
