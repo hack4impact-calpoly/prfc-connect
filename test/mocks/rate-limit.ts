@@ -6,9 +6,18 @@ const mockLimit = vi.fn().mockResolvedValue({
   reset: Date.now() + 60000,
 });
 
+const mockMembersLimit = vi.fn().mockResolvedValue({
+  success: true,
+  remaining: 9,
+  reset: Date.now() + 60000,
+});
+
 vi.mock("@/lib/rate-limit", () => ({
   rateLimiter: {
     limit: mockLimit,
+  },
+  membersRateLimiter: {
+    limit: mockMembersLimit,
   },
 }));
 
@@ -19,6 +28,12 @@ beforeEach(() => {
     remaining: 4,
     reset: Date.now() + 60000,
   });
+  mockMembersLimit.mockClear();
+  mockMembersLimit.mockResolvedValue({
+    success: true,
+    remaining: 9,
+    reset: Date.now() + 60000,
+  });
 });
 
-export { mockLimit as rateLimiterMock };
+export { mockLimit as rateLimiterMock, mockMembersLimit as membersRateLimiterMock };

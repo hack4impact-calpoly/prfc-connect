@@ -1,62 +1,85 @@
+import "../mocks/rate-limit";
+import "../mocks/dal";
+import { mockVerifySession, membersRateLimiterMock } from "../mocks";
 import { GET } from "@/app/api/members/[id]/route";
 import { NextRequest } from "next/server";
 import { AppError } from "@/utils/errors";
 
-// Mock Verify Session
-vi.mock("@/lib/dal", () => ({
-  verifySession: vi.fn(),
-}));
-
-// Mock API
 vi.mock("@/lib/api/member-api", () => ({
   getMemberById: vi.fn(),
 }));
 
-import { verifySession } from "@/lib/dal";
 import { getMemberById } from "@/lib/api/member-api";
 
+const testSession = { ownerid: 100001, isAdmin: false };
+const fakeMember = {
+  ownerid: 1,
+  ownername: "Alice",
+  owneremail: "alice@example.com",
+  ownerphone: "555-0000",
+};
+
 describe("GET /api/members/[id]", () => {
-  it("returns 401 without session", async () => {
-    vi.mocked(verifySession).mockRejectedValueOnce(new AppError("UNAUTHORIZED", "Authentication required"));
+  beforeEach(() => {
+    mockVerifySession.mockResolvedValue(testSession);
+  });
+
+  it("returns member details with valid session", async () => {
+    vi.mocked(getMemberById).mockResolvedValue(fakeMember);
 
     const req = new NextRequest("http://localhost/api/members/1");
+    const res = await GET(req, { params: Promise.resolve({ id: "1" }) });
 
-    const res = await GET(req, {
-      params: Promise.resolve({ id: "1" }),
-    });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual(fakeMember);
+  });
+
+  it("returns 401 without session", async () => {
+    mockVerifySession.mockRejectedValue(new AppError("UNAUTHORIZED", "Authentication required"));
+
+    const req = new NextRequest("http://localhost/api/members/1");
+    const res = await GET(req, { params: Promise.resolve({ id: "1" }) });
 
     expect(res.status).toBe(401);
   });
 
-  it("returns member details", async () => {
-    const fakeMember = {
-      ownerid: 1,
-      ownername: "Alice",
-      owneremail: "alice@example.com",
-      ownerphone: "555-0000",
-    };
-    vi.mocked(getMemberById).mockResolvedValueOnce(fakeMember);
+  it("returns 429 when rate limited", async () => {
+    membersRateLimiterMock.mockResolvedValueOnce({
+      success: false,
+      remaining: 0,
+      reset: Date.now() + 60000,
+    });
 
-    const res = await GET(new NextRequest("http://localhost/api/members/1"), { params: Promise.resolve({ id: "1" }) });
+    const req = new NextRequest("http://localhost/api/members/1", {
+      headers: { "x-forwarded-for": "1.1.1.1" },
+    });
+    const res = await GET(req, { params: Promise.resolve({ id: "1" }) });
 
-    expect(await res.json()).toEqual(fakeMember);
+    expect(res.status).toBe(429);
+  });
+
+  it("returns 400 for invalid ID format", async () => {
+    const req = new NextRequest("http://localhost/api/members/abc");
+    const res = await GET(req, { params: Promise.resolve({ id: "abc" }) });
+
+    expect(res.status).toBe(400);
   });
 
   it("returns 404 for non-existent member", async () => {
-    vi.mocked(getMemberById).mockResolvedValueOnce(null);
+    vi.mocked(getMemberById).mockResolvedValue(null);
 
-    const res = await GET(new NextRequest("http://localhost/api/members/999"), {
-      params: Promise.resolve({ id: "999" }),
-    });
+    const req = new NextRequest("http://localhost/api/members/999");
+    const res = await GET(req, { params: Promise.resolve({ id: "999" }) });
 
     expect(res.status).toBe(404);
   });
 
-  it("returns 400 for invalid ID format", async () => {
-    const res = await GET(new NextRequest("http://localhost/api/members/abc"), {
-      params: Promise.resolve({ id: "abc" }),
-    });
+  it("returns 500 on unexpected error", async () => {
+    vi.mocked(getMemberById).mockRejectedValue(new Error("Connection lost"));
 
-    expect(res.status).toBe(400);
+    const req = new NextRequest("http://localhost/api/members/1");
+    const res = await GET(req, { params: Promise.resolve({ id: "1" }) });
+
+    expect(res.status).toBe(500);
   });
 });
