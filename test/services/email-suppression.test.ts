@@ -1,6 +1,6 @@
 import { prismaMock } from "../mocks/prisma";
 import { suppressedLucy, suppressedMarcie } from "../mocks/email-suppressions";
-import { isEmailSuppressed, suppressEmail, filterSuppressedEmails } from "@/services/email";
+import { isEmailSuppressed, suppressEmail, filterSuppressedEmails } from "@/services/email-suppression";
 
 describe("isEmailSuppressed", () => {
   it("returns true when email exists in suppression list", async () => {

@@ -1,4 +1,19 @@
+import { vi } from "vitest";
+// import { sendGroupEmails } from "@/services/email";
+
+vi.mock("@/services/email-suppression", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/services/email-suppression")>();
+  return {
+    ...actual,
+    filterSuppressedEmails: vi.fn(),
+  };
+});
+
 describe("sendGroupEmails", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("sends to all valid recipients", async () => {
     /* Test */
   });
@@ -32,7 +47,26 @@ describe("sendGroupEmails", () => {
   });
 
   it("returns {sent: 0, failed: 0} with empty recipient list", async () => {
-    /* Test */
+    /*
+    vi.mocked(filterSuppressedEmails).mockResolvedValue({
+      valid: [],
+      suppressed: [],
+    });
+
+    const { sent, failed, suppressed } = await sendGroupEmails({
+      recipients: [],
+      subject: "",
+      body: "",
+      senderName: "",
+      replyTo: "",
+      groupId: 123,
+    });
+
+    expect(filterSuppressedEmails).toHaveBeenCalledWith([]);
+    expect(sent).toBe(0);
+    expect(failed).toBe(0);
+    expect(suppressed).toBe(0);
+    */
   });
 
   it("returns {sent: 0, failed: 0, suppressed: n} with n suppressed returns", async () => {
