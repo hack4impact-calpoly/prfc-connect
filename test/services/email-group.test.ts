@@ -2,7 +2,6 @@ import { vi } from "vitest";
 
 const sendMailMock = vi.hoisted(() => vi.fn());
 const filterSuppressedEmailsMock = vi.hoisted(() => vi.fn());
-const generateUnsubscribeTokenMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/services/email-suppression", async () => ({
   filterSuppressedEmails: filterSuppressedEmailsMock,
@@ -15,9 +14,6 @@ vi.mock("nodemailer", async () => ({
     })),
   },
 }));
-vi.mock("@/lib/unsubscribe-tokens", () => ({
-  generateUnsubscribeToken: generateUnsubscribeTokenMock,
-}));
 
 import { sendGroupEmails } from "@/services/email";
 import {
@@ -28,6 +24,9 @@ import {
   SnoopyRecipient,
 } from "../mocks/email-group";
 import "nodemailer";
+import * as tokenModule from "@/lib/unsubscribe-tokens";
+
+const tokenSpy = vi.spyOn(tokenModule, "generateUnsubscribeToken");
 
 describe("sendGroupEmails", () => {
   beforeEach(() => {
@@ -54,9 +53,9 @@ describe("sendGroupEmails", () => {
     });
 
     expect(filterSuppressedEmailsMock).toHaveBeenCalledWith(test_emails);
-    expect(sendMailMock).toHaveBeenNthCalledWith(1, expect.objectContaining({ to: BobbyRecipient.email }));
-    expect(sendMailMock).toHaveBeenNthCalledWith(2, expect.objectContaining({ to: LucyRecipient.email }));
-    expect(sendMailMock).toHaveBeenNthCalledWith(3, expect.objectContaining({ to: MarcieRecipient.email }));
+    expect(sendMailMock).toHaveBeenCalledWith(expect.objectContaining({ to: BobbyRecipient.email }));
+    expect(sendMailMock).toHaveBeenCalledWith(expect.objectContaining({ to: LucyRecipient.email }));
+    expect(sendMailMock).toHaveBeenCalledWith(expect.objectContaining({ to: MarcieRecipient.email }));
     expect(sendMailMock).toHaveBeenCalledTimes(3);
   });
 
@@ -80,12 +79,39 @@ describe("sendGroupEmails", () => {
     });
 
     expect(filterSuppressedEmailsMock).toHaveBeenCalledWith(test_emails);
-    expect(sendMailMock).toHaveBeenNthCalledWith(1, expect.objectContaining({ to: BobbyRecipient.email }));
+    expect(sendMailMock).toHaveBeenCalledWith(expect.objectContaining({ to: BobbyRecipient.email }));
     expect(sendMailMock).toHaveBeenCalledTimes(1);
   });
 
   it("generates unique unsubscribe token per recipient", async () => {
-    /* Test */
+    const test_recipients = [BobbyRecipient, LucyRecipient, MarcieRecipient];
+    filterSuppressedEmailsMock.mockResolvedValue({
+      valid: [BobbyRecipient.email, LucyRecipient.email, MarcieRecipient.email],
+      suppressed: [],
+    });
+
+    sendMailMock.mockResolvedValue(undefined);
+
+    await sendGroupEmails({
+      recipients: test_recipients,
+      subject: "",
+      body: "",
+      senderName: "",
+      replyTo: "",
+      groupId: 123,
+    });
+
+    const tokens = sendMailMock.mock.calls.map(([fields]) => {
+      const raw = fields.headers?.["List-Unsubscribe"]?.value as string; // `<url>`
+      const urlStr = raw.slice(1, -1);
+      return new URL(urlStr).searchParams.get("token");
+    });
+    tokens.forEach((token) => expect(token).toBeTruthy());
+    expect(new Set(tokens).size).toBe(tokens.length);
+    expect(tokenSpy).toHaveBeenCalledTimes(3);
+    expect(tokenSpy).toHaveBeenCalledWith(BobbyRecipient.memberId, 123);
+    expect(tokenSpy).toHaveBeenCalledWith(LucyRecipient.memberId, 123);
+    expect(tokenSpy).toHaveBeenCalledWith(MarcieRecipient.memberId, 123);
   });
 
   it("includes List-Unsubscribe header (RFC 8058)", async () => {
