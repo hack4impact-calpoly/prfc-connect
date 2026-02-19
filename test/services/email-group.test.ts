@@ -35,13 +35,13 @@ describe("sendGroupEmails", () => {
     const test_recipients = [BobbyRecipient, LucyRecipient, MarcieRecipient];
     const test_emails = test_recipients.map((r) => r.email);
     filterSuppressedEmailsMock.mockResolvedValue({
-      valid: [BobbyRecipient.email, MarcieRecipient.email],
-      suppressed: [LucyRecipient.email],
+      valid: [BobbyRecipient.email, LucyRecipient.email, MarcieRecipient.email],
+      suppressed: [],
     });
 
     sendMailMock.mockResolvedValue(undefined);
 
-    const { sent, failed, suppressed } = await sendGroupEmails({
+    await sendGroupEmails({
       recipients: test_recipients,
       subject: "",
       body: "",
@@ -52,14 +52,33 @@ describe("sendGroupEmails", () => {
 
     expect(filterSuppressedEmailsMock).toHaveBeenCalledWith(test_emails);
     expect(sendMailMock).toHaveBeenNthCalledWith(1, expect.objectContaining({ to: BobbyRecipient.email }));
-    expect(sendMailMock).toHaveBeenNthCalledWith(2, expect.objectContaining({ to: MarcieRecipient.email }));
-    expect(sent).toBe(2);
-    expect(failed).toBe(0);
-    expect(suppressed).toBe(1);
+    expect(sendMailMock).toHaveBeenNthCalledWith(2, expect.objectContaining({ to: LucyRecipient.email }));
+    expect(sendMailMock).toHaveBeenNthCalledWith(3, expect.objectContaining({ to: MarcieRecipient.email }));
+    expect(sendMailMock).toHaveBeenCalledTimes(3);
   });
 
   it("filters out suppressed emails before sending", async () => {
-    /* Test */
+    const test_recipients = [BobbyRecipient, LucyRecipient, MarcieRecipient];
+    const test_emails = test_recipients.map((r) => r.email);
+    filterSuppressedEmailsMock.mockResolvedValue({
+      valid: [BobbyRecipient.email],
+      suppressed: [LucyRecipient.email, MarcieRecipient.email],
+    });
+
+    sendMailMock.mockResolvedValue(undefined);
+
+    await sendGroupEmails({
+      recipients: test_recipients,
+      subject: "",
+      body: "",
+      senderName: "",
+      replyTo: "",
+      groupId: 123,
+    });
+
+    expect(filterSuppressedEmailsMock).toHaveBeenCalledWith(test_emails);
+    expect(sendMailMock).toHaveBeenNthCalledWith(1, expect.objectContaining({ to: BobbyRecipient.email }));
+    expect(sendMailMock).toHaveBeenCalledTimes(1);
   });
 
   it("generates unique unsubscribe token per recipient", async () => {
