@@ -116,9 +116,10 @@ describe("sendGroupEmails", () => {
   });
 
   it("includes List-Unsubscribe header (RFC 8058)", async () => {
-    const test_recipients = [BobbyRecipient];
+    const test_recipients = [BobbyRecipient, LucyRecipient, MarcieRecipient];
+    const test_emails = test_recipients.map((r) => r.email);
     filterSuppressedEmailsMock.mockResolvedValue({
-      valid: [BobbyRecipient.email],
+      valid: test_emails,
       suppressed: [],
     });
 
@@ -133,17 +134,44 @@ describe("sendGroupEmails", () => {
       groupId: 123,
     });
 
-    expect(sendMailMock).toBeCalledWith(
-      expect.objectContaining({
-        headers: expect.objectContaining({
-          "List-Unsubscribe": expect.any(Object),
+    test_emails.forEach((email) => {
+      expect(sendMailMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: email,
+          headers: expect.objectContaining({
+            "List-Unsubscribe": expect.any(Object),
+          }),
         }),
-      }),
-    );
+      );
+    });
   });
 
   it("appends CAN-SPAM footer with physical address", async () => {
-    /* Test */
+    const test_recipients = [BobbyRecipient, LucyRecipient, MarcieRecipient];
+    const test_emails = test_recipients.map((r) => r.email);
+    filterSuppressedEmailsMock.mockResolvedValue({
+      valid: test_emails,
+      suppressed: [],
+    });
+
+    sendMailMock.mockResolvedValue(undefined);
+
+    await sendGroupEmails({
+      recipients: test_recipients,
+      subject: "",
+      body: "",
+      senderName: "",
+      replyTo: "",
+      groupId: 123,
+    });
+
+    expect(sendMailMock).toHaveBeenCalledTimes(3);
+    for (const [fields] of sendMailMock.mock.calls) {
+      const html = String(fields.html ?? "");
+      expect(html).toContain("Paso Robles Food Cooperative, Inc.");
+      expect(html).toContain("P.O. Box 922, Paso Robles, CA 93447");
+      expect(html).toMatch(/<a href="[^"]*\/api\/unsubscribe\?token=[^"]*"[^>]*>Unsubscribe from this group<\/a>/);
+    }
   });
 
   it("batches emails (10 per batch)", async () => {
