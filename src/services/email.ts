@@ -5,6 +5,7 @@ import type { Prospect } from "@/schema/referral";
 import { AppError } from "@/utils/errors";
 import { env } from "@/env";
 import { generateUnsubscribeToken } from "@/lib/unsubscribe-tokens";
+import { filterSuppressedEmails } from "./email-suppression";
 
 const transport = nodemailer.createTransport({
   host: env.SMTP_HOST,
