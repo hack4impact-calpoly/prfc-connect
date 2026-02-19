@@ -1,6 +1,7 @@
 import "../mocks/email";
 import "../mocks/rate-limit";
 import "../mocks/idempotency";
+import "../mocks/csrf";
 import "../mocks/dal";
 import {
   prismaMock,
@@ -11,6 +12,7 @@ import {
   emailTransportMock,
   rateLimiterMock,
   mockGetIdempotentResponse,
+  mockValidateOrigin,
   mockVerifySession,
   mockRequireAdmin,
 } from "../mocks";
@@ -115,6 +117,19 @@ describe("POST /api/referrals", () => {
     const response = await POST(req);
 
     expect(response.status).toBe(429);
+  });
+
+  it("returns 403 for cross-origin request", async () => {
+    mockValidateOrigin.mockReturnValueOnce(false);
+
+    const req = createMockRequest({
+      body: formWithTwoProspects,
+      headers: { origin: "https://malicious-site.com" },
+    });
+    const response = await POST(req);
+
+    expect(response.status).toBe(403);
+    expect(emailTransportMock.sendMail).not.toHaveBeenCalled();
   });
 
   it("returns cached response for duplicate idempotency key", async () => {

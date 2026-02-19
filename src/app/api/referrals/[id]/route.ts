@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifySession } from "@/lib/dal";
+import { requireAdmin } from "@/lib/dal";
+import { validateOrigin } from "@/lib/csrf";
 import { UpdateRedeemedSchema } from "@/schema/api";
 import { updateReferralRedeemed, deleteReferral } from "@/services/referral";
 import { AppError, apiErrorHandler } from "@/utils/errors";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    await verifySession();
+    if (!validateOrigin(req)) {
+      return NextResponse.json({ error: { code: "FORBIDDEN", message: "Invalid origin" } }, { status: 403 });
+    }
+
+    await requireAdmin();
 
     const { id } = await params;
     if (!/^\d+$/.test(id)) {
@@ -26,7 +31,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    await verifySession();
+    await requireAdmin();
 
     const { id } = await params;
     if (!/^\d+$/.test(id)) {

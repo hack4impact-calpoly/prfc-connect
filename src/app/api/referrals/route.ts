@@ -4,6 +4,7 @@ import { createManyReferrals, getAllReferrals } from "@/services/referral";
 import { sendReferralEmails } from "@/services/email";
 import { rateLimiter } from "@/lib/rate-limit";
 import { getIdempotentResponse, setIdempotentResponse } from "@/lib/idempotency";
+import { validateOrigin } from "@/lib/csrf";
 import { verifySession, requireAdmin } from "@/lib/dal";
 import { apiErrorHandler, transformError, errorStatusMap } from "@/utils/errors";
 
@@ -11,14 +12,18 @@ export async function POST(req: NextRequest) {
   const idempotencyKey = req.headers.get("idempotency-key");
 
   try {
+    if (!validateOrigin(req)) {
+      return NextResponse.json({ error: { code: "FORBIDDEN", message: "Invalid origin" } }, { status: 403 });
+    }
+
+    await verifySession();
+
     if (idempotencyKey) {
       const cached = await getIdempotentResponse(idempotencyKey);
       if (cached) {
         return NextResponse.json(cached.body, { status: cached.status });
       }
     }
-
-    await verifySession();
 
     if (rateLimiter) {
       const forwarded = req.headers.get("x-forwarded-for");

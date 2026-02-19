@@ -1,5 +1,6 @@
 import "../mocks/dal";
-import { prismaMock, createMockRequest, referralCharlie, mockVerifySession } from "../mocks";
+import "../mocks/csrf";
+import { prismaMock, createMockRequest, referralCharlie, mockRequireAdmin, mockValidateOrigin } from "../mocks";
 import { PATCH, DELETE } from "@/app/api/referrals/[id]/route";
 import { AppError } from "@/utils/errors";
 
@@ -9,8 +10,7 @@ function createParams(id: string): { params: Promise<{ id: string }> } {
 
 describe("PATCH /api/referrals/[id]", () => {
   beforeEach(() => {
-    mockVerifySession.mockReset();
-    mockVerifySession.mockResolvedValue({ ownerid: 100184, isAdmin: false });
+    mockRequireAdmin.mockResolvedValue({ ownerid: 100184, isAdmin: true });
   });
 
   it("updates redeemed status", async () => {
@@ -25,7 +25,7 @@ describe("PATCH /api/referrals/[id]", () => {
   });
 
   it("returns 401 without valid session", async () => {
-    mockVerifySession.mockRejectedValue(new AppError("UNAUTHORIZED", "Authentication required"));
+    mockRequireAdmin.mockRejectedValue(new AppError("UNAUTHORIZED", "Authentication required"));
 
     const req = createMockRequest({ body: { redeemed: true } });
     const response = await PATCH(req, createParams("1"));
@@ -47,6 +47,15 @@ describe("PATCH /api/referrals/[id]", () => {
     expect(response.status).toBe(400);
   });
 
+  it("returns 403 for cross-origin request", async () => {
+    mockValidateOrigin.mockReturnValueOnce(false);
+
+    const req = createMockRequest({ body: { redeemed: true } });
+    const response = await PATCH(req, createParams("1"));
+
+    expect(response.status).toBe(403);
+  });
+
   it("returns 500 on database error", async () => {
     prismaMock.referral.update.mockRejectedValue(new Error("Connection lost"));
 
@@ -59,8 +68,7 @@ describe("PATCH /api/referrals/[id]", () => {
 
 describe("DELETE /api/referrals/[id]", () => {
   beforeEach(() => {
-    mockVerifySession.mockReset();
-    mockVerifySession.mockResolvedValue({ ownerid: 100184, isAdmin: false });
+    mockRequireAdmin.mockResolvedValue({ ownerid: 100184, isAdmin: true });
   });
 
   it("deletes referral successfully", async () => {
@@ -76,7 +84,7 @@ describe("DELETE /api/referrals/[id]", () => {
   });
 
   it("returns 401 without valid session", async () => {
-    mockVerifySession.mockRejectedValue(new AppError("UNAUTHORIZED", "Authentication required"));
+    mockRequireAdmin.mockRejectedValue(new AppError("UNAUTHORIZED", "Authentication required"));
 
     const req = createMockRequest();
     const response = await DELETE(req, createParams("1"));
@@ -98,5 +106,14 @@ describe("DELETE /api/referrals/[id]", () => {
     const response = await DELETE(req, createParams("999"));
 
     expect(response.status).toBe(404);
+  });
+
+  it("returns 500 on database error", async () => {
+    prismaMock.referral.findUnique.mockRejectedValue(new Error("Connection lost"));
+
+    const req = createMockRequest();
+    const response = await DELETE(req, createParams("1"));
+
+    expect(response.status).toBe(500);
   });
 });
