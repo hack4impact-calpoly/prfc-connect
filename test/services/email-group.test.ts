@@ -110,7 +110,7 @@ describe("sendGroupEmails", () => {
       .mockResolvedValueOnce(undefined)
       .mockResolvedValueOnce(undefined)
       .mockResolvedValueOnce(undefined)
-      .mockRejectedValueOnce(new Error("SMTP down"))
+      .mockRejectedValueOnce(undefined)
       .mockResolvedValueOnce(undefined);
 
     const { sent, failed, suppressed } = await sendGroupEmails({
@@ -130,7 +130,30 @@ describe("sendGroupEmails", () => {
   });
 
   it("handles SMTP errors gracefully (no throw)", async () => {
-    /* Test */
+    const test_recipients = [BobbyRecipient, LucyRecipient, MarcieRecipient];
+    const test_emails = test_recipients.map((r) => r.email);
+
+    filterSuppressedEmailsMock.mockResolvedValue({
+      valid: test_emails,
+      suppressed: [],
+    });
+
+    sendMailMock.mockRejectedValueOnce(new Error("SMTP Error")).mockResolvedValue(undefined);
+
+    const { sent, failed, suppressed } = await sendGroupEmails({
+      recipients: test_recipients,
+      subject: "",
+      body: "",
+      senderName: "",
+      replyTo: "",
+      groupId: 123,
+    });
+
+    expect(filterSuppressedEmailsMock).toHaveBeenCalledWith(test_emails);
+    expect(sendMailMock).toHaveBeenCalledTimes(3);
+    expect(sent).toBe(2);
+    expect(failed).toBe(1);
+    expect(suppressed).toBe(0);
   });
 
   it("returns {sent: 0, failed: 0} with empty recipient list", async () => {
