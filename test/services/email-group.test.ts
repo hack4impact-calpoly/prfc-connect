@@ -19,9 +19,16 @@ import { sendGroupEmails } from "@/services/email";
 import {
   BobbyRecipient,
   CharlieRecipient,
+  FranklinRecipient,
+  LinusRecipient,
   LucyRecipient,
   MarcieRecipient,
+  PeppermintPattyRecipient,
+  PigpenRecipient,
+  SallyRecipient,
+  SchroederRecipient,
   SnoopyRecipient,
+  WoodstockRecipient,
 } from "../mocks/email-group";
 import "nodemailer";
 import * as tokenModule from "@/lib/unsubscribe-tokens";
@@ -175,7 +182,58 @@ describe("sendGroupEmails", () => {
   });
 
   it("batches emails (10 per batch)", async () => {
-    /* Test */
+    vi.useFakeTimers();
+    const test_recipients = [
+      BobbyRecipient,
+      LucyRecipient,
+      MarcieRecipient,
+      CharlieRecipient,
+      SnoopyRecipient,
+      LinusRecipient,
+      PeppermintPattyRecipient,
+      SchroederRecipient,
+      SallyRecipient,
+      WoodstockRecipient,
+      FranklinRecipient,
+      PigpenRecipient,
+    ];
+    const test_emails = test_recipients.map((r) => r.email);
+    const BATCH_DELAY_MS = 1000;
+
+    filterSuppressedEmailsMock.mockResolvedValue({
+      valid: test_emails,
+      suppressed: [],
+    });
+
+    sendMailMock.mockImplementation(async () => undefined);
+
+    const promise = sendGroupEmails({
+      recipients: test_recipients,
+      subject: "",
+      body: "",
+      senderName: "",
+      replyTo: "",
+      groupId: 123,
+    });
+
+    await Promise.resolve();
+
+    expect(sendMailMock).toHaveBeenCalledTimes(10);
+
+    await vi.advanceTimersByTimeAsync(BATCH_DELAY_MS - 1);
+    await Promise.resolve();
+    expect(sendMailMock).toHaveBeenCalledTimes(10);
+
+    await vi.advanceTimersByTimeAsync(1);
+    await Promise.resolve();
+    expect(sendMailMock).toHaveBeenCalledTimes(12);
+
+    const { sent, failed, suppressed } = await promise;
+    expect(sent).toBe(12);
+    expect(failed).toBe(0);
+    expect(suppressed).toBe(0);
+
+    vi.useRealTimers();
   });
 
   it("returns correct send/fail counts", async () => {

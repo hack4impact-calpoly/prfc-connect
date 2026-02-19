@@ -29,3 +29,45 @@ export const SnoopyRecipient: Recipient = {
   memberId: 5,
   name: "Snoopy",
 };
+
+export const LinusRecipient: Recipient = {
+  email: "linus.vanpelt@gmail.com",
+  memberId: 6,
+  name: "Linus Van Pelt",
+};
+
+export const PeppermintPattyRecipient: Recipient = {
+  email: "peppermint.patty@test.com",
+  memberId: 7,
+  name: "Peppermint Patty",
+};
+
+export const SchroederRecipient: Recipient = {
+  email: "schroeder.music@gmail.com",
+  memberId: 8,
+  name: "Schroeder",
+};
+
+export const SallyRecipient: Recipient = {
+  email: "sally.brown@yahoo.com",
+  memberId: 9,
+  name: "Sally Brown",
+};
+
+export const WoodstockRecipient: Recipient = {
+  email: "woodstock@peanuts.com",
+  memberId: 10,
+  name: "Woodstock",
+};
+
+export const FranklinRecipient: Recipient = {
+  email: "franklin.armstrong@gmail.com",
+  memberId: 11,
+  name: "Franklin Armstrong",
+};
+
+export const PigpenRecipient: Recipient = {
+  email: "pigpen.dusty@test.com",
+  memberId: 12,
+  name: "Pig-Pen",
+};
