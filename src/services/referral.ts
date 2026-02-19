@@ -96,3 +96,17 @@ export async function updateReferralRedeemed(id: number, redeemed: boolean) {
     throw transformError(error);
   }
 }
+
+export async function deleteReferral(id: number) {
+  try {
+    const existing = await prisma.referral.findUnique({ where: { id } });
+
+    if (!existing) {
+      throw new AppError("NOT_FOUND", `Referral with id ${id} not found`);
+    }
+
+    return await prisma.referral.delete({ where: { id } });
+  } catch (error) {
+    throw transformError(error);
+  }
+}

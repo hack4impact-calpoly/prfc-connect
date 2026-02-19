@@ -5,11 +5,13 @@ import { ReferralFormSchema } from "@/schema/api";
 import { createManyReferrals, toggleReferralRedeemed } from "@/services/referral";
 import { sendReferralEmails } from "@/services/email";
 import { transformError } from "@/utils/errors";
-import { requireAdmin } from "@/lib/dal";
+import { verifySession, requireAdmin } from "@/lib/dal";
 import type { ActionResult } from "@/lib/action-types";
 
 export async function submitReferrals(formData: FormData): Promise<ActionResult> {
   try {
+    await verifySession();
+
     let prospectsRaw: unknown;
     try {
       prospectsRaw = JSON.parse(formData.get("prospects") as string);

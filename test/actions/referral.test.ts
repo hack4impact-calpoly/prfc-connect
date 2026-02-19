@@ -1,7 +1,7 @@
 import "../mocks/next-cache";
 import "../mocks/dal";
 import "../mocks/email";
-import { prismaMock, mockRequireAdmin } from "../mocks";
+import { prismaMock, mockVerifySession, mockRequireAdmin } from "../mocks";
 import { referralCharlie, formWithTwoProspects } from "../mocks/referrals";
 import { AppError } from "@/utils/errors";
 
@@ -21,6 +21,11 @@ describe("submitReferrals", () => {
     prospects: JSON.stringify(formWithTwoProspects.prospects),
   });
 
+  beforeEach(() => {
+    mockVerifySession.mockReset();
+    mockVerifySession.mockResolvedValue({ ownerid: 100184, isAdmin: false });
+  });
+
   it("creates referrals and returns success", async () => {
     const created = [
       { ...referralCharlie, id: 10 },
@@ -32,6 +37,15 @@ describe("submitReferrals", () => {
 
     expect(result.success).toBe(true);
     expect(result.error).toBeUndefined();
+  });
+
+  it("returns error when not authenticated", async () => {
+    mockVerifySession.mockRejectedValue(new AppError("UNAUTHORIZED", "Authentication required"));
+
+    const result = await submitReferrals(validFormData);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("Authentication required");
   });
 
   it("returns error for invalid prospects JSON", async () => {

@@ -26,7 +26,7 @@ export function useReferrals(): UseReferralsReturn {
     setIsFetching(true);
     setError(null);
     try {
-      const response = await fetch("/api/referral");
+      const response = await fetch("/api/referrals");
       if (!response.ok) {
         throw new Error(`Failed to fetch referrals: ${response.status}`);
       }

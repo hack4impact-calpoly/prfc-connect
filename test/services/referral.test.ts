@@ -7,6 +7,7 @@ import {
   createManyReferrals,
   toggleReferralRedeemed,
   updateReferralRedeemed,
+  deleteReferral,
 } from "@/services/referral";
 
 describe("getAllReferrals", () => {
@@ -155,6 +156,28 @@ describe("updateReferralRedeemed", () => {
 
     await expect(updateReferralRedeemed(999, true)).rejects.toMatchObject({
       code: "INTERNAL_ERROR",
+    });
+  });
+});
+
+describe("deleteReferral", () => {
+  it("deletes existing referral", async () => {
+    prismaMock.referral.findUnique.mockResolvedValue(referralCharlie);
+    prismaMock.referral.delete.mockResolvedValue(referralCharlie);
+
+    const result = await deleteReferral(1);
+
+    expect(result).toEqual(referralCharlie);
+    expect(prismaMock.referral.delete).toHaveBeenCalledWith({
+      where: { id: 1 },
+    });
+  });
+
+  it("throws NOT_FOUND for missing referral", async () => {
+    prismaMock.referral.findUnique.mockResolvedValue(null);
+
+    await expect(deleteReferral(999)).rejects.toMatchObject({
+      code: "NOT_FOUND",
     });
   });
 });

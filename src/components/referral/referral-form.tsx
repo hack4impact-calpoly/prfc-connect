@@ -48,31 +48,8 @@ export function ReferralForm() {
     }
 
     const memberFullName = `${referrerFirstName} ${referrerLastName}`;
-    const urlChecksum = searchParams?.get("cs");
-
-    if (!urlChecksum) {
-      setErrorMessage("Invalid URL: Missing checksum.");
-      return;
-    }
 
     try {
-      const checksumResponse = await fetch("/api/checksum", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          memberName: memberFullName,
-          memberEmail: referrerEmail,
-          referralCode,
-          checksum: urlChecksum,
-        }),
-      });
-
-      if (!checksumResponse.ok) {
-        const errorBody = await checksumResponse.json();
-        setErrorMessage(errorBody.error?.message || "Checksum validation failed.");
-        return;
-      }
-
       const referralData = {
         memberName: memberFullName.trim(),
         memberEmail: referrerEmail,
@@ -83,7 +60,7 @@ export function ReferralForm() {
         })),
       };
 
-      const response = await fetch("/api/referral", {
+      const response = await fetch("/api/referrals", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -1,7 +1,6 @@
 import "../mocks/email";
 import "../mocks/rate-limit";
 import "../mocks/idempotency";
-import "../mocks/csrf";
 import "../mocks/dal";
 import {
   prismaMock,
@@ -12,13 +11,13 @@ import {
   emailTransportMock,
   rateLimiterMock,
   mockGetIdempotentResponse,
-  mockValidateOrigin,
+  mockVerifySession,
   mockRequireAdmin,
 } from "../mocks";
-import { GET, POST } from "@/app/api/referral/route";
+import { GET, POST } from "@/app/api/referrals/route";
 import { AppError } from "@/utils/errors";
 
-describe("GET /api/referral", () => {
+describe("GET /api/referrals", () => {
   beforeEach(() => {
     mockRequireAdmin.mockReset();
   });
@@ -52,7 +51,12 @@ describe("GET /api/referral", () => {
   });
 });
 
-describe("POST /api/referral", () => {
+describe("POST /api/referrals", () => {
+  beforeEach(() => {
+    mockVerifySession.mockReset();
+    mockVerifySession.mockResolvedValue({ ownerid: 100184, isAdmin: false });
+  });
+
   it("creates referrals and sends emails", async () => {
     const createdReferrals = [
       { ...referralCharlie, id: 7 },
@@ -67,6 +71,15 @@ describe("POST /api/referral", () => {
     expect(response.status).toBe(201);
     expect(data.referrals).toHaveLength(2);
     expect(emailTransportMock.sendMail).toHaveBeenCalledTimes(2);
+  });
+
+  it("returns 401 without valid session", async () => {
+    mockVerifySession.mockRejectedValue(new AppError("UNAUTHORIZED", "Authentication required"));
+
+    const req = createMockRequest({ body: formWithTwoProspects });
+    const response = await POST(req);
+
+    expect(response.status).toBe(401);
   });
 
   it("returns 400 on invalid form data", async () => {
@@ -119,18 +132,5 @@ describe("POST /api/referral", () => {
     expect(data.referrals).toHaveLength(1);
     expect(emailTransportMock.sendMail).not.toHaveBeenCalled();
     expect(prismaMock.$transaction).not.toHaveBeenCalled();
-  });
-
-  it("returns 403 for cross-origin request", async () => {
-    mockValidateOrigin.mockReturnValueOnce(false);
-
-    const req = createMockRequest({
-      body: formWithTwoProspects,
-      headers: { origin: "https://malicious-site.com" },
-    });
-    const response = await POST(req);
-
-    expect(response.status).toBe(403);
-    expect(emailTransportMock.sendMail).not.toHaveBeenCalled();
   });
 });
