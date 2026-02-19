@@ -32,7 +32,30 @@ describe("sendGroupEmails", () => {
   });
 
   it("sends to all valid recipients", async () => {
-    /* Test */
+    const test_recipients = [BobbyRecipient, LucyRecipient, MarcieRecipient];
+    const test_emails = test_recipients.map((r) => r.email);
+    filterSuppressedEmailsMock.mockResolvedValue({
+      valid: [BobbyRecipient.email, MarcieRecipient.email],
+      suppressed: [LucyRecipient.email],
+    });
+
+    sendMailMock.mockResolvedValue(undefined);
+
+    const { sent, failed, suppressed } = await sendGroupEmails({
+      recipients: test_recipients,
+      subject: "",
+      body: "",
+      senderName: "",
+      replyTo: "",
+      groupId: 123,
+    });
+
+    expect(filterSuppressedEmailsMock).toHaveBeenCalledWith(test_emails);
+    expect(sendMailMock).toHaveBeenNthCalledWith(1, expect.objectContaining({ to: BobbyRecipient.email }));
+    expect(sendMailMock).toHaveBeenNthCalledWith(2, expect.objectContaining({ to: MarcieRecipient.email }));
+    expect(sent).toBe(2);
+    expect(failed).toBe(0);
+    expect(suppressed).toBe(1);
   });
 
   it("filters out suppressed emails before sending", async () => {
