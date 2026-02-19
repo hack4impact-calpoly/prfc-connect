@@ -84,6 +84,7 @@ describe("sendGroupEmails", () => {
   });
 
   it("generates unique unsubscribe token per recipient", async () => {
+    /* This test should be in its own file for unsubscribe-tokens.ts */
     const test_recipients = [BobbyRecipient, LucyRecipient, MarcieRecipient];
     filterSuppressedEmailsMock.mockResolvedValue({
       valid: [BobbyRecipient.email, LucyRecipient.email, MarcieRecipient.email],
@@ -102,7 +103,7 @@ describe("sendGroupEmails", () => {
     });
 
     const tokens = sendMailMock.mock.calls.map(([fields]) => {
-      const raw = fields.headers?.["List-Unsubscribe"]?.value as string; // `<url>`
+      const raw = fields.headers?.["List-Unsubscribe"]?.value as string;
       const urlStr = raw.slice(1, -1);
       return new URL(urlStr).searchParams.get("token");
     });
@@ -115,7 +116,30 @@ describe("sendGroupEmails", () => {
   });
 
   it("includes List-Unsubscribe header (RFC 8058)", async () => {
-    /* Test */
+    const test_recipients = [BobbyRecipient];
+    filterSuppressedEmailsMock.mockResolvedValue({
+      valid: [BobbyRecipient.email],
+      suppressed: [],
+    });
+
+    sendMailMock.mockResolvedValue(undefined);
+
+    await sendGroupEmails({
+      recipients: test_recipients,
+      subject: "",
+      body: "",
+      senderName: "",
+      replyTo: "",
+      groupId: 123,
+    });
+
+    expect(sendMailMock).toBeCalledWith(
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          "List-Unsubscribe": expect.any(Object),
+        }),
+      }),
+    );
   });
 
   it("appends CAN-SPAM footer with physical address", async () => {
