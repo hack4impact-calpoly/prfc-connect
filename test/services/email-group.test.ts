@@ -1,12 +1,30 @@
 import { vi } from "vitest";
 
+const sendMailMock = vi.hoisted(() => vi.fn());
+const filterSuppressedEmailsMock = vi.hoisted(() => vi.fn());
+
 vi.mock("@/services/email-suppression", async () => ({
-  filterSuppressedEmails: vi.fn(),
+  filterSuppressedEmails: filterSuppressedEmailsMock,
+}));
+vi.mock("nodemailer", async () => ({
+  default: {
+    createTransport: vi.fn(() => ({
+      sendMail: sendMailMock,
+      close: vi.fn(),
+    })),
+  },
 }));
 
 import { sendGroupEmails } from "@/services/email";
 import { filterSuppressedEmails } from "@/services/email-suppression";
-import { LucyRecipient, MarcieRecipient } from "../mocks/email-group";
+import {
+  BobbyRecipient,
+  CharlieRecipient,
+  LucyRecipient,
+  MarcieRecipient,
+  SnoopyRecipient,
+} from "../mocks/email-group";
+import "nodemailer";
 
 describe("sendGroupEmails", () => {
   beforeEach(() => {
@@ -38,7 +56,35 @@ describe("sendGroupEmails", () => {
   });
 
   it("returns correct send/fail counts", async () => {
-    /* Test */
+    const test_recipients = [BobbyRecipient, LucyRecipient, MarcieRecipient, CharlieRecipient, SnoopyRecipient];
+    const test_emails = test_recipients.map((r) => r.email);
+
+    filterSuppressedEmailsMock.mockResolvedValue({
+      valid: test_emails,
+      suppressed: [],
+    });
+
+    sendMailMock
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(new Error("SMTP down"))
+      .mockResolvedValueOnce(undefined);
+
+    const { sent, failed, suppressed } = await sendGroupEmails({
+      recipients: test_recipients,
+      subject: "",
+      body: "",
+      senderName: "",
+      replyTo: "",
+      groupId: 123,
+    });
+
+    expect(filterSuppressedEmailsMock).toHaveBeenCalledWith(test_emails);
+    expect(sendMailMock).toHaveBeenCalledTimes(5);
+    expect(sent).toBe(4);
+    expect(failed).toBe(1);
+    expect(suppressed).toBe(0);
   });
 
   it("handles SMTP errors gracefully (no throw)", async () => {
@@ -46,7 +92,7 @@ describe("sendGroupEmails", () => {
   });
 
   it("returns {sent: 0, failed: 0} with empty recipient list", async () => {
-    vi.mocked(filterSuppressedEmails).mockResolvedValue({
+    filterSuppressedEmailsMock.mockResolvedValue({
       valid: [],
       suppressed: [],
     });
@@ -67,7 +113,7 @@ describe("sendGroupEmails", () => {
   });
 
   it("returns {sent: 0, failed: 0, suppressed: n} with n suppressed returns", async () => {
-    vi.mocked(filterSuppressedEmails).mockResolvedValue({
+    filterSuppressedEmailsMock.mockResolvedValue({
       valid: [],
       suppressed: [LucyRecipient.email, MarcieRecipient.email],
     });
@@ -81,7 +127,7 @@ describe("sendGroupEmails", () => {
       groupId: 123,
     });
 
-    expect(filterSuppressedEmails).toHaveBeenCalledWith([LucyRecipient.email, MarcieRecipient.email]);
+    expect(filterSuppressedEmailsMock).toHaveBeenCalledWith([LucyRecipient.email, MarcieRecipient.email]);
     expect(sent).toBe(0);
     expect(failed).toBe(0);
     expect(suppressed).toBe(2);
