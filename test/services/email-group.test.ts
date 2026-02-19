@@ -1,13 +1,11 @@
 import { vi } from "vitest";
-// import { sendGroupEmails } from "@/services/email";
 
-vi.mock("@/services/email-suppression", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/services/email-suppression")>();
-  return {
-    ...actual,
-    filterSuppressedEmails: vi.fn(),
-  };
-});
+vi.mock("@/services/email-suppression", async () => ({
+  filterSuppressedEmails: vi.fn(),
+}));
+
+import { sendGroupEmails } from "@/services/email";
+import { filterSuppressedEmails } from "@/services/email-suppression";
 
 describe("sendGroupEmails", () => {
   beforeEach(() => {
@@ -47,7 +45,6 @@ describe("sendGroupEmails", () => {
   });
 
   it("returns {sent: 0, failed: 0} with empty recipient list", async () => {
-    /*
     vi.mocked(filterSuppressedEmails).mockResolvedValue({
       valid: [],
       suppressed: [],
@@ -66,7 +63,6 @@ describe("sendGroupEmails", () => {
     expect(sent).toBe(0);
     expect(failed).toBe(0);
     expect(suppressed).toBe(0);
-    */
   });
 
   it("returns {sent: 0, failed: 0, suppressed: n} with n suppressed returns", async () => {
