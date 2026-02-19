@@ -100,8 +100,14 @@ function generateEmailHtml(prospectName: string, memberName: string, referralCod
 const BATCH_SIZE = 10;
 const BATCH_DELAY_MS = 1000;
 
+export interface Recipient {
+  email: string;
+  memberId: number;
+  name: string;
+}
+
 interface GroupEmailParams {
-  recipients: Array<{ email: string; memberId: number; name: string }>;
+  recipients: Array<Recipient>;
   subject: string;
   body: string;
   senderName: string;
