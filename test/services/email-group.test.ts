@@ -2,6 +2,7 @@ import { vi } from "vitest";
 
 const sendMailMock = vi.hoisted(() => vi.fn());
 const filterSuppressedEmailsMock = vi.hoisted(() => vi.fn());
+const generateUnsubscribeTokenMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/services/email-suppression", async () => ({
   filterSuppressedEmails: filterSuppressedEmailsMock,
@@ -14,9 +15,11 @@ vi.mock("nodemailer", async () => ({
     })),
   },
 }));
+vi.mock("@/lib/unsubscribe-tokens", () => ({
+  generateUnsubscribeToken: generateUnsubscribeTokenMock,
+}));
 
 import { sendGroupEmails } from "@/services/email";
-import { filterSuppressedEmails } from "@/services/email-suppression";
 import {
   BobbyRecipient,
   CharlieRecipient,
@@ -171,7 +174,7 @@ describe("sendGroupEmails", () => {
       groupId: 123,
     });
 
-    expect(filterSuppressedEmails).toHaveBeenCalledWith([]);
+    expect(filterSuppressedEmailsMock).toHaveBeenCalledWith([]);
     expect(sent).toBe(0);
     expect(failed).toBe(0);
     expect(suppressed).toBe(0);
