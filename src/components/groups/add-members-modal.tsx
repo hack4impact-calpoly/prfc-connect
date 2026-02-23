@@ -35,6 +35,7 @@ export function AddMembersModal({
   isSubmitting = false,
 }: AddMembersModalProps) {
   const currentMemberCount = members.filter((member) => member.isOwner || member.isSelected).length;
+  const orderedMembers = [...members].sort((a, b) => Number(b.isOwner) - Number(a.isOwner));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -51,7 +52,7 @@ export function AddMembersModal({
 
         <div className="max-h-[400px] overflow-y-auto rounded-lg bg-paso-grey p-2">
           <div className="space-y-1">
-            {members.map((member) => (
+            {orderedMembers.map((member) => (
               <div key={member.memberId} className="flex items-center justify-between rounded-md px-3 py-2">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-10 w-10">
@@ -59,12 +60,19 @@ export function AddMembersModal({
                       {getInitials(member.ownername)}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-2xl text-black">{member.ownername}</span>
+                  <span className="text-2xl text-black">
+                    {member.ownername}
+                    {member.isOwner ? " (owner)" : ""}
+                  </span>
                 </div>
                 <Checkbox
-                  checked={member.isSelected}
-                  onCheckedChange={(checked) => onSelectionChange(member.memberId, checked === true)}
-                  aria-label={`Select ${member.ownername}`}
+                  checked={member.isOwner ? true : member.isSelected}
+                  disabled={member.isOwner}
+                  onCheckedChange={(checked) => {
+                    if (member.isOwner) return;
+                    onSelectionChange(member.memberId, checked === true);
+                  }}
+                  aria-label={member.isOwner ? `${member.ownername} is the group owner` : `Select ${member.ownername}`}
                 />
               </div>
             ))}
