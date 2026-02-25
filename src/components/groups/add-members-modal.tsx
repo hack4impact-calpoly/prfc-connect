@@ -107,7 +107,7 @@ export function AddMembersModal({
 
         <div className="flex justify-end">
           <Button type="button" onClick={onConfirm} disabled={isSubmitting} className="bg-prfc-brown px-8">
-            Save
+            {isSubmitting ? "Saving..." : "Save"}
           </Button>
         </div>
       </DialogContent>
