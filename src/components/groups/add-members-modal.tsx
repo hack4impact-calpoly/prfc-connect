@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -34,11 +35,31 @@ export function AddMembersModal({
   onConfirm,
   isSubmitting = false,
 }: AddMembersModalProps) {
+  const [searchQuery, setSearchQuery] = useState("");
   const currentMemberCount = members.filter((member) => member.isOwner || member.isSelected).length;
-  const orderedMembers = [...members].sort((a, b) => Number(b.isOwner) - Number(a.isOwner));
+  const orderedMembers = useMemo(() => [...members].sort((a, b) => Number(b.isOwner) - Number(a.isOwner)), [members]);
+  const filteredMembers = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    const ownerMember = orderedMembers.find((member) => member.isOwner);
+    const nonOwnerMembers = orderedMembers.filter((member) => !member.isOwner);
+
+    const matchedNonOwners =
+      normalizedQuery.length === 0
+        ? nonOwnerMembers
+        : nonOwnerMembers.filter((member) => member.ownername.toLowerCase().includes(normalizedQuery));
+
+    return ownerMember ? [ownerMember, ...matchedNonOwners] : matchedNonOwners;
+  }, [orderedMembers, searchQuery]);
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      setSearchQuery("");
+    }
+    onOpenChange(nextOpen);
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[700px] p-6">
         <DialogHeader className="space-y-1">
           <DialogTitle className="text-4xl font-bold text-black">{groupName}</DialogTitle>
@@ -47,12 +68,17 @@ export function AddMembersModal({
 
         <div className="relative">
           <Search className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-prfc-dark-brown" />
-          <Input placeholder="Search or add members" className="h-12 rounded-lg border-prfc-border pr-10 text-xl" />
+          <Input
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Search or add members"
+            className="h-12 rounded-lg border-prfc-border pr-10 text-xl"
+          />
         </div>
 
         <div className="max-h-[400px] overflow-y-auto rounded-lg bg-paso-grey p-2">
           <div className="space-y-1">
-            {orderedMembers.map((member) => (
+            {filteredMembers.map((member) => (
               <div key={member.memberId} className="flex items-center justify-between rounded-md px-3 py-2">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-10 w-10">
