@@ -1,5 +1,4 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useState } from "react";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
 import { Input } from "../ui/input";
@@ -19,9 +18,6 @@ interface GroupEditModalProps {
 }
 
 export function GroupDetailViewModal({ open, onOpenChange, group, onEdit, onViewAllMembers }: GroupEditModalProps) {
-  const [newName, setNewName] = useState(group.name);
-  const [newDescription, setNewDescription] = useState(group.description || "");
-
   const handleOpenChange = (nextOpen: boolean) => {
     onOpenChange(nextOpen);
   };
@@ -53,13 +49,13 @@ export function GroupDetailViewModal({ open, onOpenChange, group, onEdit, onView
             <label htmlFor="groupName" className="font-bold">
               Group Name
             </label>
-            <Input type="text" id="groupName" value={newName} onChange={(e) => setNewName(e.target.value)} />
+            <Input type="text" id="groupName" defaultValue={group.name} readOnly={true} />
           </div>
           <div id="Editable Fields" className="grid grid-cols-1 gap-2">
             <label htmlFor="description" className="font-bold">
               Description (Optional)
             </label>
-            <Textarea id="description" value={newDescription} onChange={(e) => setNewDescription(e.target.value)} />
+            <Textarea id="description" defaultValue={group.description || ""} readOnly={true} />
           </div>
           <div id="Members Section" className="flex items-center gap-4">
             <label htmlFor="addMember" className="font-bold">
