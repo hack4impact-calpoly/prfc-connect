@@ -35,7 +35,10 @@ export function GroupEditModal({
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (isSubmitting) return;
-    if (!nextOpen) {
+    if (nextOpen) {
+      setNewName(group.name);
+      setNewDescription(group.description ?? "");
+    } else {
       setNewName("");
       setNewDescription("");
     }
@@ -44,6 +47,7 @@ export function GroupEditModal({
 
   const handleSave = (newData: { name: string; description: string | null }) => {
     if (isSubmitting) return;
+    console.log(newName + " | " + newDescription);
     onSave(newData);
   };
 
@@ -75,13 +79,13 @@ export function GroupEditModal({
             <label htmlFor="groupName" className="font-bold">
               Group Name
             </label>
-            <Input type="text" id="groupName" defaultValue={newName} />
+            <Input type="text" id="groupName" value={newName} onChange={(e) => setNewName(e.target.value)} />
           </div>
           <div id="Editable Fields" className="grid grid-cols-1 gap-2">
             <label htmlFor="description" className="font-bold">
               Description (Optional)
             </label>
-            <Textarea id="description" defaultValue={newDescription} />
+            <Textarea id="description" value={newDescription} onChange={(e) => setNewDescription(e.target.value)} />
           </div>
           <div id="Members Section" className="flex items-center gap-4">
             <label htmlFor="addMember" className="font-bold">
@@ -100,7 +104,9 @@ export function GroupEditModal({
               <div key={member.memberId} className="bg-slate-300 h-8 w-8 rounded-full" />
             ))}
             {group.memberCount > 8 ? (
-              <div className="bg-slate-300 h-8 w-8 rounded-full">+ {group.memberCount - 8}</div>
+              <div className="bg-slate-300 h-8 w-8 rounded-full font-bold text-md flex justify-center items-center ">
+                +{group.memberCount - 8}
+              </div>
             ) : null}
           </div>
         </div>

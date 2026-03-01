@@ -13,8 +13,16 @@ export default function PhanPage() {
     members: [
       { memberId: 1, ownername: "Alice" },
       { memberId: 2, ownername: "Bob" },
+      { memberId: 3, ownername: "Charlie" },
+      { memberId: 4, ownername: "Diana" },
+      { memberId: 5, ownername: "Ethan" },
+      { memberId: 6, ownername: "Fiona" },
+      { memberId: 7, ownername: "George" },
+      { memberId: 8, ownername: "Hannah" },
+      { memberId: 9, ownername: "Isaac" },
+      { memberId: 10, ownername: "Julia" },
     ],
-    memberCount: 2,
+    memberCount: 10,
   };
   return (
     <div className="min-h-screen flex justify-center items-center">
