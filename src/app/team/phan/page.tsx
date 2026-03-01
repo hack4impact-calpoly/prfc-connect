@@ -1,8 +1,21 @@
 "use client";
+import { GroupEditModal } from "@/components/groups/group-edit-modal";
 import { useState } from "react";
 
 export default function PhanPage() {
   const [counter, setCounter] = useState(0);
+  const [open, setOpen] = useState(true);
+
+  const mockGroup = {
+    id: 1,
+    name: "Friends",
+    description: "People I keep in touch with.",
+    members: [
+      { memberId: 1, ownername: "Alice" },
+      { memberId: 2, ownername: "Bob" },
+    ],
+    memberCount: 2,
+  };
   return (
     <div className="min-h-screen flex justify-center items-center">
       <div className="max-w-2xl grid grid-cols-1 gap-4">
@@ -21,6 +34,14 @@ export default function PhanPage() {
           {counter}
         </button>
       </div>
+      <GroupEditModal
+        open={open}
+        onOpenChange={setOpen}
+        group={mockGroup}
+        onSave={() => {}}
+        onDelete={() => {}}
+        onAddMembers={() => {}}
+      />
     </div>
   );
 }
