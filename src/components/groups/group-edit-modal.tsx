@@ -1,9 +1,20 @@
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useState } from "react";
-import { Button } from "../ui/button";
-import { Textarea } from "../ui/textarea";
-import { Input } from "../ui/input";
+"use client";
+
+import { useRef, useState } from "react";
 import { Loader2, Plus } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { getAvatarColor, getInitials } from "@/utils/avatar";
 
 interface GroupEditModalProps {
   open: boolean;
@@ -31,94 +42,146 @@ export function GroupEditModal({
   isSubmitting = false,
 }: GroupEditModalProps) {
   const [newName, setNewName] = useState(group.name);
-  const [newDescription, setNewDescription] = useState(group.description || "");
+  const [newDescription, setNewDescription] = useState(group.description ?? "");
+  const [error, setError] = useState("");
+  const nameRef = useRef<HTMLInputElement>(null);
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (isSubmitting) return;
     if (nextOpen) {
       setNewName(group.name);
       setNewDescription(group.description ?? "");
-    } else {
-      setNewName("");
-      setNewDescription("");
+      setError("");
     }
     onOpenChange(nextOpen);
   };
 
-  const handleSave = (newData: { name: string; description: string | null }) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     if (isSubmitting) return;
-    console.log(newName + " | " + newDescription);
-    onSave(newData);
+
+    const trimmedName = newName.trim();
+    if (!trimmedName) {
+      setError("Group name is required.");
+      nameRef.current?.focus();
+      return;
+    }
+
+    onSave({
+      name: trimmedName,
+      description: newDescription.trim() === "" ? null : newDescription.trim(),
+    });
   };
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent>
-        <DialogTitle>
-          <DialogHeader className="text-[#523019] text-4xl font-black">{group.name}</DialogHeader>
-        </DialogTitle>
-        <div className="grid grid-cols-1 justify-items-stretch gap-4">
+      <DialogContent
+        onEscapeKeyDown={(e) => {
+          if (isSubmitting) e.preventDefault();
+        }}
+        onInteractOutside={(e) => {
+          if (isSubmitting) e.preventDefault();
+        }}
+      >
+        <DialogHeader className="text-prfc-brown">
+          <DialogTitle className="text-4xl font-black">{group.name}</DialogTitle>
+          <DialogDescription className="sr-only">Edit the details for the {group.name} group.</DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 justify-items-stretch gap-4">
           <Button
             type="button"
             onClick={onDelete}
-            className="
-              justify-self-end
-              bg-transparent
-              border-none
-              p-0
-              text-[#831002]
-              hover:underline
-              hover:bg-transparent
-              cursor-pointer
-              shadow-none
-            "
+            disabled={isSubmitting}
+            className="justify-self-end bg-transparent border-none p-0 text-prfc-red hover:underline hover:bg-transparent cursor-pointer shadow-none"
           >
             Delete
           </Button>
+
           <div className="grid grid-cols-1 gap-2">
             <label htmlFor="groupName" className="font-bold">
               Group Name
             </label>
-            <Input type="text" id="groupName" value={newName} onChange={(e) => setNewName(e.target.value)} />
+            <Input
+              ref={nameRef}
+              type="text"
+              id="groupName"
+              value={newName}
+              onChange={(e) => {
+                setNewName(e.target.value);
+                if (error) setError("");
+              }}
+              aria-required="true"
+              aria-invalid={error ? true : undefined}
+              aria-describedby={error ? "groupName-error" : undefined}
+              className="border-2 border-black"
+            />
+            {error && (
+              <p id="groupName-error" className="text-sm text-prfc-red mt-1">
+                {error}
+              </p>
+            )}
           </div>
-          <div id="Editable Fields" className="grid grid-cols-1 gap-2">
+
+          <div className="grid grid-cols-1 gap-2">
             <label htmlFor="description" className="font-bold">
               Description (Optional)
             </label>
-            <Textarea id="description" value={newDescription} onChange={(e) => setNewDescription(e.target.value)} />
+            <Textarea
+              id="description"
+              value={newDescription}
+              onChange={(e) => setNewDescription(e.target.value)}
+              className="border-2 border-black"
+            />
           </div>
-          <div id="Members Section" className="flex items-center gap-4">
-            <label htmlFor="addMember" className="font-bold">
-              Add Members
-            </label>
+
+          <div className="flex items-center gap-4">
+            <span className="font-bold">Add Members</span>
             <Button
-              id="addMember"
+              type="button"
               onClick={onAddMembers}
-              className="bg-slate-300 rounded-xl h-6 border-2 border-zinc-950"
+              disabled={isSubmitting}
+              aria-label="Add members to group"
+              className="h-8 w-8 rounded-full bg-gray-200 hover:bg-gray-300 border-none shadow-none p-0"
             >
-              <Plus color="black" />
+              <Plus className="h-5 w-5 text-gray-700" aria-hidden="true" />
             </Button>
           </div>
-          <div id="avatarRow" className="flex gap-2">
+
+          <div className="flex gap-2" role="group" aria-label="Group members">
             {group.members.slice(0, 8).map((member) => (
-              <div key={member.memberId} className="bg-slate-300 h-8 w-8 rounded-full" />
+              <Avatar key={member.memberId} className="h-8 w-8" role="img" aria-label={member.ownername}>
+                <AvatarFallback
+                  style={{ backgroundColor: getAvatarColor(member.ownername) }}
+                  className="text-xs font-semibold text-white"
+                  aria-hidden="true"
+                >
+                  {getInitials(member.ownername)}
+                </AvatarFallback>
+              </Avatar>
             ))}
             {group.memberCount > 8 ? (
-              <div className="bg-slate-300 h-8 w-8 rounded-full font-bold text-md flex justify-center items-center ">
+              <div
+                className="bg-slate-300 h-8 w-8 rounded-full font-bold text-sm flex justify-center items-center"
+                role="img"
+                aria-label={`${group.memberCount - 8} more members`}
+              >
                 +{group.memberCount - 8}
               </div>
             ) : null}
           </div>
-        </div>
-        <DialogFooter>
-          <Button
-            onClick={() => handleSave({ name: newName, description: newDescription })}
-            className="bg-[#523019] rounded-xl p-6"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : "Save Changes"}
-          </Button>
-        </DialogFooter>
+
+          <DialogFooter className="mt-4">
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="bg-prfc-brown text-white hover:bg-prfc-dark-brown rounded-full py-6 px-8"
+            >
+              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              {isSubmitting ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );
