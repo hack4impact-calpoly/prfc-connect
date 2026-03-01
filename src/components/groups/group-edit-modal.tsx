@@ -55,7 +55,7 @@ export function GroupEditModal({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogTitle>
-          <DialogHeader className="text-[#523019] text-4xl font-black">My Groups</DialogHeader>
+          <DialogHeader className="text-[#523019] text-4xl font-black">{group.name}</DialogHeader>
         </DialogTitle>
         <div className="grid grid-cols-1 justify-items-stretch gap-4">
           <Button
