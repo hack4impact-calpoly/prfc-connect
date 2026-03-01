@@ -72,37 +72,50 @@ export function AddMembersModal({
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
             placeholder="Search or add members"
+            aria-label="Search members"
             className="h-12 rounded-lg border-prfc-border pr-10 text-xl"
           />
         </div>
 
-        <div className="max-h-[400px] overflow-y-auto rounded-lg bg-paso-grey p-2">
-          <div className="space-y-1">
-            {filteredMembers.map((member) => (
-              <div key={member.memberId} className="flex items-center justify-between rounded-md px-3 py-2">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-10 w-10">
-                    <AvatarFallback style={{ backgroundColor: getAvatarColor(member.ownername), color: "#fff" }}>
-                      {getInitials(member.ownername)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-2xl text-black">
-                    {member.ownername}
-                    {member.isOwner ? " (owner)" : ""}
-                  </span>
+        <div aria-live="polite" className="sr-only">
+          {filteredMembers.length} {filteredMembers.length === 1 ? "member" : "members"} found
+        </div>
+
+        <div className="max-h-[min(400px,50vh)] overflow-y-auto rounded-lg bg-paso-grey p-2">
+          {filteredMembers.length === 0 ? (
+            <p className="py-8 text-center text-lg text-muted-foreground">
+              No members found matching &ldquo;{searchQuery}&rdquo;
+            </p>
+          ) : (
+            <div className="space-y-1" role="group" aria-label="Group members">
+              {filteredMembers.map((member) => (
+                <div key={member.memberId} className="flex items-center justify-between rounded-md px-3 py-2">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10">
+                      <AvatarFallback style={{ backgroundColor: getAvatarColor(member.ownername), color: "#fff" }}>
+                        {getInitials(member.ownername)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-2xl text-black">
+                      {member.ownername}
+                      {member.isOwner ? " (owner)" : ""}
+                    </span>
+                  </div>
+                  <Checkbox
+                    checked={member.isOwner ? true : member.isSelected}
+                    disabled={member.isOwner}
+                    onCheckedChange={(checked) => {
+                      if (member.isOwner) return;
+                      onSelectionChange(member.memberId, checked === true);
+                    }}
+                    aria-label={
+                      member.isOwner ? `${member.ownername} is the group owner` : `Select ${member.ownername}`
+                    }
+                  />
                 </div>
-                <Checkbox
-                  checked={member.isOwner ? true : member.isSelected}
-                  disabled={member.isOwner}
-                  onCheckedChange={(checked) => {
-                    if (member.isOwner) return;
-                    onSelectionChange(member.memberId, checked === true);
-                  }}
-                  aria-label={member.isOwner ? `${member.ownername} is the group owner` : `Select ${member.ownername}`}
-                />
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="flex justify-end">
