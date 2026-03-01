@@ -1,8 +1,29 @@
 "use client";
+import { GroupDetailViewModal } from "@/components/groups/group-detail-view-modal";
 import { useState } from "react";
 
 export default function PhanPage() {
   const [counter, setCounter] = useState(0);
+  const [open, setOpen] = useState(true);
+
+  const mockGroup = {
+    id: 1,
+    name: "Friends",
+    description: "People I keep in touch with.",
+    members: [
+      { memberId: 1, ownername: "Alice" },
+      { memberId: 2, ownername: "Bob" },
+      { memberId: 3, ownername: "Charlie" },
+      { memberId: 4, ownername: "Diana" },
+      { memberId: 5, ownername: "Ethan" },
+      { memberId: 6, ownername: "Fiona" },
+      { memberId: 7, ownername: "George" },
+      { memberId: 8, ownername: "Hannah" },
+      { memberId: 9, ownername: "Isaac" },
+      { memberId: 10, ownername: "Julia" },
+    ],
+    memberCount: 10,
+  };
   return (
     <div className="min-h-screen flex justify-center items-center">
       <div className="max-w-2xl grid grid-cols-1 gap-4">
@@ -21,6 +42,13 @@ export default function PhanPage() {
           {counter}
         </button>
       </div>
+      <GroupDetailViewModal
+        open={open}
+        onOpenChange={setOpen}
+        group={mockGroup}
+        onViewAllMembers={() => {}}
+        onEdit={() => {}}
+      />
     </div>
   );
 }
