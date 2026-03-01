@@ -1,9 +1,8 @@
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useState } from "react";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
 import { Input } from "../ui/input";
-import { Loader2, Plus } from "lucide-react";
 
 interface GroupEditModalProps {
   open: boolean;
@@ -15,40 +14,16 @@ interface GroupEditModalProps {
     members: Array<{ memberId: number; ownername: string }>;
     memberCount: number;
   };
-  onSave: (data: { name: string; description: string | null }) => void;
-  onDelete: () => void;
-  onAddMembers: () => void;
-  isSubmitting?: boolean;
+  onEdit: () => void;
+  onViewAllMembers: () => void;
 }
 
-export function GroupDetailViewModal({
-  open,
-  onOpenChange,
-  group,
-  onSave,
-  onDelete,
-  onAddMembers,
-  isSubmitting = false,
-}: GroupEditModalProps) {
+export function GroupDetailViewModal({ open, onOpenChange, group, onEdit, onViewAllMembers }: GroupEditModalProps) {
   const [newName, setNewName] = useState(group.name);
   const [newDescription, setNewDescription] = useState(group.description || "");
 
   const handleOpenChange = (nextOpen: boolean) => {
-    if (isSubmitting) return;
-    if (nextOpen) {
-      setNewName(group.name);
-      setNewDescription(group.description ?? "");
-    } else {
-      setNewName("");
-      setNewDescription("");
-    }
     onOpenChange(nextOpen);
-  };
-
-  const handleSave = (newData: { name: string; description: string | null }) => {
-    if (isSubmitting) return;
-    console.log(newName + " | " + newDescription);
-    onSave(newData);
   };
 
   return (
@@ -60,20 +35,19 @@ export function GroupDetailViewModal({
         <div className="grid grid-cols-1 justify-items-stretch gap-4">
           <Button
             type="button"
-            onClick={onDelete}
+            onClick={onEdit}
             className="
               justify-self-end
               bg-transparent
               border-none
               p-0
-              text-[#831002]
               hover:underline
               hover:bg-transparent
               cursor-pointer
               shadow-none
             "
           >
-            Delete
+            Edit
           </Button>
           <div className="grid grid-cols-1 gap-2">
             <label htmlFor="groupName" className="font-bold">
@@ -89,14 +63,14 @@ export function GroupDetailViewModal({
           </div>
           <div id="Members Section" className="flex items-center gap-4">
             <label htmlFor="addMember" className="font-bold">
-              Add Members
+              Members
             </label>
             <Button
               id="addMember"
-              onClick={onAddMembers}
+              onClick={onViewAllMembers}
               className="bg-slate-300 rounded-xl h-6 border-2 border-zinc-950"
             >
-              <Plus color="black" />
+              View All
             </Button>
           </div>
           <div id="avatarRow" className="flex gap-2">
@@ -110,15 +84,6 @@ export function GroupDetailViewModal({
             ) : null}
           </div>
         </div>
-        <DialogFooter>
-          <Button
-            onClick={() => handleSave({ name: newName, description: newDescription })}
-            className="bg-[#523019] rounded-xl p-6"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : "Save Changes"}
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
