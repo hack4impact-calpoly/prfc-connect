@@ -1,54 +1,59 @@
 "use client";
-import { GroupEditModal } from "@/components/groups/group-edit-modal";
+
 import { useState } from "react";
+import { GroupEditModal } from "@/components/groups/group-edit-modal";
+import { Button } from "@/components/ui/button";
+
+const mockGroup = {
+  id: 1,
+  name: "Friends",
+  description: "People I keep in touch with.",
+  members: [
+    { memberId: 1, ownername: "Alice Johnson" },
+    { memberId: 2, ownername: "Bob Smith" },
+    { memberId: 3, ownername: "Charlie Brown" },
+    { memberId: 4, ownername: "Diana Prince" },
+    { memberId: 5, ownername: "Ethan Hunt" },
+    { memberId: 6, ownername: "Fiona Apple" },
+    { memberId: 7, ownername: "George Lucas" },
+    { memberId: 8, ownername: "Hannah Montana" },
+    { memberId: 9, ownername: "Isaac Newton" },
+    { memberId: 10, ownername: "Julia Child" },
+  ],
+  memberCount: 10,
+};
 
 export default function PhanPage() {
-  const [counter, setCounter] = useState(0);
-  const [open, setOpen] = useState(true);
+  const [defaultOpen, setDefaultOpen] = useState(false);
+  const [submittingOpen, setSubmittingOpen] = useState(false);
 
-  const mockGroup = {
-    id: 1,
-    name: "Friends",
-    description: "People I keep in touch with.",
-    members: [
-      { memberId: 1, ownername: "Alice" },
-      { memberId: 2, ownername: "Bob" },
-      { memberId: 3, ownername: "Charlie" },
-      { memberId: 4, ownername: "Diana" },
-      { memberId: 5, ownername: "Ethan" },
-      { memberId: 6, ownername: "Fiona" },
-      { memberId: 7, ownername: "George" },
-      { memberId: 8, ownername: "Hannah" },
-      { memberId: 9, ownername: "Isaac" },
-      { memberId: 10, ownername: "Julia" },
-    ],
-    memberCount: 10,
-  };
   return (
-    <div className="min-h-screen flex justify-center items-center">
-      <div className="max-w-2xl grid grid-cols-1 gap-4">
-        <div className="rounded-lg p-8 max-w-2xl bg-emerald-900">
-          <h1 className="text-2xl font-bold text-white">Sam Phan</h1>
-          <h2 className="text-sm italic text-slate-300">Developer</h2>
-          <p className="text-slate-200">
-            <span className="font-bold">Fun Fact: </span>
-            <span>I have recently finished Season 1 of After Life (Netflix original).</span>
-          </p>
-        </div>
-        <button
-          className="rounded-xl px-8 py-4 bg-zinc-800 w-1/2 flex justify-center text-amber-100 justify-self-center"
-          onClick={() => setCounter((x) => x + 1)}
-        >
-          {counter}
-        </button>
-      </div>
+    <div className="p-20 flex flex-col items-center gap-4">
+      <h1 className="text-2xl font-bold mb-4">Group Edit Modal Preview</h1>
+
+      <Button onClick={() => setDefaultOpen(true)}>Default State</Button>
+      <Button onClick={() => setSubmittingOpen(true)}>Submitting State</Button>
+
       <GroupEditModal
-        open={open}
-        onOpenChange={setOpen}
+        open={defaultOpen}
+        onOpenChange={setDefaultOpen}
+        group={mockGroup}
+        onSave={(data) => {
+          alert(JSON.stringify(data, null, 2));
+          setDefaultOpen(false);
+        }}
+        onDelete={() => alert("Delete clicked")}
+        onAddMembers={() => alert("Add members clicked")}
+      />
+
+      <GroupEditModal
+        open={submittingOpen}
+        onOpenChange={setSubmittingOpen}
         group={mockGroup}
         onSave={() => {}}
         onDelete={() => {}}
         onAddMembers={() => {}}
+        isSubmitting
       />
     </div>
   );
