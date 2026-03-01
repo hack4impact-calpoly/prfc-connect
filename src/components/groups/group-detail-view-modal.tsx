@@ -2,6 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
 import { Input } from "../ui/input";
+import { getAvatarColor, getInitials } from "@/utils/avatar";
 
 interface GroupEditModalProps {
   open: boolean;
@@ -41,6 +42,7 @@ export function GroupDetailViewModal({ open, onOpenChange, group, onEdit, onView
               hover:bg-transparent
               cursor-pointer
               shadow-none
+              text-zinc-950
             "
           >
             Edit
@@ -53,7 +55,7 @@ export function GroupDetailViewModal({ open, onOpenChange, group, onEdit, onView
           </div>
           <div id="Editable Fields" className="grid grid-cols-1 gap-2">
             <label htmlFor="description" className="font-bold">
-              Description (Optional)
+              Description
             </label>
             <Textarea id="description" defaultValue={group.description || ""} readOnly={true} />
           </div>
@@ -64,14 +66,19 @@ export function GroupDetailViewModal({ open, onOpenChange, group, onEdit, onView
             <Button
               id="addMember"
               onClick={onViewAllMembers}
-              className="bg-slate-300 rounded-xl h-6 border-2 border-zinc-950"
+              className="bg-slate-300 rounded-xl h-6 border-2 border-zinc-950 text-zinc-950 text-xs"
             >
               View All
             </Button>
           </div>
           <div id="avatarRow" className="flex gap-2">
             {group.members.slice(0, 8).map((member) => (
-              <div key={member.memberId} className="bg-slate-300 h-8 w-8 rounded-full" />
+              <div
+                key={member.memberId}
+                className={`bg-[${getAvatarColor(member.ownername)}] h-8 w-8 rounded-full flex justify-center items-center text-black`}
+              >
+                {getInitials(member.ownername)}
+              </div>
             ))}
             {group.memberCount > 8 ? (
               <div className="bg-slate-300 h-8 w-8 rounded-full font-bold text-md flex justify-center items-center ">
