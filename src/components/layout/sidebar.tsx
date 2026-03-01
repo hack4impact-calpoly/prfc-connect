@@ -31,15 +31,13 @@ function isItemActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-// Note: top-[8vw] matches the header height in src/components/layout/header.tsx.
-// Both should be refactored to use a shared CSS custom property or rem-based value.
 export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
 
   return (
     <aside
       className={cn(
-        "fixed left-0 top-[8vw] z-20 hidden h-[calc(100vh-8vw)] w-[220px] bg-white md:block",
+        "fixed left-0 top-[var(--header-height)] z-20 hidden h-[calc(100vh-var(--header-height))] w-[220px] bg-white md:block",
         "border-r border-border",
         className,
       )}
