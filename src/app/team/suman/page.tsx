@@ -1,20 +1,24 @@
 "use client";
 
 import { Sidebar } from "@/components/layout/sidebar";
+import { TopBar } from "@/components/layout/top-bar";
 
 export default function SumanPage() {
   return (
     <div className="min-h-screen bg-background">
-      <div className="h-[8vw] bg-prfc-brown flex items-center px-6">
-        <span className="text-white font-bold text-xl">Top Bar Placeholder</span>
-      </div>
+      <TopBar
+        userName="Saurish Suman"
+        userRole="Admin Manager"
+        actionLabel="New Group"
+        onActionClick={() => alert("Action clicked")}
+      />
 
       <Sidebar />
 
-      <main className="ml-[220px] p-8 max-md:ml-0">
-        <h1 className="text-2xl font-bold mb-4">Sidebar Preview</h1>
+      <main className="min-h-[calc(100vh-var(--header-height))] p-8 md:pl-[calc(220px+2rem)]">
+        <h1 className="text-2xl font-bold mb-4">Top Bar + Sidebar Preview</h1>
         <p className="text-muted-foreground">
-          The sidebar is fixed on the left (hidden on mobile). Resize the browser to test responsive behavior.
+          Top bar spans full width. Sidebar is fixed on the left below it (hidden on mobile).
         </p>
       </main>
     </div>
