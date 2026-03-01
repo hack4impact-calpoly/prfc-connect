@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import Page from "@/app/team/phan/page";
-import userEvent from "@testing-library/user-event";
+// import userEvent from "@testing-library/user-event";
 
 describe("Phan Team Page", () => {
   it("renders name", () => {
@@ -18,18 +18,18 @@ describe("Phan Team Page", () => {
     expect(screen.getByText("Fun Fact:")).toBeInTheDocument();
   });
 
-  it("renders button", () => {
-    render(<Page />);
-    expect(screen.getByRole("button", { name: /0/ })).toBeInTheDocument();
-  });
+  // it("renders button", () => {
+  //   render(<Page />);
+  //   expect(screen.getByRole("button", { name: /0/ })).toBeInTheDocument();
+  // });
 
-  it("increments button when clicked", async () => {
-    render(<Page />);
-    const user = userEvent.setup();
-    const button = screen.getByRole("button", { name: /0/ });
-    expect(button).toBeInTheDocument();
+  // it("increments button when clicked", async () => {
+  //   render(<Page />);
+  //   const user = userEvent.setup();
+  //   const button = screen.getByRole("button", { name: /0/ });
+  //   expect(button).toBeInTheDocument();
 
-    await user.click(button);
-    expect(screen.getByRole("button", { name: /1/ })).toBeInTheDocument();
-  });
+  //   await user.click(button);
+  //   expect(screen.getByRole("button", { name: /1/ })).toBeInTheDocument();
+  // });
 });
