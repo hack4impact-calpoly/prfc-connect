@@ -1,27 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { EntityCard } from "@/components/groups/entity-card";
 
 export default function LinPage() {
-  const [count, setCount] = useState(0);
-
-  const increment = () => {
-    setCount(count + 1);
-  };
-
   return (
-    <div className="flex flex-col items-center pt-12 gap-3">
-      <div className="font-bold text-[40px]">Kyle Lin</div>
-      <div className="font-bold text-[25px]">Developer</div>
-      <div>
-        <strong>Fun Fact: </strong>I like to dance
-      </div>
-      <button onClick={increment} className="bg-emerald-300 p-5 rounded-xl">
-        Click Me!{" "}
-      </button>
-      <div>
-        Count: <div data-testid="count">{count}</div>
-      </div>
+    <div className="p-20 flex flex-col items-center gap-6 max-w-md mx-auto">
+      <h1 className="text-2xl font-bold mb-4">Entity Card Preview</h1>
+
+      <EntityCard
+        name="Garden Club"
+        memberCount={5}
+        description="A group for garden enthusiasts who love growing vegetables and sharing tips about sustainable farming practices."
+        onClick={() => alert("Clicked Garden Club")}
+      />
+
+      <EntityCard
+        name="Volunteer Team"
+        memberCount={1}
+        description={null}
+        onClick={() => alert("Clicked Volunteer Team")}
+      />
+
+      <EntityCard
+        name="Community Outreach"
+        memberCount={12}
+        description="Short description"
+        onClick={() => alert("Clicked Community Outreach")}
+      />
+
+      <EntityCard variant="add" onClick={() => alert("Add new group")} />
     </div>
   );
 }
