@@ -4,6 +4,7 @@ import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
 import { Input } from "../ui/input";
 import { Loader2, Plus } from "lucide-react";
+import { getAvatarColor, getInitials } from "@/utils/avatar";
 
 interface GroupEditModalProps {
   open: boolean;
@@ -116,7 +117,12 @@ export function GroupEditModal({
 
           <div id="avatarRow" className="flex gap-2">
             {group.members.slice(0, 8).map((member) => (
-              <div key={member.memberId} className="bg-slate-300 h-8 w-8 rounded-full" />
+              <div
+                key={member.memberId}
+                className={`bg-[${getAvatarColor(member.ownername)}] h-8 w-8 rounded-full flex justify-center items-center text-black`}
+              >
+                {getInitials(member.ownername)}
+              </div>
             ))}
             {group.memberCount > 8 ? (
               <div className="bg-slate-300 h-8 w-8 rounded-full font-bold text-md flex justify-center items-center ">
