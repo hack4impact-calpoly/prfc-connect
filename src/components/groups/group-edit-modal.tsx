@@ -91,14 +91,25 @@ export function GroupEditModal({
             <label htmlFor="groupName" className="font-bold">
               Group Name
             </label>
-            <Input type="text" id="groupName" value={newName} onChange={(e) => setNewName(e.target.value)} />
+            <Input
+              type="text"
+              id="groupName"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              className="olive-red-100 border-2 border-black"
+            />
           </div>
 
           <div id="Editable Fields" className="grid grid-cols-1 gap-2">
             <label htmlFor="description" className="font-bold">
               Description (Optional)
             </label>
-            <Textarea id="description" value={newDescription} onChange={(e) => setNewDescription(e.target.value)} />
+            <Textarea
+              id="description"
+              value={newDescription}
+              onChange={(e) => setNewDescription(e.target.value)}
+              className="olive-red-100 border-2 border-black"
+            />
           </div>
 
           <div id="Members Section" className="flex items-center gap-4">
