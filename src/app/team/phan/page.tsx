@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { GroupEditModal } from "@/components/groups/group-edit-modal";
+import { GroupDetailViewModal } from "@/components/groups/group-detail-view-modal";
 import { Button } from "@/components/ui/button";
 
 const mockGroup = {
@@ -24,36 +24,20 @@ const mockGroup = {
 };
 
 export default function PhanPage() {
-  const [defaultOpen, setDefaultOpen] = useState(false);
-  const [submittingOpen, setSubmittingOpen] = useState(false);
+  const [open, setOpen] = useState(false);
 
   return (
     <div className="p-20 flex flex-col items-center gap-4">
-      <h1 className="text-2xl font-bold mb-4">Group Edit Modal Preview</h1>
+      <h1 className="text-2xl font-bold mb-4">Group Detail View Modal Preview</h1>
 
-      <Button onClick={() => setDefaultOpen(true)}>Default State</Button>
-      <Button onClick={() => setSubmittingOpen(true)}>Submitting State</Button>
+      <Button onClick={() => setOpen(true)}>Open Detail View</Button>
 
-      <GroupEditModal
-        open={defaultOpen}
-        onOpenChange={setDefaultOpen}
+      <GroupDetailViewModal
+        open={open}
+        onOpenChange={setOpen}
         group={mockGroup}
-        onSave={(data) => {
-          alert(JSON.stringify(data, null, 2));
-          setDefaultOpen(false);
-        }}
-        onDelete={() => alert("Delete clicked")}
-        onAddMembers={() => alert("Add members clicked")}
-      />
-
-      <GroupEditModal
-        open={submittingOpen}
-        onOpenChange={setSubmittingOpen}
-        group={mockGroup}
-        onSave={() => {}}
-        onDelete={() => {}}
-        onAddMembers={() => {}}
-        isSubmitting
+        onEdit={() => alert("Edit clicked")}
+        onViewAllMembers={() => alert("View all members clicked")}
       />
     </div>
   );
