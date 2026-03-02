@@ -12,7 +12,7 @@ export const NAV_CONFIG: Record<AuthState, NavItem[]> = {
     { label: "Sign In", href: "https://pasofoodcooperative.coop/accounts/", external: true },
   ],
   member: [
-    { label: "Home", href: "/" },
+    { label: "Home", href: "/home" },
     { label: "My Groups", href: "/groups" },
     { label: "Messages", href: "/messages" },
     { label: "Events", href: "/events" },
@@ -20,7 +20,7 @@ export const NAV_CONFIG: Record<AuthState, NavItem[]> = {
     { label: "Settings", href: "/settings" },
   ],
   admin: [
-    { label: "Home", href: "/" },
+    { label: "Home", href: "/home" },
     { label: "Groups", href: "/groups" },
     { label: "Messages", href: "/messages" },
     { label: "Events", href: "/events" },

@@ -14,8 +14,8 @@ setup("authenticate as admin", async ({ page }) => {
   await page.getByLabel("Select Member").selectOption("100001");
   await page.getByRole("button", { name: "Login" }).click();
 
-  await page.waitForURL("/");
-  await expect(page).toHaveURL("/");
+  await page.waitForURL("/home");
+  await expect(page).toHaveURL("/home");
   await page.context().storageState({ path: ADMIN_AUTH_FILE });
 });
 
@@ -26,7 +26,7 @@ setup("authenticate as member", async ({ page }) => {
   await page.getByLabel("Select Member").selectOption("100003");
   await page.getByRole("button", { name: "Login" }).click();
 
-  await page.waitForURL("/");
-  await expect(page).toHaveURL("/");
+  await page.waitForURL("/home");
+  await expect(page).toHaveURL("/home");
   await page.context().storageState({ path: MEMBER_AUTH_FILE });
 });

@@ -21,7 +21,7 @@ export default function ProtectedError({ error, reset }: { error: Error & { dige
             Try again
           </button>
           <Link
-            href="/"
+            href="/home"
             className="bg-prfc-border text-white px-6 py-3 rounded font-montserrat hover:bg-prfc-dark-brown transition-colors"
           >
             Go home

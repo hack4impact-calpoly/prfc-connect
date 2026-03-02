@@ -5,7 +5,7 @@ async function loginAsAdmin(page: import("@playwright/test").Page) {
   await page.getByText("Dev Tools").click();
   await page.getByLabel("Select Member").selectOption("100001");
   await page.getByRole("button", { name: "Login" }).click();
-  await page.waitForURL("/");
+  await page.waitForURL("/home");
   await page.goto("/referral-database");
 }
 

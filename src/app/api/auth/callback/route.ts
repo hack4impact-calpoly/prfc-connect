@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.redirect(new URL("/", req.url));
   }
 
-  const response = NextResponse.redirect(new URL("/", req.url));
+  const response = NextResponse.redirect(new URL("/home", req.url));
 
   response.cookies.set(AUTH_COOKIE, token, {
     httpOnly: true,

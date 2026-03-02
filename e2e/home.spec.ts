@@ -1,5 +1,17 @@
 import { test, expect } from "@playwright/test";
 
+test.describe("Home dashboard - unauthenticated", () => {
+  test("cannot access /home without session", async ({ page }) => {
+    const response = await page.goto("/home");
+
+    const url = page.url();
+    const status = response?.status() ?? 0;
+    const isRedirected = !url.includes("/home");
+    const isErrorStatus = status >= 400;
+    expect(isRedirected || isErrorStatus).toBe(true);
+  });
+});
+
 test.describe("Home Page", () => {
   test("shows referral form elements", async ({ page }) => {
     await page.goto("/");

@@ -1,5 +1,7 @@
 import { test, expect, type Page, type Locator } from "@playwright/test";
 
+let seedGroupName: string;
+
 function getOpenDialog(page: Page): Locator {
   return page.locator('[role="dialog"][data-state="open"]');
 }
@@ -12,11 +14,63 @@ function getGroupCards(page: Page): Locator {
   return page.locator("button").filter({ hasText: /\d+ members?/ });
 }
 
+function isServerAction(resp: { request: () => { method: () => string; headers: () => Record<string, string> } }) {
+  return resp.request().method() === "POST" && !!resp.request().headers()["next-action"];
+}
+
+async function clickCardAndWaitForDetail(page: Page, card: Locator) {
+  const actionPromise = page.waitForResponse((resp) => isServerAction(resp));
+  await card.click();
+  await actionPromise;
+  await expect(getOpenDialog(page)).toBeVisible();
+}
+
+async function deleteGroupByName(page: Page, name: string) {
+  await page.goto("/groups");
+  const card = page.getByText(name, { exact: true });
+  if ((await card.count()) === 0) return;
+
+  await clickCardAndWaitForDetail(page, card.first());
+  await getOpenDialog(page).getByRole("button", { name: "Edit" }).click();
+  await expect(getOpenDialog(page).getByRole("button", { name: "Save Changes" })).toBeVisible();
+  await getOpenDialog(page).getByRole("button", { name: "Delete" }).click();
+  await expect(getOpenAlertDialog(page)).toBeVisible();
+
+  const deletePromise = page.waitForResponse((resp) => isServerAction(resp));
+  await getOpenAlertDialog(page).getByRole("button", { name: "Confirm" }).click();
+  await deletePromise;
+  await expect(page.getByText("Group deleted successfully")).toBeVisible();
+}
+
+test.beforeAll(async ({ browser }) => {
+  seedGroupName = `E2E Seed ${Date.now()} ${Math.random().toString(36).slice(2, 6)}`;
+  const page = await browser.newPage();
+  await page.goto("/groups");
+  await page.getByRole("button", { name: "Add new group" }).click();
+  const dialog = getOpenDialog(page);
+  await expect(dialog).toBeVisible();
+  await dialog.getByLabel("Group Name").fill(seedGroupName);
+
+  const createPromise = page.waitForResponse((resp) => isServerAction(resp));
+  await dialog.getByRole("button", { name: "Create Group" }).click();
+  await createPromise;
+  await expect(page.getByText("Group created successfully")).toBeVisible();
+  await expect(getOpenDialog(page)).not.toBeVisible();
+  await page.close();
+});
+
+test.afterAll(async ({ browser }) => {
+  const page = await browser.newPage();
+  await deleteGroupByName(page, seedGroupName);
+  await page.close();
+});
+
 test.describe("Groups page load", () => {
   test("displays group cards and add card", async ({ page }) => {
     await page.goto("/groups");
 
     await expect(page.getByRole("button", { name: "Add new group" })).toBeVisible();
+    await expect(getGroupCards(page).first()).toBeVisible();
   });
 
   test("shows correct heading for role", async ({ page }) => {
@@ -33,29 +87,17 @@ test.describe("Group detail modal", () => {
   test("clicking a group card opens the detail modal", async ({ page }) => {
     await page.goto("/groups");
 
-    const cards = getGroupCards(page);
-    const cardCount = await cards.count();
-    test.skip(cardCount === 0, "no groups to test with");
+    await clickCardAndWaitForDetail(page, getGroupCards(page).first());
 
-    await cards.first().click();
-
-    const dialog = getOpenDialog(page);
-    await expect(dialog).toBeVisible();
-    await expect(dialog.getByLabel("Group Name")).toBeVisible();
+    await expect(getOpenDialog(page).getByLabel("Group Name")).toBeVisible();
   });
 
   test("detail modal shows group name, description, and members section", async ({ page }) => {
     await page.goto("/groups");
 
-    const cards = getGroupCards(page);
-    const cardCount = await cards.count();
-    test.skip(cardCount === 0, "no groups to test with");
-
-    await cards.first().click();
+    await clickCardAndWaitForDetail(page, getGroupCards(page).first());
 
     const dialog = getOpenDialog(page);
-    await expect(dialog).toBeVisible();
-
     await expect(dialog.getByLabel("Group Name")).toBeVisible();
     await expect(dialog.getByText("Members")).toBeVisible();
     await expect(dialog.getByRole("button", { name: "Edit" })).toBeVisible();
@@ -65,12 +107,7 @@ test.describe("Group detail modal", () => {
   test("detail modal closes via Escape key", async ({ page }) => {
     await page.goto("/groups");
 
-    const cards = getGroupCards(page);
-    const cardCount = await cards.count();
-    test.skip(cardCount === 0, "no groups to test with");
-
-    await cards.first().click();
-    await expect(getOpenDialog(page)).toBeVisible();
+    await clickCardAndWaitForDetail(page, getGroupCards(page).first());
 
     await page.keyboard.press("Escape");
     await expect(getOpenDialog(page)).not.toBeVisible();
@@ -79,15 +116,9 @@ test.describe("Group detail modal", () => {
   test("Edit button transitions to edit modal with Save Changes", async ({ page }) => {
     await page.goto("/groups");
 
-    const cards = getGroupCards(page);
-    const cardCount = await cards.count();
-    test.skip(cardCount === 0, "no groups to test with");
+    await clickCardAndWaitForDetail(page, getGroupCards(page).first());
 
-    await cards.first().click();
-    const dialog = getOpenDialog(page);
-    await expect(dialog).toBeVisible();
-
-    await dialog.getByRole("button", { name: "Edit" }).click();
+    await getOpenDialog(page).getByRole("button", { name: "Edit" }).click();
 
     const editDialog = getOpenDialog(page);
     await expect(editDialog.getByRole("button", { name: "Save Changes" })).toBeVisible();
@@ -97,22 +128,16 @@ test.describe("Group detail modal", () => {
 test.describe("Group edit modal", () => {
   async function openEditModal(page: Page) {
     await page.goto("/groups");
-    const cards = getGroupCards(page);
-    await cards.first().click();
-    await expect(getOpenDialog(page)).toBeVisible();
+    await clickCardAndWaitForDetail(page, getGroupCards(page).first());
     await getOpenDialog(page).getByRole("button", { name: "Edit" }).click();
     await expect(getOpenDialog(page).getByRole("button", { name: "Save Changes" })).toBeVisible();
   }
 
   test("pre-populates name and description from the group", async ({ page }) => {
     await page.goto("/groups");
-    const cards = getGroupCards(page);
-    const cardCount = await cards.count();
-    test.skip(cardCount === 0, "no groups to test with");
 
-    await cards.first().click();
+    await clickCardAndWaitForDetail(page, getGroupCards(page).first());
     const detailDialog = getOpenDialog(page);
-    await expect(detailDialog).toBeVisible();
     const groupName = await detailDialog.getByLabel("Group Name").inputValue();
 
     await detailDialog.getByRole("button", { name: "Edit" }).click();
@@ -123,11 +148,6 @@ test.describe("Group edit modal", () => {
   });
 
   test("submitting with empty name shows validation error", async ({ page }) => {
-    const cards = getGroupCards(page);
-    await page.goto("/groups");
-    const cardCount = await cards.count();
-    test.skip(cardCount === 0, "no groups to test with");
-
     await openEditModal(page);
 
     const dialog = getOpenDialog(page);
@@ -138,11 +158,6 @@ test.describe("Group edit modal", () => {
   });
 
   test("saving valid changes shows success toast and closes modal", async ({ page }) => {
-    const cards = getGroupCards(page);
-    await page.goto("/groups");
-    const cardCount = await cards.count();
-    test.skip(cardCount === 0, "no groups to test with");
-
     await openEditModal(page);
 
     const dialog = getOpenDialog(page);
@@ -151,28 +166,28 @@ test.describe("Group edit modal", () => {
 
     await nameInput.clear();
     await nameInput.fill(originalName + " Edited");
+
+    const savePromise = page.waitForResponse((resp) => isServerAction(resp));
     await dialog.getByRole("button", { name: "Save Changes" }).click();
+    await savePromise;
 
     await expect(page.getByText("Group updated successfully")).toBeVisible();
     await expect(getOpenDialog(page)).not.toBeVisible();
 
-    await page.getByText(originalName + " Edited").click();
-    await expect(getOpenDialog(page)).toBeVisible();
+    await clickCardAndWaitForDetail(page, page.getByText(originalName + " Edited"));
     await getOpenDialog(page).getByRole("button", { name: "Edit" }).click();
     await expect(getOpenDialog(page).getByRole("button", { name: "Save Changes" })).toBeVisible();
     const restoreInput = getOpenDialog(page).getByLabel("Group Name");
     await restoreInput.clear();
     await restoreInput.fill(originalName);
+
+    const restorePromise = page.waitForResponse((resp) => isServerAction(resp));
     await getOpenDialog(page).getByRole("button", { name: "Save Changes" }).click();
+    await restorePromise;
     await expect(page.getByText("Group updated successfully")).toBeVisible();
   });
 
   test("Delete button opens delete confirmation", async ({ page }) => {
-    const cards = getGroupCards(page);
-    await page.goto("/groups");
-    const cardCount = await cards.count();
-    test.skip(cardCount === 0, "no groups to test with");
-
     await openEditModal(page);
 
     await getOpenDialog(page).getByRole("button", { name: "Delete" }).click();
@@ -183,11 +198,6 @@ test.describe("Group edit modal", () => {
   });
 
   test("Add Members button opens add members modal", async ({ page }) => {
-    const cards = getGroupCards(page);
-    await page.goto("/groups");
-    const cardCount = await cards.count();
-    test.skip(cardCount === 0, "no groups to test with");
-
     await openEditModal(page);
 
     await getOpenDialog(page).getByRole("button", { name: "Add members to group" }).click();
@@ -201,9 +211,7 @@ test.describe("Group edit modal", () => {
 test.describe("Delete group modal", () => {
   async function openDeleteModal(page: Page) {
     await page.goto("/groups");
-    const cards = getGroupCards(page);
-    await cards.first().click();
-    await expect(getOpenDialog(page)).toBeVisible();
+    await clickCardAndWaitForDetail(page, getGroupCards(page).first());
     await getOpenDialog(page).getByRole("button", { name: "Edit" }).click();
     await expect(getOpenDialog(page).getByRole("button", { name: "Save Changes" })).toBeVisible();
     await getOpenDialog(page).getByRole("button", { name: "Delete" }).click();
@@ -211,11 +219,6 @@ test.describe("Delete group modal", () => {
   }
 
   test("cancel returns to edit modal", async ({ page }) => {
-    const cards = getGroupCards(page);
-    await page.goto("/groups");
-    const cardCount = await cards.count();
-    test.skip(cardCount === 0, "no groups to test with");
-
     await openDeleteModal(page);
 
     await getOpenAlertDialog(page).getByRole("button", { name: "Cancel" }).click();
@@ -266,20 +269,25 @@ test.describe("Create group modal", () => {
     const dialog = getOpenDialog(page);
     await dialog.getByLabel("Group Name").fill(uniqueName);
     await dialog.getByLabel("Description (Optional)").fill("Created by e2e test");
+
+    const createPromise = page.waitForResponse((resp) => isServerAction(resp));
     await dialog.getByRole("button", { name: "Create Group" }).click();
+    await createPromise;
 
     await expect(page.getByText("Group created successfully")).toBeVisible();
     await expect(getOpenDialog(page)).not.toBeVisible();
 
     await expect(page.getByText(uniqueName)).toBeVisible();
 
-    await page.getByText(uniqueName).click();
-    await expect(getOpenDialog(page)).toBeVisible();
+    await clickCardAndWaitForDetail(page, page.getByText(uniqueName));
     await getOpenDialog(page).getByRole("button", { name: "Edit" }).click();
     await expect(getOpenDialog(page).getByRole("button", { name: "Save Changes" })).toBeVisible();
     await getOpenDialog(page).getByRole("button", { name: "Delete" }).click();
     await expect(getOpenAlertDialog(page)).toBeVisible();
+
+    const deletePromise = page.waitForResponse((resp) => isServerAction(resp));
     await getOpenAlertDialog(page).getByRole("button", { name: "Confirm" }).click();
+    await deletePromise;
     await expect(page.getByText("Group deleted successfully")).toBeVisible();
   });
 
@@ -301,9 +309,7 @@ test.describe("Create group modal", () => {
 test.describe("Add members modal", () => {
   async function openAddMembersModal(page: Page) {
     await page.goto("/groups");
-    const cards = getGroupCards(page);
-    await cards.first().click();
-    await expect(getOpenDialog(page)).toBeVisible();
+    await clickCardAndWaitForDetail(page, getGroupCards(page).first());
     await getOpenDialog(page).getByRole("button", { name: "Edit" }).click();
     await expect(getOpenDialog(page).getByRole("button", { name: "Save Changes" })).toBeVisible();
     await getOpenDialog(page).getByRole("button", { name: "Add members to group" }).click();
@@ -311,11 +317,6 @@ test.describe("Add members modal", () => {
   }
 
   test("shows member list with checkboxes", async ({ page }) => {
-    const cards = getGroupCards(page);
-    await page.goto("/groups");
-    const cardCount = await cards.count();
-    test.skip(cardCount === 0, "no groups to test with");
-
     await openAddMembersModal(page);
 
     const dialog = getOpenDialog(page);
@@ -325,11 +326,6 @@ test.describe("Add members modal", () => {
   });
 
   test("search filters members by name", async ({ page }) => {
-    const cards = getGroupCards(page);
-    await page.goto("/groups");
-    const cardCount = await cards.count();
-    test.skip(cardCount === 0, "no groups to test with");
-
     await openAddMembersModal(page);
 
     const dialog = getOpenDialog(page);
@@ -346,11 +342,6 @@ test.describe("Add members modal", () => {
   });
 
   test("saving with no new selections returns to edit modal", async ({ page }) => {
-    const cards = getGroupCards(page);
-    await page.goto("/groups");
-    const cardCount = await cards.count();
-    test.skip(cardCount === 0, "no groups to test with");
-
     await openAddMembersModal(page);
 
     await getOpenDialog(page).getByRole("button", { name: "Save" }).click();
@@ -364,12 +355,7 @@ test.describe("Full modal navigation chains", () => {
   test("card → detail → edit → delete → cancel → back to edit → close", async ({ page }) => {
     await page.goto("/groups");
 
-    const cards = getGroupCards(page);
-    const cardCount = await cards.count();
-    test.skip(cardCount === 0, "no groups to test with");
-
-    await cards.first().click();
-    await expect(getOpenDialog(page)).toBeVisible({ timeout: 10000 });
+    await clickCardAndWaitForDetail(page, getGroupCards(page).first());
     await expect(getOpenDialog(page).getByRole("button", { name: "Edit" })).toBeVisible();
 
     await getOpenDialog(page).getByRole("button", { name: "Edit" }).click();
@@ -389,12 +375,7 @@ test.describe("Full modal navigation chains", () => {
   test("card → detail → edit → add members → save → back to edit", async ({ page }) => {
     await page.goto("/groups");
 
-    const cards = getGroupCards(page);
-    const cardCount = await cards.count();
-    test.skip(cardCount === 0, "no groups to test with");
-
-    await cards.first().click();
-    await expect(getOpenDialog(page)).toBeVisible();
+    await clickCardAndWaitForDetail(page, getGroupCards(page).first());
 
     await getOpenDialog(page).getByRole("button", { name: "Edit" }).click();
     await expect(getOpenDialog(page).getByRole("button", { name: "Save Changes" })).toBeVisible();
