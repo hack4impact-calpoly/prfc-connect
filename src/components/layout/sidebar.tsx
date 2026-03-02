@@ -17,7 +17,7 @@ interface SidebarNavItem {
 }
 
 const SIDEBAR_ITEMS: SidebarNavItem[] = [
-  { label: "Home", href: "/", icon: LayoutGrid },
+  { label: "Home", href: "/home", icon: LayoutGrid },
   { label: "Messages", href: "/messages", icon: MessageSquareMore },
   { label: "Groups", href: "/groups", icon: UsersRound },
   { label: "Events", href: "/events", icon: CalendarDays },
@@ -25,9 +25,6 @@ const SIDEBAR_ITEMS: SidebarNavItem[] = [
 ];
 
 function isItemActive(pathname: string, href: string): boolean {
-  if (href === "/") {
-    return pathname === "/";
-  }
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
