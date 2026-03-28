@@ -11,7 +11,7 @@ export default function MockPortalPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  if (process.env.NODE_ENV === "production") {
+  if (process.env.NODE_ENV === "production" && process.env.STAGING !== "true") {
     return (
       <main className="flex flex-1 items-center justify-center">
         <p>Not available in production</p>
@@ -28,7 +28,7 @@ export default function MockPortalPage() {
     }
   }
 
-  async function handleLogin(e: React.FormEvent) {
+  async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
 

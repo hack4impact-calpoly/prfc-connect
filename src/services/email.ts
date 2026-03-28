@@ -7,27 +7,48 @@ import { env } from "@/env";
 import { generateUnsubscribeToken } from "@/lib/unsubscribe-tokens";
 import { filterSuppressedEmails } from "./email-suppression";
 
-const transport = nodemailer.createTransport({
-  host: env.SMTP_HOST,
-  port: env.SMTP_PORT,
-  secure: env.SMTP_SECURE,
-  auth: {
-    user: env.SMTP_USER,
-    pass: env.SMTP_PASS,
-  },
-  pool: true,
-  maxConnections: 5,
-  maxMessages: 100,
-  rateLimit: 10,
-  rateDelta: 1000,
-  socketTimeout: 45000,
-  connectionTimeout: 30000,
-});
+let _transport: nodemailer.Transporter | null = null;
+
+function getTransport(): nodemailer.Transporter {
+  if (_transport) return _transport;
+  _transport = nodemailer.createTransport({
+    host: env.SMTP_HOST,
+    port: env.SMTP_PORT,
+    secure: env.SMTP_SECURE,
+    auth: {
+      user: env.SMTP_USER,
+      pass: env.SMTP_PASS,
+    },
+    pool: true,
+    maxConnections: 5,
+    maxMessages: 100,
+    rateLimit: 10,
+    rateDelta: 1000,
+    socketTimeout: 45000,
+    connectionTimeout: 30000,
+  });
+  return _transport;
+}
 
 process.on("SIGTERM", () => {
-  console.log("Closing email transport...");
-  transport.close();
+  if (_transport) {
+    console.log("Closing email transport...");
+    _transport.close();
+  }
 });
+
+export function validateEmailAllowed(): void {
+  if (!env.EMAIL_ENABLED) {
+    throw new AppError("FORBIDDEN", "Email functionality is currently disabled", { reason: "EMAIL_DISABLED" });
+  }
+}
+
+function applyRedirect(to: string, subject: string): { to: string; subject: string } {
+  if (env.EMAIL_REDIRECT_TO) {
+    return { to: env.EMAIL_REDIRECT_TO, subject: `[TEST to: ${to}] ${subject}` };
+  }
+  return { to, subject };
+}
 
 interface SendReferralEmailParams {
   prospects: Prospect[];
@@ -44,10 +65,13 @@ export async function sendReferralEmails({
 
   try {
     for (const prospect of prospects) {
+      const originalSubject = "You've Been Invited!";
+      const { to, subject } = applyRedirect(prospect.prospectEmail, originalSubject);
+
       const mail = {
         from: env.FROM_EMAIL,
-        to: prospect.prospectEmail,
-        subject: "You've Been Invited!",
+        to,
+        subject,
         html: generateEmailHtml(prospect.prospectName, memberName, referralCode),
         attachments: [
           {
@@ -58,7 +82,7 @@ export async function sendReferralEmails({
         ],
       };
 
-      await transport.sendMail(mail);
+      await getTransport().sendMail(mail);
     }
   } catch (error) {
     throw new AppError("EMAIL_ERROR", "Failed to send referral emails", {
@@ -145,11 +169,13 @@ export async function sendGroupEmails(
 </p>
 `;
 
-        await transport.sendMail({
+        const { to, subject: redirectedSubject } = applyRedirect(recipient.email, subject);
+
+        await getTransport().sendMail({
           from: `${senderName} <${env.FROM_EMAIL}>`,
-          to: recipient.email,
+          to,
           replyTo,
-          subject,
+          subject: redirectedSubject,
           html: htmlWithFooter,
           headers: {
             "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ReferralFormSchema } from "@/schema/api";
 import { createManyReferrals, getAllReferrals } from "@/services/referral";
 import { sendReferralEmails } from "@/services/email";
+import { env } from "@/env";
 import { rateLimiter } from "@/lib/rate-limit";
 import { getIdempotentResponse, setIdempotentResponse } from "@/lib/idempotency";
 import { validateOrigin } from "@/lib/csrf";
@@ -47,7 +48,9 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { memberName, memberEmail, referralCode, prospects } = ReferralFormSchema.parse(body);
 
-    await sendReferralEmails({ prospects, referralCode, memberName });
+    if (env.EMAIL_ENABLED) {
+      await sendReferralEmails({ prospects, referralCode, memberName });
+    }
 
     const referrals = prospects.map((prospect) => ({
       memberName,

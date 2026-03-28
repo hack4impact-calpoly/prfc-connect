@@ -33,6 +33,7 @@ const testBlastMessage: Message = {
 };
 
 const envMock = vi.hoisted(() => ({
+  EMAIL_ENABLED: false as boolean,
   SMS_ENABLED: false as boolean,
   FROM_EMAIL: "no-reply@prfc.coop",
 }));
@@ -44,6 +45,11 @@ vi.mock("@/services/contact-group", () => ({
 
 vi.mock("@/services/email", () => ({
   sendGroupEmails: vi.fn(),
+  validateEmailAllowed: vi.fn(() => {
+    if (!envMock.EMAIL_ENABLED) {
+      throw new AppError("FORBIDDEN", "Email functionality is currently disabled", { reason: "EMAIL_DISABLED" });
+    }
+  }),
 }));
 
 vi.mock("@/lib/api/member-api", () => ({
@@ -157,6 +163,7 @@ describe("sendGroupMessage", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    envMock.EMAIL_ENABLED = true;
     envMock.SMS_ENABLED = false;
     mockInteractiveTransaction();
   });
@@ -255,6 +262,7 @@ describe("sendBlastMessage", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    envMock.EMAIL_ENABLED = true;
     envMock.SMS_ENABLED = false;
     mockInteractiveTransaction();
   });

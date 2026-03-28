@@ -3,7 +3,7 @@ import prisma from "@/lib/db";
 import { env } from "@/env";
 import { AppError, transformError } from "@/utils/errors";
 import { getGroupRecipients } from "@/services/contact-group";
-import { sendGroupEmails } from "@/services/email";
+import { sendGroupEmails, validateEmailAllowed } from "@/services/email";
 import { getMemberDetails, getAllActiveMemberIds } from "@/lib/api/member-api";
 import type { ComposeMessage, BlastMessage } from "@/schema/contact-group";
 import type { MockMember } from "@/lib/mock-members";
@@ -99,7 +99,7 @@ async function sendEmailsForMessage(
       subject,
       body,
       senderName: "Paso Robles Food Co-op",
-      replyTo: env.FROM_EMAIL,
+      replyTo: env.FROM_EMAIL ?? "",
       groupId: groupId ?? 0,
     });
 
@@ -142,6 +142,10 @@ export async function sendGroupMessage(input: ComposeMessage, senderId: number):
 
     if (!sendEmail && !sendSms) {
       throw new AppError("VALIDATION_ERROR", "At least one delivery method (email or SMS) must be selected");
+    }
+
+    if (sendEmail) {
+      validateEmailAllowed();
     }
 
     if (sendSms) {
@@ -234,6 +238,10 @@ export async function sendBlastMessage(input: BlastMessage, senderId: number): P
 
     if (!sendEmail && !sendSms) {
       throw new AppError("VALIDATION_ERROR", "At least one delivery method (email or SMS) must be selected");
+    }
+
+    if (sendEmail) {
+      validateEmailAllowed();
     }
 
     if (sendSms) {

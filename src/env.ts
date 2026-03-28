@@ -3,15 +3,15 @@ import { z } from "zod";
 const envSchema = z.object({
   DATABASE_URL: z.url(),
 
-  SMTP_HOST: z.string().min(1),
+  SMTP_HOST: z.string().min(1).optional(),
   SMTP_PORT: z.coerce.number().default(587),
   SMTP_SECURE: z
     .string()
     .default("false")
     .transform((v) => v === "true"),
-  SMTP_USER: z.string().min(1),
-  SMTP_PASS: z.string().min(1),
-  FROM_EMAIL: z.email(),
+  SMTP_USER: z.string().min(1).optional(),
+  SMTP_PASS: z.string().min(1).optional(),
+  FROM_EMAIL: z.email().optional(),
 
   UPSTASH_REDIS_REST_URL: z.url().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
@@ -20,10 +20,23 @@ const envSchema = z.object({
   PRFC_PORTAL_SECRET: z.string().min(32).optional(),
 
   // SMS feature flag (disabled by default)
+  EMAIL_ENABLED: z
+    .string()
+    .default("false")
+    .transform((v) => v === "true"),
+  EMAIL_REDIRECT_TO: z.email().optional(),
+
   SMS_ENABLED: z
     .string()
     .default("false")
     .transform((v) => v === "true"),
+
+  STAGING: z
+    .string()
+    .default("false")
+    .transform((v) => v === "true"),
+  STAGING_USERNAME: z.string().min(1).optional(),
+  STAGING_PASSWORD: z.string().min(1).optional(),
 
   // Member Portal API integration toggle
   USE_MOCK_MEMBER_API: z

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { ReferralFormSchema } from "@/schema/api";
 import { createManyReferrals, toggleReferralRedeemed } from "@/services/referral";
 import { sendReferralEmails } from "@/services/email";
+import { env } from "@/env";
 import { transformError } from "@/utils/errors";
 import { verifySession, requireAdmin } from "@/lib/dal";
 import type { ActionResult } from "@/lib/action-types";
@@ -28,7 +29,9 @@ export async function submitReferrals(formData: FormData): Promise<ActionResult>
 
     const { memberName, memberEmail, referralCode, prospects } = ReferralFormSchema.parse(rawData);
 
-    await sendReferralEmails({ prospects, referralCode, memberName });
+    if (env.EMAIL_ENABLED) {
+      await sendReferralEmails({ prospects, referralCode, memberName });
+    }
 
     const referrals = prospects.map((prospect) => ({
       memberName,
