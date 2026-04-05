@@ -33,6 +33,7 @@ model ContactGroup {
 
   members  ContactGroupMember[]
   messages Message[]
+  events   Event[]
 
   @@index([ownerid])
   @@map("contact_group")
@@ -137,4 +138,66 @@ model MessageRecipient {
   @@index([memberId, sentAt])
   @@index([externalId])
   @@map("message_recipient")
+}
+
+enum EventType {
+  social
+  networking
+  volunteer
+  meeting
+}
+
+enum RsvpStatus {
+  going
+  maybe
+  declined
+}
+
+model Event {
+  id           Int        @id @default(autoincrement())
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+  title        String     @db.VarChar(200)
+  description  String?    @db.Text
+  location     String?    @db.VarChar(200)
+  startDate    DateTime   @map("start_date")
+  endDate      DateTime   @map("end_date")
+  rsvpDeadline DateTime?  @map("rsvp_deadline")
+  eventType    EventType  @map("event_type")
+  ownerid      Int
+  groupId      Int?       @map("group_id")
+
+  group ContactGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  rsvps EventRsvp[]
+
+  @@index([ownerid])
+  @@index([groupId])
+  @@index([startDate])
+  @@index([eventType])
+  @@map("event")
+}
+
+model EventRsvp {
+  id          Int        @id @default(autoincrement())
+  eventId     Int        @map("event_id")
+  memberId    Int        @map("member_id")
+  status      RsvpStatus
+  respondedAt DateTime   @default(now()) @map("responded_at")
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, memberId])
+  @@index([memberId])
+  @@map("event_rsvp")
+}
+
+model UserPreference {
+  id                 Int      @id @default(autoincrement())
+  memberId           Int      @unique @map("member_id")
+  notifyEmailDefault Boolean  @default(true) @map("notify_email_default")
+  notifySmsDefault   Boolean  @default(false) @map("notify_sms_default")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  @@map("user_preference")
 }
