@@ -1,6 +1,6 @@
 import "../mocks/prisma";
 import "../mocks/encryption";
-import { prismaMock } from "../mocks";
+import { mockPrisma } from "../mocks";
 import { POST } from "@/app/api/unsubscribe/route";
 import { NextRequest } from "next/server";
 
@@ -59,7 +59,7 @@ describe("POST /api/unsubscribe", () => {
       memberId: 123,
       groupId: 456,
     });
-    prismaMock.contactGroupMember.updateMany.mockResolvedValue({ count: 1 });
+    mockPrisma.contactGroupMember.updateMany.mockResolvedValue({ count: 1 });
 
     const req = new NextRequest("http://localhost/api/unsubscribe?token=valid-token", {
       method: "POST",
@@ -67,7 +67,7 @@ describe("POST /api/unsubscribe", () => {
     const res = await POST(req);
 
     expect(res.status).toBe(204);
-    expect(prismaMock.contactGroupMember.updateMany).toHaveBeenCalledWith({
+    expect(mockPrisma.contactGroupMember.updateMany).toHaveBeenCalledWith({
       where: { memberId: 123, groupId: 456 },
       data: {
         notifyEmail: false,
@@ -83,7 +83,7 @@ describe("POST /api/unsubscribe", () => {
       memberId: 123,
       groupId: 456,
     });
-    prismaMock.contactGroupMember.updateMany.mockRejectedValue(new Error("DB error"));
+    mockPrisma.contactGroupMember.updateMany.mockRejectedValue(new Error("DB error"));
 
     const req = new NextRequest("http://localhost/api/unsubscribe?token=valid-token", {
       method: "POST",

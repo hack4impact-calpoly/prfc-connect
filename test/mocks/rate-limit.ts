@@ -36,4 +36,4 @@ beforeEach(() => {
   });
 });
 
-export { mockLimit as rateLimiterMock, mockMembersLimit as membersRateLimiterMock };
+export { mockLimit as mockRateLimiter, mockMembersLimit as mockMembersRateLimiter };

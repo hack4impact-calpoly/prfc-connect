@@ -1,4 +1,4 @@
-import { prismaMock } from "../mocks/prisma";
+import { mockPrisma } from "../mocks/prisma";
 import { getGroupMessageHistory } from "@/services/message";
 
 vi.mock("@/services/contact-group", () => ({
@@ -57,7 +57,7 @@ describe("getGroupMessageHistory", () => {
   });
 
   it("returns messages ordered by sentAt desc", async () => {
-    prismaMock.message.findMany.mockResolvedValue(testMessages as never);
+    mockPrisma.message.findMany.mockResolvedValue(testMessages as never);
 
     const result = await getGroupMessageHistory(5);
 
@@ -68,11 +68,11 @@ describe("getGroupMessageHistory", () => {
   });
 
   it("uses select with only summary fields", async () => {
-    prismaMock.message.findMany.mockResolvedValue([] as never);
+    mockPrisma.message.findMany.mockResolvedValue([] as never);
 
     await getGroupMessageHistory(5);
 
-    expect(prismaMock.message.findMany).toHaveBeenCalledWith({
+    expect(mockPrisma.message.findMany).toHaveBeenCalledWith({
       where: { groupId: 5 },
       select: {
         id: true,
@@ -90,47 +90,47 @@ describe("getGroupMessageHistory", () => {
   });
 
   it("applies default limit of 20", async () => {
-    prismaMock.message.findMany.mockResolvedValue([] as never);
+    mockPrisma.message.findMany.mockResolvedValue([] as never);
 
     await getGroupMessageHistory(5);
 
-    expect(prismaMock.message.findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 20 }));
+    expect(mockPrisma.message.findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 20 }));
   });
 
   it("respects custom limit", async () => {
-    prismaMock.message.findMany.mockResolvedValue([] as never);
+    mockPrisma.message.findMany.mockResolvedValue([] as never);
 
     await getGroupMessageHistory(5, 10);
 
-    expect(prismaMock.message.findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 10 }));
+    expect(mockPrisma.message.findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 10 }));
   });
 
   it("clamps limit to max of 100", async () => {
-    prismaMock.message.findMany.mockResolvedValue([] as never);
+    mockPrisma.message.findMany.mockResolvedValue([] as never);
 
     await getGroupMessageHistory(5, 500);
 
-    expect(prismaMock.message.findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 100 }));
+    expect(mockPrisma.message.findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 100 }));
   });
 
   it("clamps zero limit to 1", async () => {
-    prismaMock.message.findMany.mockResolvedValue([] as never);
+    mockPrisma.message.findMany.mockResolvedValue([] as never);
 
     await getGroupMessageHistory(5, 0);
 
-    expect(prismaMock.message.findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 1 }));
+    expect(mockPrisma.message.findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 1 }));
   });
 
   it("clamps negative limit to 1", async () => {
-    prismaMock.message.findMany.mockResolvedValue([] as never);
+    mockPrisma.message.findMany.mockResolvedValue([] as never);
 
     await getGroupMessageHistory(5, -5);
 
-    expect(prismaMock.message.findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 1 }));
+    expect(mockPrisma.message.findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 1 }));
   });
 
   it("returns empty array when no messages exist", async () => {
-    prismaMock.message.findMany.mockResolvedValue([] as never);
+    mockPrisma.message.findMany.mockResolvedValue([] as never);
 
     const result = await getGroupMessageHistory(999);
 
@@ -138,7 +138,7 @@ describe("getGroupMessageHistory", () => {
   });
 
   it("throws INTERNAL_ERROR on database failure", async () => {
-    prismaMock.message.findMany.mockRejectedValue(new Error("Database down"));
+    mockPrisma.message.findMany.mockRejectedValue(new Error("Database down"));
 
     await expect(getGroupMessageHistory(5)).rejects.toMatchObject({
       code: "INTERNAL_ERROR",

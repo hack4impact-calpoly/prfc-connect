@@ -1,7 +1,7 @@
 import "../mocks/dal";
 import "../mocks/csrf";
 import "../mocks/encryption";
-import { prismaMock, createMockRequest, referralCharlie, mockRequireAdmin, mockValidateOrigin } from "../mocks";
+import { mockPrisma, createMockRequest, referralCharlie, mockRequireAdmin, mockValidateOrigin } from "../mocks";
 import { PATCH, DELETE } from "@/app/api/referrals/[id]/route";
 import { AppError } from "@/utils/errors";
 
@@ -15,7 +15,7 @@ describe("PATCH /api/referrals/[id]", () => {
   });
 
   it("updates redeemed status", async () => {
-    prismaMock.referral.update.mockResolvedValue({ ...referralCharlie, redeemed: true });
+    mockPrisma.referral.update.mockResolvedValue({ ...referralCharlie, redeemed: true });
 
     const req = createMockRequest({ body: { redeemed: true } });
     const response = await PATCH(req, createParams("1"));
@@ -58,7 +58,7 @@ describe("PATCH /api/referrals/[id]", () => {
   });
 
   it("returns 500 on database error", async () => {
-    prismaMock.referral.update.mockRejectedValue(new Error("Connection lost"));
+    mockPrisma.referral.update.mockRejectedValue(new Error("Connection lost"));
 
     const req = createMockRequest({ body: { redeemed: true } });
     const response = await PATCH(req, createParams("1"));
@@ -73,8 +73,8 @@ describe("DELETE /api/referrals/[id]", () => {
   });
 
   it("deletes referral successfully", async () => {
-    prismaMock.referral.findUnique.mockResolvedValue(referralCharlie);
-    prismaMock.referral.delete.mockResolvedValue(referralCharlie);
+    mockPrisma.referral.findUnique.mockResolvedValue(referralCharlie);
+    mockPrisma.referral.delete.mockResolvedValue(referralCharlie);
 
     const req = createMockRequest();
     const response = await DELETE(req, createParams("1"));
@@ -101,7 +101,7 @@ describe("DELETE /api/referrals/[id]", () => {
   });
 
   it("returns 404 for non-existent referral", async () => {
-    prismaMock.referral.findUnique.mockResolvedValue(null);
+    mockPrisma.referral.findUnique.mockResolvedValue(null);
 
     const req = createMockRequest();
     const response = await DELETE(req, createParams("999"));
@@ -110,7 +110,7 @@ describe("DELETE /api/referrals/[id]", () => {
   });
 
   it("returns 500 on database error", async () => {
-    prismaMock.referral.findUnique.mockRejectedValue(new Error("Connection lost"));
+    mockPrisma.referral.findUnique.mockRejectedValue(new Error("Connection lost"));
 
     const req = createMockRequest();
     const response = await DELETE(req, createParams("1"));

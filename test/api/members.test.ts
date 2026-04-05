@@ -1,6 +1,6 @@
 import "../mocks/rate-limit";
 import "../mocks/dal";
-import { mockVerifySession, membersRateLimiterMock } from "../mocks";
+import { mockVerifySession, mockMembersRateLimiter } from "../mocks";
 import { GET } from "@/app/api/members/route";
 import { NextRequest } from "next/server";
 import { AppError } from "@/utils/errors";
@@ -42,7 +42,7 @@ describe("GET /api/members", () => {
   });
 
   it("returns 429 when rate limited", async () => {
-    membersRateLimiterMock.mockResolvedValueOnce({
+    mockMembersRateLimiter.mockResolvedValueOnce({
       success: false,
       remaining: 0,
       reset: Date.now() + 60000,

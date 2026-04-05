@@ -5,13 +5,13 @@ import "../mocks/csrf";
 import "../mocks/dal";
 import "../mocks/encryption";
 import {
-  prismaMock,
+  mockPrisma,
   createMockRequest,
   allReferrals,
   formWithTwoProspects,
   referralCharlie,
   mockResendSend,
-  rateLimiterMock,
+  mockRateLimiter,
   mockGetIdempotentResponse,
   mockValidateOrigin,
   mockVerifySession,
@@ -27,7 +27,7 @@ describe("GET /api/referrals", () => {
 
   it("returns all referrals as JSON", async () => {
     mockRequireAdmin.mockResolvedValue({ ownerid: 100184, isAdmin: true });
-    prismaMock.referral.findMany.mockResolvedValue(allReferrals);
+    mockPrisma.referral.findMany.mockResolvedValue(allReferrals);
 
     const response = await GET();
     const data = await response.json();
@@ -46,7 +46,7 @@ describe("GET /api/referrals", () => {
 
   it("returns 500 on database error", async () => {
     mockRequireAdmin.mockResolvedValue({ ownerid: 100184, isAdmin: true });
-    prismaMock.referral.findMany.mockRejectedValue(new Error("Connection lost"));
+    mockPrisma.referral.findMany.mockRejectedValue(new Error("Connection lost"));
 
     const response = await GET();
 
@@ -65,7 +65,7 @@ describe("POST /api/referrals", () => {
       { ...referralCharlie, id: 7 },
       { ...referralCharlie, id: 8, prospectName: "Marcie Johnson", prospectEmail: "marcie.johnson@yahoo.com" },
     ];
-    prismaMock.$transaction.mockResolvedValue(createdReferrals);
+    mockPrisma.$transaction.mockResolvedValue(createdReferrals);
 
     const req = createMockRequest({ body: formWithTwoProspects });
     const response = await POST(req);
@@ -101,11 +101,11 @@ describe("POST /api/referrals", () => {
     const response = await POST(req);
 
     expect(response.status).toBe(500);
-    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+    expect(mockPrisma.$transaction).not.toHaveBeenCalled();
   });
 
   it("returns 429 when rate limited", async () => {
-    rateLimiterMock.mockResolvedValueOnce({
+    mockRateLimiter.mockResolvedValueOnce({
       success: false,
       remaining: 0,
       reset: Date.now() + 60000,
@@ -147,6 +147,6 @@ describe("POST /api/referrals", () => {
     expect(response.status).toBe(201);
     expect(data.referrals).toHaveLength(1);
     expect(mockResendSend).not.toHaveBeenCalled();
-    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+    expect(mockPrisma.$transaction).not.toHaveBeenCalled();
   });
 });

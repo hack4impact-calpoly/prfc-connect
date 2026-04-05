@@ -3,7 +3,7 @@ import "../mocks/dal";
 import "../mocks/email";
 import "../mocks/encryption";
 
-import { prismaMock, mockVerifySession, mockRequireAdmin } from "../mocks";
+import { mockPrisma, mockVerifySession, mockRequireAdmin } from "../mocks";
 import { referralCharlie, formWithTwoProspects } from "../mocks/referrals";
 import { AppError } from "@/utils/errors";
 
@@ -33,7 +33,7 @@ describe("submitReferrals", () => {
       { ...referralCharlie, id: 10 },
       { ...referralCharlie, id: 11, prospectName: "Marcie Johnson" },
     ];
-    prismaMock.$transaction.mockResolvedValue(created);
+    mockPrisma.$transaction.mockResolvedValue(created);
 
     const result = await submitReferrals(validFormData);
 
@@ -77,7 +77,7 @@ describe("submitReferrals", () => {
   });
 
   it("returns error on database failure", async () => {
-    prismaMock.$transaction.mockRejectedValue(new Error("Connection lost"));
+    mockPrisma.$transaction.mockRejectedValue(new Error("Connection lost"));
 
     const result = await submitReferrals(validFormData);
 
@@ -93,13 +93,13 @@ describe("toggleRedeemed", () => {
 
   it("toggles redeemed status when authenticated", async () => {
     mockRequireAdmin.mockResolvedValue({ ownerid: 100184, isAdmin: true });
-    prismaMock.referral.findUnique.mockResolvedValue(referralCharlie);
-    prismaMock.referral.update.mockResolvedValue({ ...referralCharlie, redeemed: true });
+    mockPrisma.referral.findUnique.mockResolvedValue(referralCharlie);
+    mockPrisma.referral.update.mockResolvedValue({ ...referralCharlie, redeemed: true });
 
     const result = await toggleRedeemed(1);
 
     expect(result.success).toBe(true);
-    expect(prismaMock.referral.update).toHaveBeenCalledWith({
+    expect(mockPrisma.referral.update).toHaveBeenCalledWith({
       where: { id: 1 },
       data: { redeemed: true },
     });
@@ -116,7 +116,7 @@ describe("toggleRedeemed", () => {
 
   it("returns error for non-existent referral", async () => {
     mockRequireAdmin.mockResolvedValue({ ownerid: 100184, isAdmin: true });
-    prismaMock.referral.findUnique.mockResolvedValue(null);
+    mockPrisma.referral.findUnique.mockResolvedValue(null);
 
     const result = await toggleRedeemed(999);
 

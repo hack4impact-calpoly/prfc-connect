@@ -10,12 +10,12 @@ vi.mock("@/lib/db", () => ({
 import prisma from "@/lib/db";
 
 beforeEach(() => {
-  mockReset(prismaMock);
+  mockReset(mockPrisma);
 });
 
-export const prismaMock = prisma as unknown as DeepMockProxy<PrismaClient>;
+export const mockPrisma = prisma as unknown as DeepMockProxy<PrismaClient>;
 
 export function mockInteractiveTransaction() {
-  prismaMock.$transaction.mockImplementation(((fn: (tx: typeof prismaMock) => Promise<unknown>) =>
-    fn(prismaMock)) as never);
+  mockPrisma.$transaction.mockImplementation(((fn: (tx: typeof mockPrisma) => Promise<unknown>) =>
+    fn(mockPrisma)) as never);
 }

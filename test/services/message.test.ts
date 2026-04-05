@@ -1,5 +1,5 @@
 import { vi } from "vitest";
-import { prismaMock, mockInteractiveTransaction } from "../mocks/prisma";
+import { mockPrisma, mockInteractiveTransaction } from "../mocks/prisma";
 import { mockMembers } from "@/lib/mock-members";
 import { isQuietHours, validateSmsAllowed, sendGroupMessage, sendBlastMessage } from "@/services/message";
 import { AppError } from "@/utils/errors";
@@ -172,15 +172,15 @@ describe("sendGroupMessage", () => {
     vi.mocked(getGroupRecipients).mockResolvedValue([100002, 100003, 100004]);
     vi.mocked(getMemberDetails).mockResolvedValue(testRecipients);
     vi.mocked(sendGroupEmails).mockResolvedValue({ sent: 3, failed: 0, suppressed: 0 });
-    prismaMock.message.create.mockResolvedValue({ ...testMessage, id: 1 });
-    prismaMock.messageRecipient.createMany.mockResolvedValue({ count: 3 });
-    prismaMock.messageRecipient.updateMany.mockResolvedValue({ count: 3 });
-    prismaMock.message.update.mockResolvedValue(testMessage);
+    mockPrisma.message.create.mockResolvedValue({ ...testMessage, id: 1 });
+    mockPrisma.messageRecipient.createMany.mockResolvedValue({ count: 3 });
+    mockPrisma.messageRecipient.updateMany.mockResolvedValue({ count: 3 });
+    mockPrisma.message.update.mockResolvedValue(testMessage);
 
     const result = await sendGroupMessage(defaultInput, 100001);
 
     expect(result.messageId).toBe(1);
-    expect(prismaMock.message.create).toHaveBeenCalledWith({
+    expect(mockPrisma.message.create).toHaveBeenCalledWith({
       data: {
         groupId: 5,
         senderId: 100001,
@@ -198,14 +198,14 @@ describe("sendGroupMessage", () => {
     vi.mocked(getGroupRecipients).mockResolvedValue([100002, 100003, 100004]);
     vi.mocked(getMemberDetails).mockResolvedValue(testRecipients);
     vi.mocked(sendGroupEmails).mockResolvedValue({ sent: 3, failed: 0, suppressed: 0 });
-    prismaMock.message.create.mockResolvedValue({ ...testMessage, id: 1 });
-    prismaMock.messageRecipient.createMany.mockResolvedValue({ count: 3 });
-    prismaMock.messageRecipient.updateMany.mockResolvedValue({ count: 3 });
-    prismaMock.message.update.mockResolvedValue(testMessage);
+    mockPrisma.message.create.mockResolvedValue({ ...testMessage, id: 1 });
+    mockPrisma.messageRecipient.createMany.mockResolvedValue({ count: 3 });
+    mockPrisma.messageRecipient.updateMany.mockResolvedValue({ count: 3 });
+    mockPrisma.message.update.mockResolvedValue(testMessage);
 
     await sendGroupMessage(defaultInput, 100001);
 
-    expect(prismaMock.messageRecipient.createMany).toHaveBeenCalledWith({
+    expect(mockPrisma.messageRecipient.createMany).toHaveBeenCalledWith({
       data: [
         { messageId: 1, memberId: 100002, channel: "email", status: "pending" },
         { messageId: 1, memberId: 100003, channel: "email", status: "pending" },
@@ -234,14 +234,14 @@ describe("sendGroupMessage", () => {
     vi.mocked(getGroupRecipients).mockResolvedValue([100002, 100003, 100004]);
     vi.mocked(getMemberDetails).mockResolvedValue(testRecipients);
     vi.mocked(sendGroupEmails).mockResolvedValue({ sent: 1, failed: 2, suppressed: 0 });
-    prismaMock.message.create.mockResolvedValue({ ...testMessage, id: 1 });
-    prismaMock.messageRecipient.createMany.mockResolvedValue({ count: 3 });
-    prismaMock.messageRecipient.updateMany.mockResolvedValue({ count: 2 });
-    prismaMock.message.update.mockResolvedValue({ ...testMessage, failedCount: 2 });
+    mockPrisma.message.create.mockResolvedValue({ ...testMessage, id: 1 });
+    mockPrisma.messageRecipient.createMany.mockResolvedValue({ count: 3 });
+    mockPrisma.messageRecipient.updateMany.mockResolvedValue({ count: 2 });
+    mockPrisma.message.update.mockResolvedValue({ ...testMessage, failedCount: 2 });
 
     const result = await sendGroupMessage(defaultInput, 100001);
 
-    expect(prismaMock.message.update).toHaveBeenCalledWith({
+    expect(mockPrisma.message.update).toHaveBeenCalledWith({
       where: { id: 1 },
       data: { failedCount: 2 },
     });
@@ -271,15 +271,15 @@ describe("sendBlastMessage", () => {
     vi.mocked(getAllActiveMemberIds).mockResolvedValue(allMemberIds);
     vi.mocked(getMemberDetails).mockResolvedValue([...mockMembers]);
     vi.mocked(sendGroupEmails).mockResolvedValue({ sent: 389, failed: 0, suppressed: 0 });
-    prismaMock.message.create.mockResolvedValue({ ...testBlastMessage, id: 2 });
-    prismaMock.messageRecipient.createMany.mockResolvedValue({ count: 389 });
-    prismaMock.messageRecipient.updateMany.mockResolvedValue({ count: 389 });
-    prismaMock.message.update.mockResolvedValue(testBlastMessage);
+    mockPrisma.message.create.mockResolvedValue({ ...testBlastMessage, id: 2 });
+    mockPrisma.messageRecipient.createMany.mockResolvedValue({ count: 389 });
+    mockPrisma.messageRecipient.updateMany.mockResolvedValue({ count: 389 });
+    mockPrisma.message.update.mockResolvedValue(testBlastMessage);
 
     const result = await sendBlastMessage(defaultInput, 100001);
 
     expect(result.messageId).toBe(2);
-    expect(prismaMock.message.create).toHaveBeenCalledWith({
+    expect(mockPrisma.message.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         isBlast: true,
         groupId: null,
@@ -291,10 +291,10 @@ describe("sendBlastMessage", () => {
     vi.mocked(getAllActiveMemberIds).mockResolvedValue(allMemberIds);
     vi.mocked(getMemberDetails).mockResolvedValue([...mockMembers]);
     vi.mocked(sendGroupEmails).mockResolvedValue({ sent: 389, failed: 0, suppressed: 0 });
-    prismaMock.message.create.mockResolvedValue({ ...testBlastMessage, id: 2 });
-    prismaMock.messageRecipient.createMany.mockResolvedValue({ count: 389 });
-    prismaMock.messageRecipient.updateMany.mockResolvedValue({ count: 389 });
-    prismaMock.message.update.mockResolvedValue(testBlastMessage);
+    mockPrisma.message.create.mockResolvedValue({ ...testBlastMessage, id: 2 });
+    mockPrisma.messageRecipient.createMany.mockResolvedValue({ count: 389 });
+    mockPrisma.messageRecipient.updateMany.mockResolvedValue({ count: 389 });
+    mockPrisma.message.update.mockResolvedValue(testBlastMessage);
 
     await sendBlastMessage(defaultInput, 100001);
 
@@ -306,14 +306,14 @@ describe("sendBlastMessage", () => {
     vi.mocked(getAllActiveMemberIds).mockResolvedValue(allMemberIds);
     vi.mocked(getMemberDetails).mockResolvedValue([...mockMembers]);
     vi.mocked(sendGroupEmails).mockResolvedValue({ sent: 350, failed: 39, suppressed: 0 });
-    prismaMock.message.create.mockResolvedValue({ ...testBlastMessage, id: 2 });
-    prismaMock.messageRecipient.createMany.mockResolvedValue({ count: 389 });
-    prismaMock.messageRecipient.updateMany.mockResolvedValue({ count: 39 });
-    prismaMock.message.update.mockResolvedValue({ ...testBlastMessage, failedCount: 39 });
+    mockPrisma.message.create.mockResolvedValue({ ...testBlastMessage, id: 2 });
+    mockPrisma.messageRecipient.createMany.mockResolvedValue({ count: 389 });
+    mockPrisma.messageRecipient.updateMany.mockResolvedValue({ count: 39 });
+    mockPrisma.message.update.mockResolvedValue({ ...testBlastMessage, failedCount: 39 });
 
     const result = await sendBlastMessage(defaultInput, 100001);
 
-    expect(prismaMock.message.update).toHaveBeenCalledWith({
+    expect(mockPrisma.message.update).toHaveBeenCalledWith({
       where: { id: 2 },
       data: { failedCount: 39 },
     });
