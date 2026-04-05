@@ -1,13 +1,9 @@
+import "../mocks/next-cache";
+import "../mocks/dal";
+
 import { vi, type MockedFunction } from "vitest";
 import { AppError } from "@/utils/errors";
-
-vi.mock("next/cache", () => ({
-  revalidatePath: vi.fn(),
-}));
-
-vi.mock("@/lib/dal", () => ({
-  verifySession: vi.fn(),
-}));
+import { mockVerifySession, mockRevalidatePath } from "../mocks";
 
 vi.mock("@/services/sms-consent", () => ({
   getMemberSmsConsent: vi.fn(),
@@ -19,8 +15,6 @@ vi.mock("@/services/user-preference", () => ({
   updateUserPreferences: vi.fn(),
 }));
 
-import { revalidatePath } from "next/cache";
-import { verifySession } from "@/lib/dal";
 import { getMemberSmsConsent, revokeSmsConsent } from "@/services/sms-consent";
 import { getUserPreferences, updateUserPreferences } from "@/services/user-preference";
 import {
@@ -30,8 +24,6 @@ import {
   updateUserPreferencesAction,
 } from "@/actions/settings";
 
-const mockRevalidatePath = revalidatePath as MockedFunction<typeof revalidatePath>;
-const mockVerifySession = verifySession as MockedFunction<typeof verifySession>;
 const mockGetMemberSmsConsent = getMemberSmsConsent as MockedFunction<typeof getMemberSmsConsent>;
 const mockRevokeSmsConsent = revokeSmsConsent as MockedFunction<typeof revokeSmsConsent>;
 const mockGetUserPreferences = getUserPreferences as MockedFunction<typeof getUserPreferences>;
