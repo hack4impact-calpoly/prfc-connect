@@ -1,10 +1,10 @@
-const envMock = vi.hoisted(() => ({
+const mockEnv = vi.hoisted(() => ({
   FIELD_ENCRYPTION_KEY: "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
   BLIND_INDEX_KEY: "f6e5d4c3b2a1f6e5d4c3b2a1f6e5d4c3b2a1f6e5d4c3b2a1f6e5d4c3b2a1f6e5",
 }));
 
 vi.mock("@/env", () => ({
-  env: envMock,
+  env: mockEnv,
 }));
 
 import { encrypt, decrypt, blindIndex } from "@/lib/encryption";

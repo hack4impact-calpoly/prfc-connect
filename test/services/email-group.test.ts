@@ -3,10 +3,10 @@ import "../mocks/email";
 import { vi } from "vitest";
 import { mockResendSend } from "../mocks";
 
-const filterSuppressedEmailsMock = vi.hoisted(() => vi.fn());
+const mockFilterSuppressedEmails = vi.hoisted(() => vi.fn());
 
 vi.mock("@/services/email-suppression", async () => ({
-  filterSuppressedEmails: filterSuppressedEmailsMock,
+  filterSuppressedEmails: mockFilterSuppressedEmails,
 }));
 
 import { sendGroupEmails } from "@/services/email";
@@ -38,14 +38,14 @@ describe("sendGroupEmails", () => {
 
   it("sends to all valid recipients", async () => {
     const recipients = [recipientBobby, recipientLucy, recipientMarcie];
-    filterSuppressedEmailsMock.mockResolvedValue({
+    mockFilterSuppressedEmails.mockResolvedValue({
       valid: recipients.map((r) => r.email),
       suppressed: [],
     });
 
     await sendGroupEmails({ ...defaultParams, recipients });
 
-    expect(filterSuppressedEmailsMock).toHaveBeenCalledWith(recipients.map((r) => r.email));
+    expect(mockFilterSuppressedEmails).toHaveBeenCalledWith(recipients.map((r) => r.email));
     expect(mockResendSend).toHaveBeenCalledWith(expect.objectContaining({ to: recipientBobby.email }));
     expect(mockResendSend).toHaveBeenCalledWith(expect.objectContaining({ to: recipientLucy.email }));
     expect(mockResendSend).toHaveBeenCalledWith(expect.objectContaining({ to: recipientMarcie.email }));
@@ -54,21 +54,21 @@ describe("sendGroupEmails", () => {
 
   it("filters out suppressed emails before sending", async () => {
     const recipients = [recipientBobby, recipientLucy, recipientMarcie];
-    filterSuppressedEmailsMock.mockResolvedValue({
+    mockFilterSuppressedEmails.mockResolvedValue({
       valid: [recipientBobby.email],
       suppressed: [recipientLucy.email, recipientMarcie.email],
     });
 
     await sendGroupEmails({ ...defaultParams, recipients });
 
-    expect(filterSuppressedEmailsMock).toHaveBeenCalledWith(recipients.map((r) => r.email));
+    expect(mockFilterSuppressedEmails).toHaveBeenCalledWith(recipients.map((r) => r.email));
     expect(mockResendSend).toHaveBeenCalledWith(expect.objectContaining({ to: recipientBobby.email }));
     expect(mockResendSend).toHaveBeenCalledTimes(1);
   });
 
   it("generates unique unsubscribe token per recipient", async () => {
     const recipients = [recipientBobby, recipientLucy, recipientMarcie];
-    filterSuppressedEmailsMock.mockResolvedValue({
+    mockFilterSuppressedEmails.mockResolvedValue({
       valid: recipients.map((r) => r.email),
       suppressed: [],
     });
@@ -91,7 +91,7 @@ describe("sendGroupEmails", () => {
 
   it("includes RFC 8058 one-click unsubscribe headers", async () => {
     const recipients = [recipientBobby, recipientLucy, recipientMarcie];
-    filterSuppressedEmailsMock.mockResolvedValue({
+    mockFilterSuppressedEmails.mockResolvedValue({
       valid: recipients.map((r) => r.email),
       suppressed: [],
     });
@@ -110,7 +110,7 @@ describe("sendGroupEmails", () => {
 
   it("appends CAN-SPAM footer with physical address", async () => {
     const recipients = [recipientBobby, recipientLucy, recipientMarcie];
-    filterSuppressedEmailsMock.mockResolvedValue({
+    mockFilterSuppressedEmails.mockResolvedValue({
       valid: recipients.map((r) => r.email),
       suppressed: [],
     });
@@ -137,7 +137,7 @@ describe("sendGroupEmails", () => {
 
     it("sends in batches of 10 with delay between batches", async () => {
       const batchDelayMs = 1000;
-      filterSuppressedEmailsMock.mockResolvedValue({
+      mockFilterSuppressedEmails.mockResolvedValue({
         valid: allRecipients.map((r) => r.email),
         suppressed: [],
       });
@@ -164,7 +164,7 @@ describe("sendGroupEmails", () => {
 
   it("returns correct send/fail counts", async () => {
     const recipients = [recipientBobby, recipientLucy, recipientMarcie, recipientCharlie, recipientSnoopy];
-    filterSuppressedEmailsMock.mockResolvedValue({
+    mockFilterSuppressedEmails.mockResolvedValue({
       valid: recipients.map((r) => r.email),
       suppressed: [],
     });
@@ -185,7 +185,7 @@ describe("sendGroupEmails", () => {
 
   it("handles send errors gracefully without throwing", async () => {
     const recipients = [recipientBobby, recipientLucy, recipientMarcie];
-    filterSuppressedEmailsMock.mockResolvedValue({
+    mockFilterSuppressedEmails.mockResolvedValue({
       valid: recipients.map((r) => r.email),
       suppressed: [],
     });
@@ -202,21 +202,21 @@ describe("sendGroupEmails", () => {
   });
 
   it("returns zeros with empty recipient list", async () => {
-    filterSuppressedEmailsMock.mockResolvedValue({
+    mockFilterSuppressedEmails.mockResolvedValue({
       valid: [],
       suppressed: [],
     });
 
     const { sent, failed, suppressed } = await sendGroupEmails({ ...defaultParams, recipients: [] });
 
-    expect(filterSuppressedEmailsMock).toHaveBeenCalledWith([]);
+    expect(mockFilterSuppressedEmails).toHaveBeenCalledWith([]);
     expect(sent).toBe(0);
     expect(failed).toBe(0);
     expect(suppressed).toBe(0);
   });
 
   it("counts all suppressed recipients", async () => {
-    filterSuppressedEmailsMock.mockResolvedValue({
+    mockFilterSuppressedEmails.mockResolvedValue({
       valid: [],
       suppressed: [recipientLucy.email, recipientMarcie.email],
     });
@@ -226,7 +226,7 @@ describe("sendGroupEmails", () => {
       recipients: [recipientLucy, recipientMarcie],
     });
 
-    expect(filterSuppressedEmailsMock).toHaveBeenCalledWith([recipientLucy.email, recipientMarcie.email]);
+    expect(mockFilterSuppressedEmails).toHaveBeenCalledWith([recipientLucy.email, recipientMarcie.email]);
     expect(sent).toBe(0);
     expect(failed).toBe(0);
     expect(suppressed).toBe(2);

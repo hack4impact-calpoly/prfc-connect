@@ -32,7 +32,7 @@ const testBlastMessage: Message = {
   isBlast: true,
 };
 
-const envMock = vi.hoisted(() => ({
+const mockEnv = vi.hoisted(() => ({
   EMAIL_ENABLED: false as boolean,
   SMS_ENABLED: false as boolean,
   FROM_EMAIL: "no-reply@prfc.coop",
@@ -46,7 +46,7 @@ vi.mock("@/services/contact-group", () => ({
 vi.mock("@/services/email", () => ({
   sendGroupEmails: vi.fn(),
   validateEmailAllowed: vi.fn(() => {
-    if (!envMock.EMAIL_ENABLED) {
+    if (!mockEnv.EMAIL_ENABLED) {
       throw new AppError("FORBIDDEN", "Email functionality is currently disabled", { reason: "EMAIL_DISABLED" });
     }
   }),
@@ -58,7 +58,7 @@ vi.mock("@/lib/api/member-api", () => ({
 }));
 
 vi.mock("@/env", () => ({
-  env: envMock,
+  env: mockEnv,
 }));
 
 import { getGroupRecipients } from "@/services/contact-group";
@@ -123,7 +123,7 @@ describe("validateSmsAllowed", () => {
   it("throws FORBIDDEN during quiet hours", () => {
     // 9 PM Pacific = 5 AM UTC next day (during PST)
     vi.setSystemTime(new Date("2024-01-15T05:00:00Z"));
-    envMock.SMS_ENABLED = true;
+    mockEnv.SMS_ENABLED = true;
 
     expect.assertions(3);
     try {
@@ -138,7 +138,7 @@ describe("validateSmsAllowed", () => {
   it("throws FORBIDDEN when SMS_ENABLED=false", () => {
     // 10 AM Pacific = 6 PM UTC (during PST)
     vi.setSystemTime(new Date("2024-01-15T18:00:00Z"));
-    envMock.SMS_ENABLED = false;
+    mockEnv.SMS_ENABLED = false;
 
     expect.assertions(3);
     try {
@@ -163,8 +163,8 @@ describe("sendGroupMessage", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    envMock.EMAIL_ENABLED = true;
-    envMock.SMS_ENABLED = false;
+    mockEnv.EMAIL_ENABLED = true;
+    mockEnv.SMS_ENABLED = false;
     mockInteractiveTransaction();
   });
 
@@ -262,8 +262,8 @@ describe("sendBlastMessage", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    envMock.EMAIL_ENABLED = true;
-    envMock.SMS_ENABLED = false;
+    mockEnv.EMAIL_ENABLED = true;
+    mockEnv.SMS_ENABLED = false;
     mockInteractiveTransaction();
   });
 
