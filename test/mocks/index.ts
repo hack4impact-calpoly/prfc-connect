@@ -1,7 +1,7 @@
 export * from "./referrals";
 export { prismaMock } from "./prisma";
 export { createMockRequest } from "./request";
-export { resendSendMock } from "./email";
+export { mockResendSend } from "./email";
 export { rateLimiterMock, membersRateLimiterMock } from "./rate-limit";
 export { mockGetIdempotentResponse, mockSetIdempotentResponse } from "./idempotency";
 export { mockValidateOrigin } from "./csrf";

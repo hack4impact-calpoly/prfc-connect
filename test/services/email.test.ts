@@ -1,5 +1,5 @@
 import "../mocks/email";
-import { resendSendMock } from "../mocks";
+import { mockResendSend } from "../mocks";
 import { sendReferralEmails } from "@/services/email";
 
 describe("sendReferralEmails", () => {
@@ -15,7 +15,7 @@ describe("sendReferralEmails", () => {
       memberName: "Charlie Brown",
     });
 
-    expect(resendSendMock).toHaveBeenCalledTimes(2);
+    expect(mockResendSend).toHaveBeenCalledTimes(2);
   });
 
   it("includes referral code in email", async () => {
@@ -25,12 +25,12 @@ describe("sendReferralEmails", () => {
       memberName: "Charlie Brown",
     });
 
-    const callArgs = resendSendMock.mock.calls[0][0];
+    const callArgs = mockResendSend.mock.calls[0][0];
     expect(callArgs.html).toContain("REF-7F3A9B");
   });
 
   it("throws EMAIL_ERROR on send failure", async () => {
-    resendSendMock.mockResolvedValueOnce({ data: null, error: { message: "Connection refused", name: "api_error" } });
+    mockResendSend.mockResolvedValueOnce({ data: null, error: { message: "Connection refused", name: "api_error" } });
 
     await expect(
       sendReferralEmails({

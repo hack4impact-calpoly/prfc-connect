@@ -10,7 +10,7 @@ import {
   allReferrals,
   formWithTwoProspects,
   referralCharlie,
-  resendSendMock,
+  mockResendSend,
   rateLimiterMock,
   mockGetIdempotentResponse,
   mockValidateOrigin,
@@ -73,7 +73,7 @@ describe("POST /api/referrals", () => {
 
     expect(response.status).toBe(201);
     expect(data.referrals).toHaveLength(2);
-    expect(resendSendMock).toHaveBeenCalledTimes(2);
+    expect(mockResendSend).toHaveBeenCalledTimes(2);
   });
 
   it("returns 401 without valid session", async () => {
@@ -95,7 +95,7 @@ describe("POST /api/referrals", () => {
   });
 
   it("returns 500 when email fails", async () => {
-    resendSendMock.mockResolvedValueOnce({ data: null, error: { message: "Send failed", name: "api_error" } });
+    mockResendSend.mockResolvedValueOnce({ data: null, error: { message: "Send failed", name: "api_error" } });
     const req = createMockRequest({ body: formWithTwoProspects });
 
     const response = await POST(req);
@@ -130,7 +130,7 @@ describe("POST /api/referrals", () => {
     const response = await POST(req);
 
     expect(response.status).toBe(403);
-    expect(resendSendMock).not.toHaveBeenCalled();
+    expect(mockResendSend).not.toHaveBeenCalled();
   });
 
   it("returns cached response for duplicate idempotency key", async () => {
@@ -146,7 +146,7 @@ describe("POST /api/referrals", () => {
 
     expect(response.status).toBe(201);
     expect(data.referrals).toHaveLength(1);
-    expect(resendSendMock).not.toHaveBeenCalled();
+    expect(mockResendSend).not.toHaveBeenCalled();
     expect(prismaMock.$transaction).not.toHaveBeenCalled();
   });
 });

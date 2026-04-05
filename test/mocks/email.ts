@@ -14,4 +14,4 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-export const resendSendMock: Mock = mockSend;
+export const mockResendSend: Mock = mockSend;
