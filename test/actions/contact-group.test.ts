@@ -1,13 +1,9 @@
+import "../mocks/next-cache";
+import "../mocks/dal";
+
 import { vi, type MockedFunction } from "vitest";
 import { AppError } from "@/utils/errors";
-
-vi.mock("next/cache", () => ({
-  revalidatePath: vi.fn(),
-}));
-
-vi.mock("@/lib/dal", () => ({
-  verifySession: vi.fn(),
-}));
+import { mockVerifySession, mockRevalidatePath } from "../mocks";
 
 vi.mock("@/services/contact-group", () => ({
   createGroup: vi.fn(),
@@ -24,8 +20,6 @@ vi.mock("@/services/message", () => ({
   sendBlastMessage: vi.fn(),
 }));
 
-import { revalidatePath } from "next/cache";
-import { verifySession } from "@/lib/dal";
 import {
   createGroup,
   updateGroup,
@@ -47,8 +41,6 @@ import {
   sendBlast,
 } from "@/actions/contact-group";
 
-const mockRevalidatePath = revalidatePath as MockedFunction<typeof revalidatePath>;
-const mockVerifySession = verifySession as MockedFunction<typeof verifySession>;
 const mockCreateGroup = createGroup as MockedFunction<typeof createGroup>;
 const mockUpdateGroup = updateGroup as MockedFunction<typeof updateGroup>;
 const mockDeleteGroup = deleteGroup as MockedFunction<typeof deleteGroup>;

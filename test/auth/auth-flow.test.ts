@@ -176,7 +176,6 @@ describe("logout server action", () => {
     await logout().catch(() => {});
 
     expect(mockCookieStore.delete).toHaveBeenCalledWith(AUTH_COOKIE);
-    // TODO: Replace with the real PRFC member portal URL in production
     expect(mockRedirect).toHaveBeenCalledWith("/dev/mock-portal");
   });
 });
