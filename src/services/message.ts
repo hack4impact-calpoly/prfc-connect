@@ -26,6 +26,44 @@ export interface MessageSummary {
   failedCount: number;
 }
 
+export interface MessageHistoryItem {
+  id: number;
+  subject: string;
+  sentAt: Date;
+  emailCount: number;
+  smsCount: number;
+  failedCount: number;
+  isBlast: boolean;
+  groupName: string | null;
+}
+
+export interface MessageDetail {
+  id: number;
+  subject: string;
+  body: string;
+  sentAt: Date;
+  senderId: number;
+  emailCount: number;
+  smsCount: number;
+  failedCount: number;
+  isBlast: boolean;
+  groupName: string | null;
+}
+
+export interface RecipientStatus {
+  memberId: number;
+  memberName: string;
+  channel: string;
+  status: string;
+  sentAt: Date | null;
+}
+
+export interface RecipientCounts {
+  emailEligible: number;
+  smsEligible: number;
+  smsIneligible: number;
+}
+
 const DEFAULT_MESSAGE_HISTORY_LIMIT = 20;
 const MAX_MESSAGE_HISTORY_LIMIT = 100;
 
@@ -321,6 +359,138 @@ export async function sendBlastMessage(input: BlastMessage, senderId: number): P
       emailCount: emailsSent,
       smsCount: smsSent,
       failedCount: emailsFailed,
+    };
+  } catch (error) {
+    throw transformError(error);
+  }
+}
+
+export async function getAllMessageHistory(options: {
+  senderId?: number;
+  limit?: number;
+  offset?: number;
+  channel?: "email" | "sms";
+}): Promise<MessageHistoryItem[]> {
+  try {
+    const { senderId, limit = 50, offset = 0, channel } = options;
+    const effectiveLimit = Math.min(Math.max(1, limit), MAX_MESSAGE_HISTORY_LIMIT);
+
+    const where: Record<string, unknown> = {};
+    if (senderId) where.senderId = senderId;
+    if (channel) {
+      where.recipients = { some: { channel } };
+    }
+
+    const messages = await prisma.message.findMany({
+      where,
+      select: {
+        id: true,
+        subject: true,
+        sentAt: true,
+        emailCount: true,
+        smsCount: true,
+        failedCount: true,
+        isBlast: true,
+        group: { select: { name: true } },
+      },
+      orderBy: { sentAt: "desc" },
+      take: effectiveLimit,
+      skip: offset,
+    });
+
+    return messages.map((m) => ({
+      id: m.id,
+      subject: m.subject,
+      sentAt: m.sentAt,
+      emailCount: m.emailCount,
+      smsCount: m.smsCount,
+      failedCount: m.failedCount,
+      isBlast: m.isBlast,
+      groupName: m.group?.name ?? null,
+    }));
+  } catch (error) {
+    throw transformError(error);
+  }
+}
+
+export async function getMessageById(messageId: number): Promise<MessageDetail> {
+  try {
+    const message = await prisma.message.findUnique({
+      where: { id: messageId },
+      select: {
+        id: true,
+        subject: true,
+        body: true,
+        sentAt: true,
+        senderId: true,
+        emailCount: true,
+        smsCount: true,
+        failedCount: true,
+        isBlast: true,
+        group: { select: { name: true } },
+      },
+    });
+
+    if (!message) {
+      throw new AppError("NOT_FOUND", "Message not found");
+    }
+
+    return {
+      ...message,
+      groupName: message.group?.name ?? null,
+    };
+  } catch (error) {
+    throw transformError(error);
+  }
+}
+
+export async function getMessageRecipients(messageId: number): Promise<RecipientStatus[]> {
+  try {
+    const recipients = await prisma.messageRecipient.findMany({
+      where: { messageId },
+      select: {
+        memberId: true,
+        channel: true,
+        status: true,
+        sentAt: true,
+      },
+      orderBy: { memberId: "asc" },
+    });
+
+    const memberIds = Array.from(new Set(recipients.map((r) => r.memberId)));
+    const members = await getMemberDetails(memberIds);
+    const memberMap = new Map(members.map((m) => [m.ownerid, m.ownername]));
+
+    return recipients.map((r) => ({
+      memberId: r.memberId,
+      memberName: memberMap.get(r.memberId) ?? "Unknown Member",
+      channel: r.channel,
+      status: r.status,
+      sentAt: r.sentAt,
+    }));
+  } catch (error) {
+    throw transformError(error);
+  }
+}
+
+export async function previewRecipientCounts(groupId: number): Promise<RecipientCounts> {
+  try {
+    const [emailEligible, smsEligible, totalMembers] = await Promise.all([
+      prisma.contactGroupMember.count({
+        where: { groupId, notifyEmail: true },
+      }),
+      prisma.contactGroupMember.count({
+        where: { groupId, notifySms: true },
+      }),
+      prisma.contactGroupMember.count({
+        where: { groupId },
+      }),
+    ]);
+
+    return {
+      emailEligible,
+      smsEligible,
+      smsIneligible: totalMembers - smsEligible,
     };
   } catch (error) {
     throw transformError(error);

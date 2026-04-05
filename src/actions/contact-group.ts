@@ -22,10 +22,23 @@ import {
   removeMembersFromGroup,
   updateMemberNotifications,
 } from "@/services/contact-group";
-import { sendGroupMessage, sendBlastMessage } from "@/services/message";
+import {
+  sendGroupMessage,
+  sendBlastMessage,
+  getAllMessageHistory,
+  getMessageById,
+  getMessageRecipients,
+  previewRecipientCounts,
+} from "@/services/message";
 import { transformError } from "@/utils/errors";
 import type { ActionResult } from "@/lib/action-types";
-import type { MessageResult } from "@/services/message";
+import type {
+  MessageResult,
+  MessageHistoryItem,
+  MessageDetail,
+  RecipientStatus,
+  RecipientCounts,
+} from "@/services/message";
 
 export interface EnrichedGroupData {
   id: number;
@@ -253,6 +266,60 @@ export async function sendBlast(input: {
     const result = await sendBlastMessage(validated, session.ownerid);
 
     return { success: true, data: result };
+  } catch (error) {
+    const appError = transformError(error);
+    return { success: false, error: appError.message };
+  }
+}
+
+export async function fetchMessageHistory(options: {
+  limit?: number;
+  offset?: number;
+  channel?: "email" | "sms";
+}): Promise<ActionResult<MessageHistoryItem[]>> {
+  try {
+    const session = await verifySession();
+    const senderId = session.isAdmin ? undefined : session.ownerid;
+    const messages = await getAllMessageHistory({ ...options, senderId });
+    return { success: true, data: messages };
+  } catch (error) {
+    const appError = transformError(error);
+    return { success: false, error: appError.message };
+  }
+}
+
+export async function fetchMessageDetail(messageId: number): Promise<
+  ActionResult<{
+    message: MessageDetail;
+    recipients: RecipientStatus[];
+  }>
+> {
+  try {
+    const session = await verifySession();
+    const message = await getMessageById(messageId);
+
+    if (!session.isAdmin && message.senderId !== session.ownerid) {
+      return { success: false, error: "You do not have permission to view this message" };
+    }
+
+    const recipients = await getMessageRecipients(messageId);
+    return { success: true, data: { message, recipients } };
+  } catch (error) {
+    const appError = transformError(error);
+    return { success: false, error: appError.message };
+  }
+}
+
+export async function fetchRecipientPreview(groupId: number): Promise<ActionResult<RecipientCounts>> {
+  try {
+    const session = await verifySession();
+
+    if (!session.isAdmin && !(await isGroupOwner(groupId, session.ownerid))) {
+      return { success: false, error: "You do not have permission to preview recipients for this group" };
+    }
+
+    const counts = await previewRecipientCounts(groupId);
+    return { success: true, data: counts };
   } catch (error) {
     const appError = transformError(error);
     return { success: false, error: appError.message };
