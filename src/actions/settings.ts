@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { verifySession } from "@/lib/dal";
 import { UpdatePreferencesSchema, RevokeSmsConsentSchema } from "@/schema/settings";
 import { getMemberSmsConsent, revokeSmsConsent } from "@/services/sms-consent";
@@ -25,6 +26,7 @@ export async function revokeSmsConsentAction(input: { method: string; message: s
     const session = await verifySession();
     const validated = RevokeSmsConsentSchema.parse(input);
     await revokeSmsConsent(session.ownerid, validated.method, validated.message);
+    revalidatePath("/settings");
     return { success: true };
   } catch (error) {
     const appError = transformError(error);
@@ -51,6 +53,7 @@ export async function updateUserPreferencesAction(input: {
     const session = await verifySession();
     const validated = UpdatePreferencesSchema.parse(input);
     const updated = await updateUserPreferences(session.ownerid, validated);
+    revalidatePath("/settings");
     return { success: true, data: updated };
   } catch (error) {
     const appError = transformError(error);
