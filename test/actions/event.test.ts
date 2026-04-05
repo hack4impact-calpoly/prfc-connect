@@ -194,24 +194,14 @@ describe("fetchEventDetail", () => {
     vi.clearAllMocks();
   });
 
-  it("returns event with RSVPs for owner", async () => {
-    mockVerifySession.mockResolvedValue({ ownerid: 100001, isAdmin: false });
+  it("returns event with RSVPs for any authenticated member", async () => {
+    mockVerifySession.mockResolvedValue({ ownerid: 100003, isAdmin: false });
     mockGetEventById.mockResolvedValue(sampleEvent as never);
     mockGetEventRsvps.mockResolvedValue([]);
 
     const result = await fetchEventDetail(1);
 
     expect(result).toEqual({ success: true, data: { event: sampleEvent, rsvps: [] } });
-  });
-
-  it("rejects non-owner non-admin access", async () => {
-    mockVerifySession.mockResolvedValue({ ownerid: 100003, isAdmin: false });
-    mockGetEventById.mockResolvedValue(sampleEvent as never);
-
-    const result = await fetchEventDetail(1);
-
-    expect(result.success).toBe(false);
-    expect(result.error).toContain("do not have permission");
   });
 });
 

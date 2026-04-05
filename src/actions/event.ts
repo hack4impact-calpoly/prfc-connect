@@ -103,13 +103,8 @@ export async function fetchEventDetail(
   eventId: number,
 ): Promise<ActionResult<{ event: EventWithRsvpCount; rsvps: RsvpDetail[] }>> {
   try {
-    const session = await verifySession();
+    await verifySession();
     const event = await getEventById(eventId);
-
-    if (!session.isAdmin && event.ownerid !== session.ownerid) {
-      return { success: false, error: "You do not have permission to view this event" };
-    }
-
     const rsvps = await getEventRsvps(eventId);
     return { success: true, data: { event, rsvps } };
   } catch (error) {
