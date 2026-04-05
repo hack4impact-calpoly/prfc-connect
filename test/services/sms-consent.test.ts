@@ -1,24 +1,14 @@
 import { prismaMock } from "../mocks/prisma";
+import { activeConsentKermit } from "../mocks/sms-consent";
 import { getMemberSmsConsent, hasActiveConsent, revokeSmsConsent } from "@/services/sms-consent";
-
-const activeConsent = {
-  id: 1,
-  memberId: 100001,
-  consentedAt: new Date("2026-01-15"),
-  consentMethod: "web_form",
-  consentText: "I agree to receive SMS messages",
-  consentPurpose: "group_notifications",
-  revokedAt: null,
-  revokeMethod: null,
-};
 
 describe("getMemberSmsConsent", () => {
   it("returns active consent record when found", async () => {
-    prismaMock.smsConsent.findFirst.mockResolvedValue(activeConsent as never);
+    prismaMock.smsConsent.findFirst.mockResolvedValue(activeConsentKermit as never);
 
     const result = await getMemberSmsConsent(100001);
 
-    expect(result).toEqual(activeConsent);
+    expect(result).toEqual(activeConsentKermit);
   });
 
   it("filters by revokedAt null to find only active consent", async () => {

@@ -6,16 +6,9 @@ vi.mock("@/lib/api/member-api", () => ({
 
 import { getMemberById } from "@/lib/api/member-api";
 import { getMemberProfile } from "@/services/profile";
+import { memberKermit } from "../mocks/members";
 
 const mockGetMemberById = getMemberById as MockedFunction<typeof getMemberById>;
-
-const mockMember = {
-  ownerid: 100001,
-  ownername: "Kermit Komm",
-  owneremail: "kermit@coop.org",
-  ownerphone: "805-555-1234",
-  owneraltphone: "805-555-5678",
-};
 
 describe("getMemberProfile", () => {
   beforeEach(() => {
@@ -23,7 +16,7 @@ describe("getMemberProfile", () => {
   });
 
   it("returns profile with split name and admin role", async () => {
-    mockGetMemberById.mockResolvedValue(mockMember);
+    mockGetMemberById.mockResolvedValue(memberKermit);
 
     const result = await getMemberProfile(100001, true);
 
@@ -38,7 +31,7 @@ describe("getMemberProfile", () => {
   });
 
   it("returns member role when isAdmin is false", async () => {
-    mockGetMemberById.mockResolvedValue(mockMember);
+    mockGetMemberById.mockResolvedValue(memberKermit);
 
     const result = await getMemberProfile(100001, false);
 
@@ -52,7 +45,7 @@ describe("getMemberProfile", () => {
   });
 
   it("handles member with no alt phone", async () => {
-    mockGetMemberById.mockResolvedValue({ ...mockMember, owneraltphone: undefined });
+    mockGetMemberById.mockResolvedValue({ ...memberKermit, owneraltphone: undefined });
 
     const result = await getMemberProfile(100001, false);
 

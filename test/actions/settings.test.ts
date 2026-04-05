@@ -3,7 +3,13 @@ import "../mocks/dal";
 
 import { vi, type MockedFunction } from "vitest";
 import { AppError } from "@/utils/errors";
-import { mockVerifySession, mockRevalidatePath } from "../mocks";
+import {
+  mockVerifySession,
+  mockRevalidatePath,
+  activeConsentKermit,
+  defaultPreferences,
+  allDisabledPreferences,
+} from "../mocks";
 
 vi.mock("@/services/sms-consent", () => ({
   getMemberSmsConsent: vi.fn(),
@@ -29,17 +35,6 @@ const mockRevokeSmsConsent = revokeSmsConsent as MockedFunction<typeof revokeSms
 const mockGetUserPreferences = getUserPreferences as MockedFunction<typeof getUserPreferences>;
 const mockUpdateUserPreferences = updateUserPreferences as MockedFunction<typeof updateUserPreferences>;
 
-const fullConsent = {
-  id: 1,
-  memberId: 100001,
-  consentedAt: new Date("2026-01-15"),
-  consentMethod: "web_form",
-  consentText: "I agree to receive SMS messages",
-  consentPurpose: "group_notifications",
-  revokedAt: null,
-  revokeMethod: null,
-};
-
 describe("fetchSmsConsent", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -47,11 +42,11 @@ describe("fetchSmsConsent", () => {
   });
 
   it("returns full consent record shape for authenticated member", async () => {
-    mockGetMemberSmsConsent.mockResolvedValue(fullConsent);
+    mockGetMemberSmsConsent.mockResolvedValue(activeConsentKermit);
 
     const result = await fetchSmsConsent();
 
-    expect(result).toEqual({ success: true, data: fullConsent });
+    expect(result).toEqual({ success: true, data: activeConsentKermit });
     expect(result.data).toHaveProperty("consentedAt");
     expect(result.data).toHaveProperty("consentMethod");
     expect(result.data).toHaveProperty("consentText");
@@ -117,14 +112,11 @@ describe("fetchUserPreferences", () => {
   });
 
   it("returns both preference fields", async () => {
-    mockGetUserPreferences.mockResolvedValue({ notifyEmailDefault: true, notifySmsDefault: false });
+    mockGetUserPreferences.mockResolvedValue(defaultPreferences);
 
     const result = await fetchUserPreferences();
 
-    expect(result).toEqual({
-      success: true,
-      data: { notifyEmailDefault: true, notifySmsDefault: false },
-    });
+    expect(result).toEqual({ success: true, data: defaultPreferences });
     expect(result.data).toHaveProperty("notifyEmailDefault");
     expect(result.data).toHaveProperty("notifySmsDefault");
   });
@@ -137,14 +129,11 @@ describe("updateUserPreferencesAction", () => {
   });
 
   it("returns updated preferences and revalidates settings path", async () => {
-    mockUpdateUserPreferences.mockResolvedValue({ notifyEmailDefault: false, notifySmsDefault: false });
+    mockUpdateUserPreferences.mockResolvedValue(allDisabledPreferences);
 
     const result = await updateUserPreferencesAction({ notifyEmailDefault: false });
 
-    expect(result).toEqual({
-      success: true,
-      data: { notifyEmailDefault: false, notifySmsDefault: false },
-    });
+    expect(result).toEqual({ success: true, data: allDisabledPreferences });
     expect(mockUpdateUserPreferences).toHaveBeenCalledWith(100001, { notifyEmailDefault: false });
     expect(mockRevalidatePath).toHaveBeenCalledWith("/settings");
   });

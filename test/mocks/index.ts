@@ -7,3 +7,6 @@ export { mockGetIdempotentResponse, mockSetIdempotentResponse } from "./idempote
 export { mockValidateOrigin } from "./csrf";
 export { mockVerifySession, mockRequireAdmin } from "./dal";
 export { mockRevalidatePath } from "./next-cache";
+export { activeConsentKermit } from "./sms-consent";
+export { defaultPreferences, allEnabledPreferences, allDisabledPreferences } from "./user-preferences";
+export { memberKermit, memberAngelica } from "./members";
