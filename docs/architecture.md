@@ -170,7 +170,7 @@ Six models will be added for Contact Groups with email/SMS messaging:
 - **CSRF protection** for state-changing requests
 - **Idempotency keys** prevent duplicate submissions
 - **Zod validation** on all inputs
-- **Security headers** set in `next.config.js` (CSP, HSTS, X-Frame-Options)
+- **Security headers** set in `next.config.ts` (CSP, HSTS, X-Frame-Options)
 
 ## Related Docs
 

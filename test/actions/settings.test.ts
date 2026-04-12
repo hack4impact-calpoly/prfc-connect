@@ -19,21 +19,24 @@ vi.mock("@/services/sms-consent", () => ({
 vi.mock("@/services/user-preference", () => ({
   getUserPreferences: vi.fn(),
   updateUserPreferences: vi.fn(),
+  uploadProfilePhoto: vi.fn(),
 }));
 
 import { getMemberSmsConsent, revokeSmsConsent } from "@/services/sms-consent";
-import { getUserPreferences, updateUserPreferences } from "@/services/user-preference";
+import { getUserPreferences, updateUserPreferences, uploadProfilePhoto } from "@/services/user-preference";
 import {
   fetchSmsConsent,
   revokeSmsConsentAction,
   fetchUserPreferences,
   updateUserPreferencesAction,
+  uploadPhotoAction,
 } from "@/actions/settings";
 
 const mockGetMemberSmsConsent = getMemberSmsConsent as MockedFunction<typeof getMemberSmsConsent>;
 const mockRevokeSmsConsent = revokeSmsConsent as MockedFunction<typeof revokeSmsConsent>;
 const mockGetUserPreferences = getUserPreferences as MockedFunction<typeof getUserPreferences>;
 const mockUpdateUserPreferences = updateUserPreferences as MockedFunction<typeof updateUserPreferences>;
+const mockUploadProfilePhoto = uploadProfilePhoto as MockedFunction<typeof uploadProfilePhoto>;
 
 describe("fetchSmsConsent", () => {
   beforeEach(() => {
@@ -150,5 +153,49 @@ describe("updateUserPreferencesAction", () => {
     const result = await updateUserPreferencesAction({ notifyEmailDefault: "yes" as never });
 
     expect(result.success).toBe(false);
+  });
+});
+
+describe("uploadPhotoAction", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockVerifySession.mockResolvedValue({ ownerid: 100001, isAdmin: false });
+  });
+
+  it("calls uploadProfilePhoto with session ownerid and the FormData file, returns the url, revalidates settings", async () => {
+    const file = new File([new Uint8Array(1024)], "photo.jpg", { type: "image/jpeg" });
+    const formData = new FormData();
+    formData.set("file", file);
+    mockUploadProfilePhoto.mockResolvedValue("https://abc.public.blob.vercel-storage.com/avatars/100001.jpg");
+
+    const result = await uploadPhotoAction(formData);
+
+    expect(result).toEqual({
+      success: true,
+      data: { url: "https://abc.public.blob.vercel-storage.com/avatars/100001.jpg" },
+    });
+    expect(mockUploadProfilePhoto).toHaveBeenCalledWith(100001, file);
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/settings");
+  });
+
+  it("returns error when no file is in the FormData", async () => {
+    const formData = new FormData();
+
+    const result = await uploadPhotoAction(formData);
+
+    expect(result).toEqual({ success: false, error: "No file provided" });
+    expect(mockUploadProfilePhoto).not.toHaveBeenCalled();
+  });
+
+  it("returns error when not authenticated", async () => {
+    mockVerifySession.mockRejectedValue(new AppError("UNAUTHORIZED", "Authentication required"));
+    const formData = new FormData();
+    formData.set("file", new File([new Uint8Array(1024)], "photo.jpg", { type: "image/jpeg" }));
+
+    const result = await uploadPhotoAction(formData);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe("Authentication required");
+    expect(mockUploadProfilePhoto).not.toHaveBeenCalled();
   });
 });

@@ -211,6 +211,7 @@ model UserPreference {
   memberId           Int      @unique @map("member_id")
   notifyEmailDefault Boolean  @default(true) @map("notify_email_default")
   notifySmsDefault   Boolean  @default(false) @map("notify_sms_default")
+  photoUrl           String?  @map("photo_url") @db.VarChar(500)
   createdAt          DateTime @default(now()) @map("created_at")
   updatedAt          DateTime @updatedAt @map("updated_at")
 
