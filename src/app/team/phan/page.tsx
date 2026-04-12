@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { GroupDetailViewModal } from "@/components/groups/group-detail-view-modal";
 import { Button } from "@/components/ui/button";
+import { EntityCard } from "@/components/groups/entity-card";
 
 const mockGroup = {
   id: 1,
@@ -33,6 +34,8 @@ export default function PhanPage() {
       <Button onClick={() => setOpen(true)}>Open Detail View</Button>
 
       <GroupDetailViewModal open={open} onOpenChange={setOpen} group={mockGroup} onEdit={() => alert("Edit clicked")} />
+
+      <EntityCard></EntityCard>
     </div>
   );
 }

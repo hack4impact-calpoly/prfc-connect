@@ -1,9 +1,6 @@
 import { ChevronRight, Plus, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { getAvatarColor, getInitials } from "@/utils/avatar";
-
 interface EntityCardProps {
   variant?: "group" | "add";
   name?: string;
@@ -12,13 +9,7 @@ interface EntityCardProps {
   onClick?: () => void;
 }
 
-export function EntityCard({
-  variant = "group",
-  name = "",
-  memberCount = 0,
-  description = null,
-  onClick,
-}: EntityCardProps) {
+export function EntityCard({ variant = "group", name = "", memberCount = 0, onClick }: EntityCardProps) {
   const isAdd = variant === "add";
   const isInteractive = !!onClick;
   const Component = isInteractive ? "button" : "div";
@@ -30,12 +21,6 @@ export function EntityCard({
     </div>
   ) : (
     <div className="flex flex-col gap-4">
-      <Avatar className="h-14 w-14">
-        <AvatarFallback style={{ backgroundColor: getAvatarColor(name) }} className="text-white font-semibold">
-          {getInitials(name)}
-        </AvatarFallback>
-      </Avatar>
-
       <div className="font-bold text-xl">{name}</div>
 
       <div className="flex gap-2">
@@ -44,8 +29,6 @@ export function EntityCard({
           {memberCount} {memberCount === 1 ? "member" : "members"}
         </div>
       </div>
-
-      {description ? <p className="text-sm text-muted-foreground line-clamp-2">{description}</p> : null}
 
       {isInteractive ? (
         <ChevronRight className="absolute right-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
