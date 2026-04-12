@@ -8,8 +8,8 @@ describe("Rutledge Team Page", () => {
     expect(screen.getByText("Tech Lead")).toBeInTheDocument();
   });
 
-  it("renders the month calendar preview heading", () => {
+  it("renders the dashboard stat cards preview heading", () => {
     render(<Page />);
-    expect(screen.getByText("Month Calendar Preview")).toBeInTheDocument();
+    expect(screen.getByText("Dashboard Stat Cards Preview")).toBeInTheDocument();
   });
 });
