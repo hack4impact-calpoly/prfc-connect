@@ -8,8 +8,8 @@ describe("Rutledge Team Page", () => {
     expect(screen.getByText("Tech Lead")).toBeInTheDocument();
   });
 
-  it("renders the profile photo upload preview heading", () => {
+  it("renders the notification preferences preview heading", () => {
     render(<Page />);
-    expect(screen.getByText("Profile Photo Upload Preview")).toBeInTheDocument();
+    expect(screen.getByText("Notification Preferences Card Preview")).toBeInTheDocument();
   });
 });

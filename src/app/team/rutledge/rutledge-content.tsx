@@ -9,6 +9,7 @@ import type { GroupOption, MemberOption } from "@/components/events/invitee-comb
 import { TotalMembersCard } from "@/components/dashboard/total-members-card";
 import { EventsThisMonthCard } from "@/components/dashboard/events-this-month-card";
 import { ProfilePhotoUpload } from "@/components/profile/profile-photo-upload";
+import { NotificationPreferencesCard } from "@/components/settings/notification-preferences-card";
 
 const PREVIEW_EVENT_DATES = new Set(["2026-04-13", "2026-04-15", "2026-04-16", "2026-04-17"]);
 
@@ -36,6 +37,8 @@ export function RutledgeContent() {
   const [defaultDate, setDefaultDate] = useState<Date>();
   const [uploadingA, setUploadingA] = useState(false);
   const [uploadingB, setUploadingB] = useState(false);
+  const [previewEmail, setPreviewEmail] = useState(true);
+  const [previewSms, setPreviewSms] = useState(false);
 
   const handleDayClick = (date: Date) => {
     const withDefaultTime = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 10, 0);
@@ -47,6 +50,14 @@ export function RutledgeContent() {
     setter(true);
     toast.info(`Upload fired: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`);
     setTimeout(() => setter(false), 800);
+  };
+
+  const handleTogglePreview = (
+    key: "notifyEmailDefault" | "notifySmsDefault",
+    value: boolean,
+  ) => {
+    if (key === "notifyEmailDefault") setPreviewEmail(value);
+    else setPreviewSms(value);
   };
 
   return (
@@ -68,6 +79,29 @@ export function RutledgeContent() {
               photoUrl={null}
               onUpload={handlePreviewUpload(setUploadingB)}
               isUploading={uploadingB}
+            />
+          </div>
+        </div>
+        <div className="mt-10">
+          <h2 className="text-xl font-semibold">Notification Preferences Card Preview</h2>
+          <div className="mt-4 space-y-4">
+            <NotificationPreferencesCard
+              emailEnabled={previewEmail}
+              smsEnabled={previewSms}
+              smsFeatureEnabled
+              onToggle={handleTogglePreview}
+            />
+            <NotificationPreferencesCard
+              emailEnabled={false}
+              smsEnabled={false}
+              smsFeatureEnabled
+              onToggle={() => {}}
+            />
+            <NotificationPreferencesCard
+              emailEnabled={true}
+              smsEnabled={false}
+              smsFeatureEnabled={false}
+              onToggle={() => {}}
             />
           </div>
         </div>
