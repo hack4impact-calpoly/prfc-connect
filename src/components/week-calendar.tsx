@@ -4,7 +4,6 @@ import "temporal-polyfill/global";
 import { useNextCalendarApp, ScheduleXCalendar } from "@schedule-x/react";
 import { createViewWeek } from "@schedule-x/calendar";
 import "@schedule-x/theme-default/dist/index.css";
-import "./week-calendar.css";
 import type { EventType } from "@/generated/prisma/client";
 import type { EventSummary } from "@/services/event";
 

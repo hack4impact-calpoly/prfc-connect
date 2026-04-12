@@ -115,3 +115,16 @@
     @apply bg-background text-foreground;
   }
 }
+
+.sx-react-calendar-wrapper {
+  --sx-color-primary: #523019;
+  --sx-color-on-primary: #ffffff;
+  --sx-color-primary-container: #e3cdbc;
+  --sx-color-on-primary-container: #231f1f;
+  --sx-color-surface: #ffffff;
+  --sx-color-on-surface: #231f1f;
+  --sx-internal-color-text: #231f1f;
+
+  height: 100%;
+  min-height: 600px;
+}
