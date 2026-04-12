@@ -167,14 +167,29 @@ model Event {
   ownerid      Int
   groupId      Int?       @map("group_id")
 
-  group ContactGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
-  rsvps EventRsvp[]
+  group    ContactGroup?  @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  rsvps    EventRsvp[]
+  invitees EventInvitee[]
 
   @@index([ownerid])
   @@index([groupId])
   @@index([startDate])
   @@index([eventType])
   @@map("event")
+}
+
+model EventInvitee {
+  id        Int      @id @default(autoincrement())
+  eventId   Int      @map("event_id")
+  memberId  Int      @map("member_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, memberId])
+  @@index([eventId])
+  @@index([memberId])
+  @@map("event_invitee")
 }
 
 model EventRsvp {

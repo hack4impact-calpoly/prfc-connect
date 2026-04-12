@@ -12,6 +12,9 @@ import {
   rsvpToEvent,
   getEventRsvps,
   getUpcomingEvents,
+  getEventsForMonth,
+  inviteGroup,
+  inviteMembers,
 } from "@/services/event";
 import { getRecentActivity } from "@/services/dashboard";
 import { getAllMessageHistory } from "@/services/message";
@@ -31,11 +34,22 @@ export async function createEventAction(input: {
   rsvpDeadline?: string | Date | null;
   eventType: string;
   groupId?: number | null;
+  memberIds?: number[];
+  groupIds?: number[];
 }): Promise<ActionResult<{ id: number }>> {
   try {
     const session = await verifySession();
     const validated = CreateEventSchema.parse(input);
-    const event = await createEvent(validated, session.ownerid);
+
+    const { memberIds, groupIds, ...eventData } = validated;
+    const event = await createEvent(eventData, session.ownerid);
+
+    if (groupIds && groupIds.length > 0) {
+      await Promise.all(groupIds.map((gid) => inviteGroup(event.id, gid)));
+    }
+    if (memberIds && memberIds.length > 0) {
+      await inviteMembers(event.id, memberIds);
+    }
 
     revalidatePath("/events");
     revalidatePath("/home");
@@ -115,6 +129,7 @@ export async function fetchEventDetail(
 
 export interface DashboardData {
   totalMembers: number;
+  eventsThisMonth: number;
   upcomingEvents: EventSummary[];
   recentActivity: ActivityItem[];
   recentMessages: MessageHistoryItem[];
@@ -124,8 +139,10 @@ export async function fetchDashboardData(): Promise<ActionResult<DashboardData>>
   try {
     await verifySession();
 
-    const [memberList, upcomingEvents, recentActivity, recentMessages] = await Promise.all([
+    const now = new Date();
+    const [memberList, monthEvents, upcomingEvents, recentActivity, recentMessages] = await Promise.all([
       getAllMembers(),
+      getEventsForMonth(now.getFullYear(), now.getMonth() + 1),
       getUpcomingEvents(4),
       getRecentActivity(3),
       getAllMessageHistory({ limit: 1 }),
@@ -135,6 +152,7 @@ export async function fetchDashboardData(): Promise<ActionResult<DashboardData>>
       success: true,
       data: {
         totalMembers: memberList.length,
+        eventsThisMonth: monthEvents.length,
         upcomingEvents,
         recentActivity,
         recentMessages,
