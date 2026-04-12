@@ -35,7 +35,14 @@ export default function PhanPage() {
 
       <GroupDetailViewModal open={open} onOpenChange={setOpen} group={mockGroup} onEdit={() => alert("Edit clicked")} />
 
-      <EntityCard></EntityCard>
+      <EntityCard
+        variant="group"
+        name="Testing"
+        memberCount={42}
+        onViewGroup={() => console.log("View group clicked")}
+        onQuickEdit={() => console.log("Quick edit clicked")}
+        onDelete={() => console.log("Delete clicked")}
+      />
     </div>
   );
 }

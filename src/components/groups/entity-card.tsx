@@ -34,7 +34,7 @@ export function EntityCard({
     </div>
   ) : (
     <div>
-      <div className="flex flex-col gap-4 p-6">
+      <div className="flex flex-col gap-2 p-6">
         <div className="self-end">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -53,8 +53,8 @@ export function EntityCard({
           </DropdownMenu>
         </div>
         <div className="font-bold text-xl">{name ? name : "John Doe"}</div>
-        <div className="inline-flex items-center gap-2 bg-transparent text-prfc-border py-2 rounded-full text-sm">
-          <UsersRound className="h-4 w-4" />
+        <div className="inline-flex items-center gap-2 bg-transparent text-prfc-border rounded-full text-md">
+          <UsersRound className="h-5 w-5" />
           {memberCount} {memberCount === 1 ? "member" : "members"}
         </div>
       </div>
