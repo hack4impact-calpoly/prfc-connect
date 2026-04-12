@@ -3,6 +3,7 @@ import prisma from "@/lib/db";
 import { startOfMonth, endOfMonth, startOfWeek, endOfWeek } from "date-fns";
 import { AppError, transformError } from "@/utils/errors";
 import { getMemberDetails } from "@/lib/api/member-api";
+import { getGroupMembers } from "@/services/contact-group";
 import type { CreateEvent, UpdateEvent } from "@/schema/event";
 import type { Event, EventType, RsvpStatus } from "@/generated/prisma/client";
 
@@ -34,7 +35,13 @@ export interface RsvpCounts {
   declined: number;
 }
 
-export async function createEvent(data: CreateEvent, ownerid: number): Promise<Event> {
+export interface InviteeDetail {
+  memberId: number;
+  memberName: string;
+  createdAt: Date;
+}
+
+export async function createEvent(data: Omit<CreateEvent, "memberIds" | "groupIds">, ownerid: number): Promise<Event> {
   try {
     return await prisma.event.create({
       data: { ...data, ownerid },
@@ -104,13 +111,19 @@ export async function getUpcomingEvents(limit: number = 5): Promise<EventSummary
   }
 }
 
-export async function getEventsForMonth(year: number, month: number): Promise<EventSummary[]> {
+export async function getEventsForMonth(
+  year: number,
+  month: number,
+  filters?: { eventType?: EventType; groupId?: number },
+): Promise<EventSummary[]> {
   try {
     const start = startOfMonth(new Date(year, month - 1));
     const end = endOfMonth(start);
 
     return await queryEventSummaries({
       startDate: { gte: start, lte: end },
+      ...(filters?.eventType && { eventType: filters.eventType }),
+      ...(filters?.groupId && { groupId: filters.groupId }),
     });
   } catch (error) {
     throw transformError(error);
@@ -194,6 +207,51 @@ export async function getEventRsvpCounts(eventId: number): Promise<RsvpCounts> {
     ]);
 
     return { going, maybe, declined };
+  } catch (error) {
+    throw transformError(error);
+  }
+}
+
+export async function inviteMembers(eventId: number, memberIds: number[]): Promise<void> {
+  if (memberIds.length === 0) return;
+  try {
+    await prisma.eventInvitee.createMany({
+      data: memberIds.map((memberId) => ({ eventId, memberId })),
+      skipDuplicates: true,
+    });
+  } catch (error) {
+    throw transformError(error);
+  }
+}
+
+export async function inviteGroup(eventId: number, groupId: number): Promise<void> {
+  try {
+    const memberIds = await getGroupMembers(groupId);
+    await inviteMembers(eventId, memberIds);
+  } catch (error) {
+    throw transformError(error);
+  }
+}
+
+export async function getEventInvitees(eventId: number): Promise<InviteeDetail[]> {
+  try {
+    const rows = await prisma.eventInvitee.findMany({
+      where: { eventId },
+      select: { memberId: true, createdAt: true },
+      orderBy: { createdAt: "asc" },
+    });
+
+    if (rows.length === 0) return [];
+
+    const memberIds = rows.map((r) => r.memberId);
+    const members = await getMemberDetails(memberIds);
+    const memberMap = new Map(members.map((m) => [m.ownerid, m.ownername]));
+
+    return rows.map((r) => ({
+      memberId: r.memberId,
+      memberName: memberMap.get(r.memberId) ?? "Unknown Member",
+      createdAt: r.createdAt,
+    }));
   } catch (error) {
     throw transformError(error);
   }
