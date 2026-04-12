@@ -2,6 +2,7 @@ import "server-only";
 import { put, del } from "@vercel/blob";
 import prisma from "@/lib/db";
 import { AppError, transformError } from "@/utils/errors";
+import { MAX_PHOTO_BYTES, ALLOWED_PHOTO_TYPES } from "@/lib/photo-constraints";
 
 export interface UserPreferenceData {
   notifyEmailDefault: boolean;
@@ -12,9 +13,6 @@ const DEFAULTS: UserPreferenceData = {
   notifyEmailDefault: true,
   notifySmsDefault: false,
 };
-
-export const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
-export const ALLOWED_PHOTO_TYPES = new Set(["image/jpeg", "image/png"]);
 
 export async function getUserPreferences(memberId: number): Promise<UserPreferenceData> {
   try {

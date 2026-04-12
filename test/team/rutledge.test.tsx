@@ -8,8 +8,8 @@ describe("Rutledge Team Page", () => {
     expect(screen.getByText("Tech Lead")).toBeInTheDocument();
   });
 
-  it("renders the dashboard stat cards preview heading", () => {
+  it("renders the profile photo upload preview heading", () => {
     render(<Page />);
-    expect(screen.getByText("Dashboard Stat Cards Preview")).toBeInTheDocument();
+    expect(screen.getByText("Profile Photo Upload Preview")).toBeInTheDocument();
   });
 });

@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { MonthCalendar } from "@/components/events/month-calendar";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { CreateEventPopover } from "@/components/events/create-event-popover";
 import type { GroupOption, MemberOption } from "@/components/events/invitee-combobox";
 import { TotalMembersCard } from "@/components/dashboard/total-members-card";
 import { EventsThisMonthCard } from "@/components/dashboard/events-this-month-card";
+import { ProfilePhotoUpload } from "@/components/profile/profile-photo-upload";
 
 const PREVIEW_EVENT_DATES = new Set(["2026-04-13", "2026-04-15", "2026-04-16", "2026-04-17"]);
 
@@ -32,6 +34,8 @@ export function RutledgeContent() {
   const [currentMonth, setCurrentMonth] = useState(new Date("2026-04-01"));
   const [dialogOpen, setDialogOpen] = useState(false);
   const [defaultDate, setDefaultDate] = useState<Date>();
+  const [uploadingA, setUploadingA] = useState(false);
+  const [uploadingB, setUploadingB] = useState(false);
 
   const handleDayClick = (date: Date) => {
     const withDefaultTime = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 10, 0);
@@ -39,11 +43,34 @@ export function RutledgeContent() {
     setDialogOpen(true);
   };
 
+  const handlePreviewUpload = (setter: (v: boolean) => void) => (file: File) => {
+    setter(true);
+    toast.info(`Upload fired: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`);
+    setTimeout(() => setter(false), 800);
+  };
+
   return (
     <div className="min-h-screen bg-background p-8">
       <div className="mx-auto max-w-3xl">
         <h1 className="text-3xl font-bold text-foreground">Kevin Rutledge</h1>
         <p className="mt-2 text-lg text-muted-foreground">Tech Lead</p>
+        <div className="mt-10">
+          <h2 className="text-xl font-semibold">Profile Photo Upload Preview</h2>
+          <div className="mt-4 space-y-3">
+            <ProfilePhotoUpload
+              name="Kevin Rutledge"
+              photoUrl="/assets/produce.jpg"
+              onUpload={handlePreviewUpload(setUploadingA)}
+              isUploading={uploadingA}
+            />
+            <ProfilePhotoUpload
+              name="Tom Wilson"
+              photoUrl={null}
+              onUpload={handlePreviewUpload(setUploadingB)}
+              isUploading={uploadingB}
+            />
+          </div>
+        </div>
         <div className="mt-10">
           <h2 className="text-xl font-semibold">Dashboard Stat Cards Preview</h2>
           <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
