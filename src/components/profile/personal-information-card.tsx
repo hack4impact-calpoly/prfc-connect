@@ -21,7 +21,7 @@ function IconInput({ icon, value, id }: { icon: React.ReactNode; value: string; 
         value={value}
         disabled
         readOnly
-        className="rounded-lg bg-prfc-blue/5 border-gray-200/90 shadow-none pl-11 h-10 font-khula py-0 leading-[2.5rem] disabled:opacity-100"
+        className="rounded-lg bg-paso-grey border-gray-200/90 shadow-none pl-11 h-10 font-khula py-0 leading-[2.5rem] disabled:opacity-100"
       />
     </div>
   );
@@ -43,7 +43,7 @@ export function PersonalInformationCard({ firstName, lastName, email, phone }: P
                 value={firstName}
                 disabled
                 readOnly
-                className="rounded-lg bg-prfc-blue/5 border-gray-200/90 shadow-none h-10 font-khula py-0 leading-[2.5rem] disabled:opacity-100"
+                className="rounded-lg bg-paso-grey border-gray-200/90 shadow-none h-10 font-khula py-0 leading-[2.5rem] disabled:opacity-100"
               />
             </div>
             <div className="space-y-1">
@@ -55,7 +55,7 @@ export function PersonalInformationCard({ firstName, lastName, email, phone }: P
                 value={lastName}
                 disabled
                 readOnly
-                className="rounded-lg bg-prfc-blue/5 border-gray-200/90 shadow-none h-10 font-khula py-0 leading-[2.5rem] disabled:opacity-100"
+                className="rounded-lg bg-paso-grey border-gray-200/90 shadow-none h-10 font-khula py-0 leading-[2.5rem] disabled:opacity-100"
               />
             </div>
           </div>
