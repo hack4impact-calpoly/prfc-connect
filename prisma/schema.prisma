@@ -162,6 +162,7 @@ model Event {
   location     String?    @db.VarChar(200)
   startDate    DateTime   @map("start_date")
   endDate      DateTime   @map("end_date")
+  isAllDay     Boolean    @default(false) @map("is_all_day")
   rsvpDeadline DateTime?  @map("rsvp_deadline")
   eventType    EventType  @map("event_type")
   ownerid      Int

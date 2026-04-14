@@ -21,6 +21,7 @@ function createAdapter() {
     connectionLimit: 5,
     keepAliveDelay: 30000,
     socketTimeout: 60000,
+    timezone: "Z",
   });
 }
 

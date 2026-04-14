@@ -1,17 +1,33 @@
 import type { Metadata } from "next";
-import { CalendarDays } from "lucide-react";
-import { ComingSoonPage } from "@/components/layout/coming-soon-page";
+import { verifySession } from "@/lib/dal";
+import { getEventsForWeek } from "@/services/event";
+import { getAllGroupsWithMemberIds } from "@/services/contact-group";
+import { getAllMembers } from "@/lib/api/member-api";
+import { coopStartOfWeek } from "@/lib/time";
+import { EventsContent } from "./events-content";
 
 export const metadata: Metadata = {
   title: "Events | PRFC Connect",
 };
 
-export default function EventsPage() {
+export default async function EventsPage() {
+  const session = await verifySession();
+  const now = new Date();
+  const weekStart = coopStartOfWeek(now);
+  const [initialWeekEvents, groups, members] = await Promise.all([
+    getEventsForWeek(weekStart),
+    getAllGroupsWithMemberIds(),
+    getAllMembers(),
+  ]);
+
   return (
-    <ComingSoonPage
-      icon={CalendarDays}
-      title="Events"
-      description="Coming soon. Events will be available in a future update."
+    <EventsContent
+      initialDateIso={now.toISOString()}
+      initialWeekEvents={initialWeekEvents}
+      groups={groups}
+      members={members}
+      currentUserOwnerid={session.ownerid}
+      isAdmin={session.isAdmin}
     />
   );
 }

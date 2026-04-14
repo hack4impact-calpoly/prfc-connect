@@ -10,14 +10,20 @@ import { TotalMembersCard } from "@/components/dashboard/total-members-card";
 import { EventsThisMonthCard } from "@/components/dashboard/events-this-month-card";
 import { ProfilePhotoUpload } from "@/components/profile/profile-photo-upload";
 import { NotificationPreferencesCard } from "@/components/settings/notification-preferences-card";
+import { coopFloatingDate, coopWallClockToUtc } from "@/lib/time";
 
-const PREVIEW_EVENT_DATES = new Set(["2026-04-13", "2026-04-15", "2026-04-16", "2026-04-17"]);
+const PREVIEW_EVENTS_BY_DATE = new Map<string, { allDayCount: number; timedCount: number }>([
+  ["2026-04-13", { allDayCount: 0, timedCount: 2 }],
+  ["2026-04-15", { allDayCount: 1, timedCount: 0 }],
+  ["2026-04-16", { allDayCount: 2, timedCount: 3 }],
+  ["2026-04-17", { allDayCount: 0, timedCount: 1 }],
+]);
 
 const MOCK_GROUPS: GroupOption[] = [
-  { id: 1, name: "Board of Directors", memberCount: 7 },
-  { id: 2, name: "General Members", memberCount: 142 },
-  { id: 3, name: "Volunteers", memberCount: 23 },
-  { id: 4, name: "Garden Committee", memberCount: 12 },
+  { id: 1, name: "Board of Directors", memberCount: 7, memberIds: [] },
+  { id: 2, name: "General Members", memberCount: 142, memberIds: [] },
+  { id: 3, name: "Volunteers", memberCount: 23, memberIds: [] },
+  { id: 4, name: "Garden Committee", memberCount: 12, memberIds: [] },
 ];
 
 const MOCK_MEMBERS: MemberOption[] = [
@@ -32,7 +38,7 @@ const MOCK_MEMBERS: MemberOption[] = [
 ];
 
 export function RutledgeContent() {
-  const [currentMonth, setCurrentMonth] = useState(new Date("2026-04-01"));
+  const [currentMonth, setCurrentMonth] = useState(coopFloatingDate(2026, 3, 1));
   const [dialogOpen, setDialogOpen] = useState(false);
   const [defaultDate, setDefaultDate] = useState<Date>();
   const [uploadingA, setUploadingA] = useState(false);
@@ -41,7 +47,7 @@ export function RutledgeContent() {
   const [previewSms, setPreviewSms] = useState(false);
 
   const handleDayClick = (date: Date) => {
-    const withDefaultTime = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 10, 0);
+    const withDefaultTime = coopWallClockToUtc(date.getFullYear(), date.getMonth(), date.getDate(), 10, 0);
     setDefaultDate(withDefaultTime);
     setDialogOpen(true);
   };
@@ -52,10 +58,7 @@ export function RutledgeContent() {
     setTimeout(() => setter(false), 800);
   };
 
-  const handleTogglePreview = (
-    key: "notifyEmailDefault" | "notifySmsDefault",
-    value: boolean,
-  ) => {
+  const handleTogglePreview = (key: "notifyEmailDefault" | "notifySmsDefault", value: boolean) => {
     if (key === "notifyEmailDefault") setPreviewEmail(value);
     else setPreviewSms(value);
   };
@@ -116,14 +119,12 @@ export function RutledgeContent() {
         </div>
         <div className="mt-10">
           <h2 className="text-xl font-semibold">Month Calendar Preview</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Click any day to open the create event popover.
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">Click any day to open the create event popover.</p>
           <div className="mt-4">
             <MonthCalendar
               currentMonth={currentMonth}
-              onMonthChange={setCurrentMonth}
-              eventDates={PREVIEW_EVENT_DATES}
+              onMonthChange={(d) => setCurrentMonth(coopFloatingDate(d.getFullYear(), d.getMonth(), 1))}
+              eventsByDate={PREVIEW_EVENTS_BY_DATE}
               onDayClick={handleDayClick}
             />
           </div>

@@ -1,6 +1,8 @@
 import "@testing-library/jest-dom/vitest";
 import { vi } from "vitest";
 
+process.env.TZ = "UTC";
+
 vi.mock("server-only", () => ({}));
 
 if (typeof window !== "undefined") {

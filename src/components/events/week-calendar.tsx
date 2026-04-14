@@ -1,13 +1,15 @@
 "use client";
 
 import "temporal-polyfill/global";
+import { useEffect } from "react";
 import { useNextCalendarApp, ScheduleXCalendar } from "@schedule-x/react";
 import { createViewWeek } from "@schedule-x/calendar";
 import "@schedule-x/theme-default/dist/index.css";
+import { COOP_TZ, DEFAULT_EVENT_DURATION_MS, coopDateParts, coopWallClockToUtc } from "@/lib/time";
 import type { EventType } from "@/generated/prisma/client";
 import type { EventSummary } from "@/services/event";
 
-type WeekCalendarEvent = Pick<EventSummary, "id" | "title" | "startDate" | "endDate" | "eventType">;
+type WeekCalendarEvent = Pick<EventSummary, "id" | "title" | "startDate" | "endDate" | "eventType" | "isAllDay">;
 
 type Props = {
   events: WeekCalendarEvent[];
@@ -42,48 +44,77 @@ const CALENDARS = {
   },
 };
 
+function toScheduleXEvents(events: WeekCalendarEvent[]) {
+  return events.map((e) => ({
+    id: e.id,
+    title: e.title,
+    start: e.isAllDay ? toFloatingPlainDate(e.startDate) : toCoopZonedDateTime(e.startDate),
+    end: e.isAllDay ? toFloatingPlainDate(e.endDate) : toCoopZonedDateTime(e.endDate),
+    calendarId: CALENDAR_ID_BY_TYPE[e.eventType],
+  }));
+}
+
+function toFloatingPlainDate(d: Date): Temporal.PlainDate {
+  return Temporal.PlainDate.from({
+    year: d.getUTCFullYear(),
+    month: d.getUTCMonth() + 1,
+    day: d.getUTCDate(),
+  });
+}
+
+function toCoopPlainDate(d: Date): Temporal.PlainDate {
+  const { year, month0, day } = coopDateParts(d);
+  return Temporal.PlainDate.from({ year, month: month0 + 1, day });
+}
+
+function toCoopZonedDateTime(d: Date): Temporal.ZonedDateTime {
+  const { year, month0, day, hour, minute } = coopDateParts(d);
+  return Temporal.ZonedDateTime.from({
+    year,
+    month: month0 + 1,
+    day,
+    hour,
+    minute,
+    timeZone: COOP_TZ,
+  });
+}
+
 export function WeekCalendar({ events, selectedDate, onEventClick, onTimeSlotClick }: Props) {
   const calendar = useNextCalendarApp({
     views: [createViewWeek()],
     firstDayOfWeek: 7,
     weekOptions: { gridHeight: 1152 },
     calendars: CALENDARS,
-    selectedDate: selectedDate
-      ? Temporal.PlainDate.from({
-          year: selectedDate.getFullYear(),
-          month: selectedDate.getMonth() + 1,
-          day: selectedDate.getDate(),
-        })
-      : undefined,
-    events: events.map((e) => ({
-      id: e.id,
-      title: e.title,
-      start: toZonedDateTime(e.startDate),
-      end: toZonedDateTime(e.endDate),
-      calendarId: CALENDAR_ID_BY_TYPE[e.eventType],
-    })),
+    timezone: COOP_TZ,
+    selectedDate: selectedDate ? toCoopPlainDate(selectedDate) : undefined,
+    events: toScheduleXEvents(events),
     callbacks: {
       onEventClick: (event) => {
         if (typeof event.id === "number") onEventClick?.(event.id);
       },
       onClickDateTime: (dateTime) => {
-        const start = new Date(dateTime.epochMilliseconds);
-        const end = new Date(start.getTime() + 60 * 60 * 1000);
-        onTimeSlotClick?.(start, end);
+        const rounded = dateTime.round({
+          smallestUnit: "minute",
+          roundingIncrement: 15,
+          roundingMode: "halfExpand",
+        });
+        const coopInstant = coopWallClockToUtc(
+          rounded.year,
+          rounded.month - 1,
+          rounded.day,
+          rounded.hour,
+          rounded.minute,
+        );
+        const end = new Date(coopInstant.getTime() + DEFAULT_EVENT_DURATION_MS);
+        onTimeSlotClick?.(coopInstant, end);
       },
     },
   });
 
-  return <ScheduleXCalendar calendarApp={calendar} />;
-}
+  useEffect(() => {
+    if (!calendar) return;
+    calendar.events.set(toScheduleXEvents(events));
+  }, [calendar, events]);
 
-function toZonedDateTime(d: Date): Temporal.ZonedDateTime {
-  return Temporal.ZonedDateTime.from({
-    year: d.getFullYear(),
-    month: d.getMonth() + 1,
-    day: d.getDate(),
-    hour: d.getHours(),
-    minute: d.getMinutes(),
-    timeZone: Temporal.Now.timeZoneId(),
-  });
+  return <ScheduleXCalendar calendarApp={calendar} />;
 }

@@ -1,9 +1,18 @@
 import "server-only";
 import prisma from "@/lib/db";
-import { startOfMonth, endOfMonth, startOfWeek, endOfWeek } from "date-fns";
 import { AppError, transformError } from "@/utils/errors";
 import { getMemberDetails } from "@/lib/api/member-api";
 import { getGroupMembers } from "@/services/contact-group";
+import {
+  coopEndOfMonth,
+  coopEndOfWeek,
+  coopStartOfMonth,
+  coopStartOfWeek,
+  utcEndOfMonth,
+  utcEndOfWeek,
+  utcStartOfMonth,
+  utcStartOfWeek,
+} from "@/lib/time";
 import type { CreateEvent, UpdateEvent } from "@/schema/event";
 import type { Event, EventType, RsvpStatus } from "@/generated/prisma/client";
 
@@ -16,6 +25,7 @@ export interface EventSummary {
   title: string;
   startDate: Date;
   endDate: Date;
+  isAllDay: boolean;
   eventType: EventType;
   location: string | null;
   groupName: string | null;
@@ -117,13 +127,22 @@ export async function getEventsForMonth(
   filters?: { eventType?: EventType; groupId?: number },
 ): Promise<EventSummary[]> {
   try {
-    const start = startOfMonth(new Date(year, month - 1));
-    const end = endOfMonth(start);
+    const coopStart = coopStartOfMonth(year, month);
+    const coopEnd = coopEndOfMonth(year, month);
+    const floatingStart = utcStartOfMonth(year, month);
+    const floatingEnd = utcEndOfMonth(year, month);
 
     return await queryEventSummaries({
-      startDate: { gte: start, lte: end },
-      ...(filters?.eventType && { eventType: filters.eventType }),
-      ...(filters?.groupId && { groupId: filters.groupId }),
+      AND: [
+        {
+          OR: [
+            { isAllDay: false, startDate: { gte: coopStart, lte: coopEnd } },
+            { isAllDay: true, startDate: { gte: floatingStart, lte: floatingEnd } },
+          ],
+        },
+        ...(filters?.eventType ? [{ eventType: filters.eventType }] : []),
+        ...(filters?.groupId ? [{ groupId: filters.groupId }] : []),
+      ],
     });
   } catch (error) {
     throw transformError(error);
@@ -132,11 +151,16 @@ export async function getEventsForMonth(
 
 export async function getEventsForWeek(weekStart: Date): Promise<EventSummary[]> {
   try {
-    const start = startOfWeek(weekStart);
-    const end = endOfWeek(start);
+    const coopStart = coopStartOfWeek(weekStart);
+    const coopEnd = coopEndOfWeek(weekStart);
+    const floatingStart = utcStartOfWeek(weekStart);
+    const floatingEnd = utcEndOfWeek(weekStart);
 
     return await queryEventSummaries({
-      startDate: { gte: start, lte: end },
+      OR: [
+        { isAllDay: false, startDate: { gte: coopStart, lte: coopEnd } },
+        { isAllDay: true, startDate: { gte: floatingStart, lte: floatingEnd } },
+      ],
     });
   } catch (error) {
     throw transformError(error);
@@ -233,6 +257,43 @@ export async function inviteGroup(eventId: number, groupId: number): Promise<voi
   }
 }
 
+export async function uninviteMembers(eventId: number, memberIds: number[]): Promise<void> {
+  if (memberIds.length === 0) return;
+  try {
+    await prisma.eventInvitee.deleteMany({
+      where: { eventId, memberId: { in: memberIds } },
+    });
+  } catch (error) {
+    throw transformError(error);
+  }
+}
+
+export async function setEventInvitees(eventId: number, memberIds: number[]): Promise<void> {
+  try {
+    const currentIds = await getEventInviteeMemberIds(eventId);
+    const currentSet = new Set(currentIds);
+    const desiredSet = new Set(memberIds);
+    const toAdd = memberIds.filter((id) => !currentSet.has(id));
+    const toRemove = currentIds.filter((id) => !desiredSet.has(id));
+    if (toAdd.length > 0) await inviteMembers(eventId, toAdd);
+    if (toRemove.length > 0) await uninviteMembers(eventId, toRemove);
+  } catch (error) {
+    throw transformError(error);
+  }
+}
+
+export async function getEventInviteeMemberIds(eventId: number): Promise<number[]> {
+  try {
+    const rows = await prisma.eventInvitee.findMany({
+      where: { eventId },
+      select: { memberId: true },
+    });
+    return rows.map((r) => r.memberId);
+  } catch (error) {
+    throw transformError(error);
+  }
+}
+
 export async function getEventInvitees(eventId: number): Promise<InviteeDetail[]> {
   try {
     const rows = await prisma.eventInvitee.findMany({
@@ -269,6 +330,7 @@ async function queryEventSummaries(
       title: true,
       startDate: true,
       endDate: true,
+      isAllDay: true,
       eventType: true,
       location: true,
       group: { select: { name: true } },
@@ -283,6 +345,7 @@ async function queryEventSummaries(
     title: e.title,
     startDate: e.startDate,
     endDate: e.endDate,
+    isAllDay: e.isAllDay,
     eventType: e.eventType,
     location: e.location,
     groupName: e.group?.name ?? null,

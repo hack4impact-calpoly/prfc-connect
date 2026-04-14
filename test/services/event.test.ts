@@ -1,5 +1,6 @@
 import { vi, type MockedFunction } from "vitest";
 import { mockPrisma } from "../mocks/prisma";
+import { eventMemberTownHall } from "../mocks/events";
 
 vi.mock("@/lib/api/member-api", () => ({
   getMemberDetails: vi.fn(),
@@ -27,32 +28,26 @@ import {
   inviteMembers,
   inviteGroup,
   getEventInvitees,
+  setEventInvitees,
 } from "@/services/event";
 
 const mockGetMemberDetails = getMemberDetails as MockedFunction<typeof getMemberDetails>;
 const mockGetGroupMembers = getGroupMembers as MockedFunction<typeof getGroupMembers>;
 
-const sampleEvent = {
-  id: 1,
-  createdAt: new Date("2026-04-01"),
-  updatedAt: new Date("2026-04-01"),
-  title: "Member Town Hall",
-  description: "Monthly meeting",
-  location: "Downtown Paso Robles",
-  startDate: new Date("2026-04-08T18:00:00"),
-  endDate: new Date("2026-04-08T19:00:00"),
-  rsvpDeadline: new Date("2026-04-07T18:00:00"),
-  eventType: "meeting" as const,
-  ownerid: 100001,
-  groupId: 1,
-};
+const sampleEvent = eventMemberTownHall;
 
 describe("createEvent", () => {
   it("creates event with owner", async () => {
     mockPrisma.event.create.mockResolvedValue(sampleEvent as never);
 
     const result = await createEvent(
-      { title: "Member Town Hall", startDate: new Date(), endDate: new Date(), eventType: "meeting" },
+      {
+        title: "Member Town Hall",
+        startDate: new Date(),
+        endDate: new Date(),
+        isAllDay: false,
+        eventType: "meeting",
+      },
       100001,
     );
 
@@ -66,7 +61,10 @@ describe("createEvent", () => {
     mockPrisma.event.create.mockRejectedValue(new Error("Connection lost"));
 
     await expect(
-      createEvent({ title: "Test", startDate: new Date(), endDate: new Date(), eventType: "social" }, 100001),
+      createEvent(
+        { title: "Test", startDate: new Date(), endDate: new Date(), isAllDay: false, eventType: "social" },
+        100001,
+      ),
     ).rejects.toMatchObject({ code: "INTERNAL_ERROR" });
   });
 });
@@ -124,7 +122,7 @@ describe("getUpcomingEvents", () => {
 });
 
 describe("getEventsForMonth", () => {
-  it("queries events within month boundaries", async () => {
+  it("queries timed events within coop-zone month boundaries and all-day events within UTC month boundaries", async () => {
     mockPrisma.event.findMany.mockResolvedValue([] as never);
 
     await getEventsForMonth(2026, 4);
@@ -132,48 +130,63 @@ describe("getEventsForMonth", () => {
     expect(mockPrisma.event.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {
-          startDate: {
-            gte: new Date(2026, 3, 1),
-            lte: expect.any(Date),
-          },
+          AND: [
+            {
+              OR: [
+                {
+                  isAllDay: false,
+                  startDate: {
+                    gte: new Date("2026-04-01T07:00:00.000Z"),
+                    lte: new Date("2026-05-01T06:59:59.000Z"),
+                  },
+                },
+                {
+                  isAllDay: true,
+                  startDate: {
+                    gte: new Date("2026-04-01T00:00:00.000Z"),
+                    lte: new Date("2026-04-30T23:59:59.999Z"),
+                  },
+                },
+              ],
+            },
+          ],
         },
       }),
     );
   });
 
-  it("merges eventType and groupId filters into the where clause", async () => {
+  it("merges eventType and groupId filters into the AND clause", async () => {
     mockPrisma.event.findMany.mockResolvedValue([] as never);
 
     await getEventsForMonth(2026, 4, { eventType: "meeting", groupId: 5 });
 
-    expect(mockPrisma.event.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.objectContaining({
-          startDate: { gte: expect.any(Date), lte: expect.any(Date) },
-          eventType: "meeting",
-          groupId: 5,
-        }),
-      }),
+    const call = mockPrisma.event.findMany.mock.calls[0][0] as { where: { AND: unknown[] } };
+    expect(call.where.AND).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ OR: expect.any(Array) }),
+        { eventType: "meeting" },
+        { groupId: 5 },
+      ]),
     );
   });
 });
 
 describe("getEventsForWeek", () => {
-  it("queries events within week boundaries", async () => {
+  it("queries timed events in coop-zone week and all-day events in UTC week via OR clause", async () => {
     mockPrisma.event.findMany.mockResolvedValue([] as never);
 
-    await getEventsForWeek(new Date("2026-04-06"));
+    await getEventsForWeek(new Date("2026-04-15T21:00:00.000Z"));
 
-    expect(mockPrisma.event.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: {
-          startDate: {
-            gte: expect.any(Date),
-            lte: expect.any(Date),
-          },
-        },
-      }),
-    );
+    const call = mockPrisma.event.findMany.mock.calls[0][0] as {
+      where: { OR: Array<{ isAllDay: boolean; startDate: { gte: Date; lte: Date } }> };
+    };
+    expect(call.where.OR).toHaveLength(2);
+    const timed = call.where.OR.find((c) => c.isAllDay === false);
+    const allDay = call.where.OR.find((c) => c.isAllDay === true);
+    expect(timed?.startDate.gte.toISOString()).toBe("2026-04-12T07:00:00.000Z");
+    expect(timed?.startDate.lte.toISOString()).toBe("2026-04-19T06:59:59.999Z");
+    expect(allDay?.startDate.gte.toISOString()).toBe("2026-04-12T00:00:00.000Z");
+    expect(allDay?.startDate.lte.toISOString()).toBe("2026-04-18T23:59:59.999Z");
   });
 });
 
@@ -335,5 +348,70 @@ describe("getEventInvitees", () => {
 
     expect(result).toEqual([]);
     expect(mockGetMemberDetails).not.toHaveBeenCalled();
+  });
+});
+
+describe("setEventInvitees", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("invites members present in desired but missing from current", async () => {
+    mockPrisma.eventInvitee.findMany.mockResolvedValue([{ memberId: 100001 }, { memberId: 100002 }] as never);
+    mockPrisma.eventInvitee.createMany.mockResolvedValue({ count: 1 } as never);
+    mockPrisma.eventInvitee.deleteMany.mockResolvedValue({ count: 0 } as never);
+
+    await setEventInvitees(1, [100001, 100002, 100003]);
+
+    expect(mockPrisma.eventInvitee.createMany).toHaveBeenCalledWith({
+      data: [{ eventId: 1, memberId: 100003 }],
+      skipDuplicates: true,
+    });
+    expect(mockPrisma.eventInvitee.deleteMany).not.toHaveBeenCalled();
+  });
+
+  it("uninvites members in current but missing from desired", async () => {
+    mockPrisma.eventInvitee.findMany.mockResolvedValue([
+      { memberId: 100001 },
+      { memberId: 100002 },
+      { memberId: 100003 },
+    ] as never);
+    mockPrisma.eventInvitee.deleteMany.mockResolvedValue({ count: 2 } as never);
+
+    await setEventInvitees(1, [100001]);
+
+    expect(mockPrisma.eventInvitee.deleteMany).toHaveBeenCalledWith({
+      where: { eventId: 1, memberId: { in: [100002, 100003] } },
+    });
+    expect(mockPrisma.eventInvitee.createMany).not.toHaveBeenCalled();
+  });
+
+  it("applies both additions and removals in a single call", async () => {
+    mockPrisma.eventInvitee.findMany.mockResolvedValue([
+      { memberId: 100001 },
+      { memberId: 100002 },
+      { memberId: 100003 },
+    ] as never);
+    mockPrisma.eventInvitee.createMany.mockResolvedValue({ count: 1 } as never);
+    mockPrisma.eventInvitee.deleteMany.mockResolvedValue({ count: 2 } as never);
+
+    await setEventInvitees(1, [100001, 100004]);
+
+    expect(mockPrisma.eventInvitee.createMany).toHaveBeenCalledWith({
+      data: [{ eventId: 1, memberId: 100004 }],
+      skipDuplicates: true,
+    });
+    expect(mockPrisma.eventInvitee.deleteMany).toHaveBeenCalledWith({
+      where: { eventId: 1, memberId: { in: [100002, 100003] } },
+    });
+  });
+
+  it("is a no-op when desired matches current exactly", async () => {
+    mockPrisma.eventInvitee.findMany.mockResolvedValue([{ memberId: 100001 }, { memberId: 100002 }] as never);
+
+    await setEventInvitees(1, [100001, 100002]);
+
+    expect(mockPrisma.eventInvitee.createMany).not.toHaveBeenCalled();
+    expect(mockPrisma.eventInvitee.deleteMany).not.toHaveBeenCalled();
   });
 });

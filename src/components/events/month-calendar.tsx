@@ -3,27 +3,37 @@
 import { useMemo } from "react";
 import { DayPicker, type DayButtonProps } from "react-day-picker";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { format, addMonths, subMonths } from "date-fns";
+import { addMonths, subMonths } from "date-fns";
+import { coopDateParts, coopFormatTimed, localDayKey } from "@/lib/time";
 import { cn } from "@/lib/utils";
+
+export type DayMarker = { allDayCount: number; timedCount: number };
 
 type Props = {
   currentMonth: Date;
   onMonthChange: (month: Date) => void;
-  eventDates: Set<string>;
+  eventsByDate: Map<string, DayMarker>;
   onDayClick?: (date: Date) => void;
 };
 
-export function MonthCalendar({ currentMonth, onMonthChange, eventDates, onDayClick }: Props) {
+const MAX_MARKERS_PER_TYPE = 2;
+
+export function MonthCalendar({ currentMonth, onMonthChange, eventsByDate, onDayClick }: Props) {
+  const localMonth = useMemo(() => {
+    const { year, month0 } = coopDateParts(currentMonth);
+    return new Date(year, month0, 1);
+  }, [currentMonth]);
+
   const components = useMemo(
     () => ({
       DayButton: ({ day, modifiers, className, ...rest }: DayButtonProps) => {
-        const hasEvent = eventDates.has(format(day.date, "yyyy-MM-dd"));
+        const marker = eventsByDate.get(localDayKey(day.date));
         const { today, outside } = modifiers;
         return (
           <button
             {...rest}
             className={cn(
-              "relative flex h-full w-full flex-col items-center justify-center rounded-md",
+              "flex h-full w-full flex-col items-center justify-start rounded-md pt-2",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-prfc-red",
               className,
             )}
@@ -38,30 +48,42 @@ export function MonthCalendar({ currentMonth, onMonthChange, eventDates, onDayCl
             >
               {day.date.getDate()}
             </span>
-            {hasEvent && (
-              <span
-                className={cn("absolute bottom-1 h-1.5 w-1.5 rounded-full", today ? "bg-white" : "bg-prfc-red")}
-                aria-hidden="true"
-              />
+            {marker && (marker.allDayCount > 0 || marker.timedCount > 0) && (
+              <div className="mt-2 flex flex-col items-center gap-1.5">
+                {Array.from({ length: Math.min(marker.allDayCount, MAX_MARKERS_PER_TYPE) }).map((_, i) => (
+                  <span key={`bar-${i}`} className="h-1 w-5 rounded-full bg-prfc-red" aria-hidden="true" />
+                ))}
+                {Array.from({ length: Math.min(marker.timedCount, MAX_MARKERS_PER_TYPE) }).map((_, i) => (
+                  <span key={`dot-${i}`} className="h-1.5 w-1.5 rounded-full bg-prfc-red" aria-hidden="true" />
+                ))}
+                {(() => {
+                  const overflow =
+                    Math.max(0, marker.allDayCount - MAX_MARKERS_PER_TYPE) +
+                    Math.max(0, marker.timedCount - MAX_MARKERS_PER_TYPE);
+                  return overflow > 0 ? (
+                    <span className="text-[10px] font-semibold text-prfc-red">+{overflow}</span>
+                  ) : null;
+                })()}
+              </div>
             )}
           </button>
         );
       },
     }),
-    [eventDates],
+    [eventsByDate],
   );
 
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
         <h2 className="flex items-baseline gap-2">
-          <span className="font-angkor text-3xl text-prfc-red">{format(currentMonth, "MMMM")}</span>
-          <span className="text-3xl text-prfc-brown">{format(currentMonth, "yyyy")}</span>
+          <span className="font-angkor text-3xl text-prfc-red">{coopFormatTimed(currentMonth, "MMMM")}</span>
+          <span className="text-3xl text-prfc-brown">{coopFormatTimed(currentMonth, "yyyy")}</span>
         </h2>
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={() => onMonthChange(subMonths(currentMonth, 1))}
+            onClick={() => onMonthChange(subMonths(localMonth, 1))}
             aria-label="Previous month"
             className="rounded-md p-2 hover:bg-paso-light-brown"
           >
@@ -69,7 +91,7 @@ export function MonthCalendar({ currentMonth, onMonthChange, eventDates, onDayCl
           </button>
           <button
             type="button"
-            onClick={() => onMonthChange(addMonths(currentMonth, 1))}
+            onClick={() => onMonthChange(addMonths(localMonth, 1))}
             aria-label="Next month"
             className="rounded-md p-2 hover:bg-paso-light-brown"
           >
@@ -79,11 +101,12 @@ export function MonthCalendar({ currentMonth, onMonthChange, eventDates, onDayCl
       </div>
       <DayPicker
         mode="single"
-        month={currentMonth}
+        month={localMonth}
         onMonthChange={onMonthChange}
         onDayClick={onDayClick}
         weekStartsOn={0}
         showOutsideDays
+        fixedWeeks
         hideNavigation
         components={components}
         classNames={{
@@ -91,7 +114,7 @@ export function MonthCalendar({ currentMonth, onMonthChange, eventDates, onDayCl
           weekdays: "grid grid-cols-7",
           weekday: "py-2 text-center text-xs font-bold text-prfc-brown",
           week: "grid grid-cols-7",
-          day: "aspect-square text-center",
+          day: "h-28 text-center",
         }}
       />
     </div>

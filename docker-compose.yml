@@ -3,6 +3,7 @@ services:
     image: mysql:8.0
     container_name: prfc-mysql
     restart: unless-stopped
+    command: ["--default-time-zone=+00:00"]
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-prfc_portal}

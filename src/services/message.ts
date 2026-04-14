@@ -5,6 +5,7 @@ import { AppError, transformError } from "@/utils/errors";
 import { getGroupRecipients } from "@/services/contact-group";
 import { sendGroupEmails, validateEmailAllowed } from "@/services/email";
 import { getMemberDetails, getAllActiveMemberIds } from "@/lib/api/member-api";
+import { coopHourOfDay } from "@/lib/time";
 import type { ComposeMessage, BlastMessage } from "@/schema/contact-group";
 import type { MockMember } from "@/lib/mock-members";
 
@@ -97,14 +98,8 @@ export async function getGroupMessageHistory(
 }
 
 export function isQuietHours(): boolean {
-  const formatter = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/Los_Angeles",
-    hour: "2-digit",
-    hour12: false,
-  });
-  const hour = parseInt(formatter.format(new Date()));
-
   // TCPA compliance: no SMS before 8 AM or after 8 PM Pacific
+  const hour = coopHourOfDay(new Date());
   return hour < 8 || hour >= 20;
 }
 

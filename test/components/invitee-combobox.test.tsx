@@ -8,8 +8,8 @@ function wrap(ui: React.ReactElement) {
 }
 
 const GROUPS = [
-  { id: 1, name: "Board of Directors", memberCount: 7 },
-  { id: 2, name: "Volunteers", memberCount: 23 },
+  { id: 1, name: "Board of Directors", memberCount: 7, memberIds: [] },
+  { id: 2, name: "Volunteers", memberCount: 23, memberIds: [] },
 ];
 
 const MEMBERS = [

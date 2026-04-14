@@ -10,3 +10,5 @@ export { mockRevalidatePath } from "./next-cache";
 export { activeConsentKermit } from "./sms-consent";
 export { defaultPreferences, allEnabledPreferences, allDisabledPreferences } from "./user-preferences";
 export { memberKermit, memberAngelica } from "./members";
+export { groupAlpha, groupBravo, groupCharlie, allGroups, memberAlice, memberBob } from "./contact-groups";
+export { eventTownHall, eventMemberTownHall, eventBoardMeeting } from "./events";

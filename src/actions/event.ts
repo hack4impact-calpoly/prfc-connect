@@ -2,7 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { verifySession } from "@/lib/dal";
-import { CreateEventSchema, UpdateEventSchema, RsvpSchema } from "@/schema/event";
+import {
+  CreateEventSchema,
+  UpdateEventSchema,
+  RsvpSchema,
+  EventIdSchema,
+  WeekStartSchema,
+  FetchEventsForMonthSchema,
+} from "@/schema/event";
 import {
   createEvent,
   updateEvent,
@@ -13,12 +20,17 @@ import {
   getEventRsvps,
   getUpcomingEvents,
   getEventsForMonth,
+  getEventsForWeek,
+  getEventInviteeMemberIds,
   inviteGroup,
   inviteMembers,
+  setEventInvitees,
 } from "@/services/event";
+import type { EventType } from "@/generated/prisma/client";
 import { getRecentActivity } from "@/services/dashboard";
 import { getAllMessageHistory } from "@/services/message";
 import { getAllMembers } from "@/lib/api/member-api";
+import { coopNow } from "@/lib/time";
 import { transformError } from "@/utils/errors";
 import type { ActionResult } from "@/lib/action-types";
 import type { EventWithRsvpCount, RsvpDetail, EventSummary } from "@/services/event";
@@ -31,6 +43,7 @@ export async function createEventAction(input: {
   location?: string | null;
   startDate: string | Date;
   endDate: string | Date;
+  isAllDay?: boolean;
   rsvpDeadline?: string | Date | null;
   eventType: string;
   groupId?: number | null;
@@ -63,15 +76,25 @@ export async function createEventAction(input: {
 export async function updateEventAction(eventId: number, input: Record<string, unknown>): Promise<ActionResult> {
   try {
     const session = await verifySession();
+    const validatedId = EventIdSchema.parse(eventId);
 
-    if (!session.isAdmin && !(await isEventOwner(eventId, session.ownerid))) {
+    if (!session.isAdmin && !(await isEventOwner(validatedId, session.ownerid))) {
       return { success: false, error: "You do not have permission to edit this event" };
     }
 
     const validated = UpdateEventSchema.parse(input);
-    await updateEvent(eventId, validated);
+    const { memberIds, groupIds, ...eventData } = validated;
+    await updateEvent(validatedId, eventData);
 
-    revalidatePath(`/events`);
+    if (memberIds !== undefined) {
+      await setEventInvitees(validatedId, memberIds);
+    }
+
+    if (groupIds && groupIds.length > 0) {
+      await Promise.all(groupIds.map((gid) => inviteGroup(validatedId, gid)));
+    }
+
+    revalidatePath("/events");
     revalidatePath("/home");
     return { success: true };
   } catch (error) {
@@ -83,12 +106,13 @@ export async function updateEventAction(eventId: number, input: Record<string, u
 export async function deleteEventAction(eventId: number): Promise<ActionResult> {
   try {
     const session = await verifySession();
+    const validatedId = EventIdSchema.parse(eventId);
 
-    if (!session.isAdmin && !(await isEventOwner(eventId, session.ownerid))) {
+    if (!session.isAdmin && !(await isEventOwner(validatedId, session.ownerid))) {
       return { success: false, error: "You do not have permission to delete this event" };
     }
 
-    await deleteEvent(eventId);
+    await deleteEvent(validatedId);
 
     revalidatePath("/events");
     revalidatePath("/home");
@@ -113,14 +137,20 @@ export async function rsvpAction(input: { eventId: number; status: string }): Pr
   }
 }
 
-export async function fetchEventDetail(
-  eventId: number,
-): Promise<ActionResult<{ event: EventWithRsvpCount; rsvps: RsvpDetail[] }>> {
+export async function fetchEventDetail(eventId: number): Promise<
+  ActionResult<{
+    event: EventWithRsvpCount;
+    rsvps: RsvpDetail[];
+    inviteeMemberIds: number[];
+  }>
+> {
   try {
     await verifySession();
-    const event = await getEventById(eventId);
-    const rsvps = await getEventRsvps(eventId);
-    return { success: true, data: { event, rsvps } };
+    const validatedId = EventIdSchema.parse(eventId);
+    const event = await getEventById(validatedId);
+    const rsvps = await getEventRsvps(validatedId);
+    const inviteeMemberIds = await getEventInviteeMemberIds(validatedId);
+    return { success: true, data: { event, rsvps, inviteeMemberIds } };
   } catch (error) {
     const appError = transformError(error);
     return { success: false, error: appError.message };
@@ -139,10 +169,10 @@ export async function fetchDashboardData(): Promise<ActionResult<DashboardData>>
   try {
     await verifySession();
 
-    const now = new Date();
+    const now = coopNow();
     const [memberList, monthEvents, upcomingEvents, recentActivity, recentMessages] = await Promise.all([
       getAllMembers(),
-      getEventsForMonth(now.getFullYear(), now.getMonth() + 1),
+      getEventsForMonth(now.year, now.month0 + 1),
       getUpcomingEvents(4),
       getRecentActivity(3),
       getAllMessageHistory({ limit: 1 }),
@@ -158,6 +188,34 @@ export async function fetchDashboardData(): Promise<ActionResult<DashboardData>>
         recentMessages,
       },
     };
+  } catch (error) {
+    const appError = transformError(error);
+    return { success: false, error: appError.message };
+  }
+}
+
+export async function fetchEventsForWeek(weekStart: Date): Promise<ActionResult<EventSummary[]>> {
+  try {
+    await verifySession();
+    const validatedWeekStart = WeekStartSchema.parse(weekStart);
+    const events = await getEventsForWeek(validatedWeekStart);
+    return { success: true, data: events };
+  } catch (error) {
+    const appError = transformError(error);
+    return { success: false, error: appError.message };
+  }
+}
+
+export async function fetchEventsForMonth(
+  year: number,
+  month: number,
+  filters?: { eventType?: EventType; groupId?: number },
+): Promise<ActionResult<EventSummary[]>> {
+  try {
+    await verifySession();
+    const validated = FetchEventsForMonthSchema.parse({ year, month, filters });
+    const events = await getEventsForMonth(validated.year, validated.month, validated.filters);
+    return { success: true, data: events };
   } catch (error) {
     const appError = transformError(error);
     return { success: false, error: appError.message };

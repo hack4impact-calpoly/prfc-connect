@@ -6,6 +6,7 @@ export const CreateEventSchema = z.object({
   location: z.string().max(200).nullish(),
   startDate: z.coerce.date(),
   endDate: z.coerce.date(),
+  isAllDay: z.boolean().optional().default(false),
   rsvpDeadline: z.coerce.date().nullish(),
   eventType: z.enum(["social", "networking", "volunteer", "meeting"]),
   groupId: z.number().int().positive().nullish(),
@@ -18,6 +19,50 @@ export const UpdateEventSchema = CreateEventSchema.partial();
 export const RsvpSchema = z.object({
   eventId: z.number().int().positive(),
   status: z.enum(["going", "maybe", "declined"]),
+});
+
+export const EventIdSchema = z.number().int().positive();
+
+export const WeekStartSchema = z.coerce.date();
+
+export const FetchEventsForMonthSchema = z.object({
+  year: z.number().int().min(1970).max(9999),
+  month: z.number().int().min(1).max(12),
+  filters: z
+    .object({
+      eventType: z.enum(["social", "networking", "volunteer", "meeting"]).optional(),
+      groupId: z.number().int().positive().optional(),
+    })
+    .optional(),
+});
+
+export const EventSummarySchema = z.object({
+  id: z.number(),
+  title: z.string(),
+  startDate: z.coerce.date(),
+  endDate: z.coerce.date(),
+  isAllDay: z.boolean(),
+  eventType: z.enum(["social", "networking", "volunteer", "meeting"]),
+  location: z.string().nullable(),
+  groupName: z.string().nullable(),
+  rsvpCount: z.number(),
+});
+
+export const EventWithRsvpCountSchema = z.object({
+  id: z.number(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
+  title: z.string(),
+  description: z.string().nullable(),
+  location: z.string().nullable(),
+  startDate: z.coerce.date(),
+  endDate: z.coerce.date(),
+  isAllDay: z.boolean(),
+  rsvpDeadline: z.coerce.date().nullable(),
+  eventType: z.enum(["social", "networking", "volunteer", "meeting"]),
+  ownerid: z.number(),
+  groupId: z.number().nullable(),
+  rsvpCount: z.number(),
 });
 
 export type CreateEvent = z.infer<typeof CreateEventSchema>;

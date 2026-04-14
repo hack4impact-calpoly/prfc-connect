@@ -19,6 +19,7 @@ export type GroupOption = {
   id: number;
   name: string;
   memberCount: number;
+  memberIds: number[];
 };
 
 export type MemberOption = {
