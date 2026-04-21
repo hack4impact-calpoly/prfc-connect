@@ -32,7 +32,7 @@ export function HomeContent({ groups, greeting, sectionHeading }: HomeContentPro
               variant="group"
               name={group.name}
               memberCount={group.memberCount}
-              description={group.description}
+              // Missing click event handlers
             />
           ))}
         </div>

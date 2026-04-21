@@ -10,25 +10,28 @@ export default function LinPage() {
       <EntityCard
         name="Garden Club"
         memberCount={5}
-        description="A group for garden enthusiasts who love growing vegetables and sharing tips about sustainable farming practices."
-        onClick={() => alert("Clicked Garden Club")}
+        // description="A group for garden enthusiasts who love growing vegetables and sharing tips about sustainable farming practices."
+        // onClick={() => alert("Clicked Garden Club")}
       />
 
       <EntityCard
         name="Volunteer Team"
         memberCount={1}
-        description={null}
-        onClick={() => alert("Clicked Volunteer Team")}
+        // description={null}
+        // onClick={() => alert("Clicked Volunteer Team")}
       />
 
       <EntityCard
         name="Community Outreach"
         memberCount={12}
-        description="Short description"
-        onClick={() => alert("Clicked Community Outreach")}
+        // description="Short description"
+        // onClick={() => alert("Clicked Community Outreach")}
       />
 
-      <EntityCard variant="add" onClick={() => alert("Add new group")} />
+      <EntityCard
+        variant="add"
+        // onClick={() => alert("Add new group")}
+      />
     </div>
   );
 }
