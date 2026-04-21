@@ -8,9 +8,10 @@ interface UseFuzzySearchOptions {
   threshold?: number;
 }
 
-export function useFuzzySearch<T>(items: T[], options: UseFuzzySearchOptions): T[] {
-  const query = useSearchQuery();
-  const debouncedQuery = useDebounce(query, 300);
+export function useFuzzySearch<T>(items: T[], options: UseFuzzySearchOptions, query?: string): T[] {
+  const contextQuery = useSearchQuery();
+  const activeQuery = query ?? contextQuery;
+  const debouncedQuery = useDebounce(activeQuery, 300);
 
   const fuse = useMemo(
     () =>

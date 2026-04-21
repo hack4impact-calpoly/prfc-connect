@@ -5,7 +5,12 @@ vi.mock("@/lib/api/member-api", () => ({
   getMemberDetails: vi.fn(),
 }));
 
+vi.mock("@/services/contact-group", () => ({
+  getGroupMembers: vi.fn(),
+}));
+
 import { getMemberDetails } from "@/lib/api/member-api";
+import { getGroupMembers } from "@/services/contact-group";
 import {
   createEvent,
   updateEvent,
@@ -19,9 +24,13 @@ import {
   rsvpToEvent,
   getEventRsvps,
   getEventRsvpCounts,
+  inviteMembers,
+  inviteGroup,
+  getEventInvitees,
 } from "@/services/event";
 
 const mockGetMemberDetails = getMemberDetails as MockedFunction<typeof getMemberDetails>;
+const mockGetGroupMembers = getGroupMembers as MockedFunction<typeof getGroupMembers>;
 
 const sampleEvent = {
   id: 1,
@@ -131,6 +140,22 @@ describe("getEventsForMonth", () => {
       }),
     );
   });
+
+  it("merges eventType and groupId filters into the where clause", async () => {
+    mockPrisma.event.findMany.mockResolvedValue([] as never);
+
+    await getEventsForMonth(2026, 4, { eventType: "meeting", groupId: 5 });
+
+    expect(mockPrisma.event.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          startDate: { gte: expect.any(Date), lte: expect.any(Date) },
+          eventType: "meeting",
+          groupId: 5,
+        }),
+      }),
+    );
+  });
 });
 
 describe("getEventsForWeek", () => {
@@ -222,5 +247,93 @@ describe("getEventRsvpCounts", () => {
     const result = await getEventRsvpCounts(1);
 
     expect(result).toEqual({ going: 10, maybe: 3, declined: 2 });
+  });
+});
+
+describe("inviteMembers", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("bulk creates invitee rows with skipDuplicates", async () => {
+    mockPrisma.eventInvitee.createMany.mockResolvedValue({ count: 3 });
+
+    await inviteMembers(1, [100001, 100002, 100003]);
+
+    expect(mockPrisma.eventInvitee.createMany).toHaveBeenCalledWith({
+      data: [
+        { eventId: 1, memberId: 100001 },
+        { eventId: 1, memberId: 100002 },
+        { eventId: 1, memberId: 100003 },
+      ],
+      skipDuplicates: true,
+    });
+  });
+
+  it("no-ops on empty memberIds", async () => {
+    await inviteMembers(1, []);
+
+    expect(mockPrisma.eventInvitee.createMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("inviteGroup", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("fans out group members into invitee rows", async () => {
+    mockGetGroupMembers.mockResolvedValue([100001, 100002]);
+    mockPrisma.eventInvitee.createMany.mockResolvedValue({ count: 2 });
+
+    await inviteGroup(1, 5);
+
+    expect(mockGetGroupMembers).toHaveBeenCalledWith(5);
+    expect(mockPrisma.eventInvitee.createMany).toHaveBeenCalledWith({
+      data: [
+        { eventId: 1, memberId: 100001 },
+        { eventId: 1, memberId: 100002 },
+      ],
+      skipDuplicates: true,
+    });
+  });
+});
+
+describe("getEventInvitees", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns invitees with resolved member names", async () => {
+    mockPrisma.eventInvitee.findMany.mockResolvedValue([
+      { memberId: 100001, createdAt: new Date("2026-04-05") },
+    ] as never);
+    mockGetMemberDetails.mockResolvedValue([
+      { ownerid: 100001, ownername: "Kermit Komm", owneremail: "k@test.com", ownerphone: "805-555-0001" },
+    ]);
+
+    const result = await getEventInvitees(1);
+
+    expect(result).toEqual([{ memberId: 100001, memberName: "Kermit Komm", createdAt: new Date("2026-04-05") }]);
+  });
+
+  it("falls back to Unknown Member when not resolved", async () => {
+    mockPrisma.eventInvitee.findMany.mockResolvedValue([
+      { memberId: 99999, createdAt: new Date("2026-04-05") },
+    ] as never);
+    mockGetMemberDetails.mockResolvedValue([]);
+
+    const result = await getEventInvitees(1);
+
+    expect(result[0].memberName).toBe("Unknown Member");
+  });
+
+  it("short-circuits without calling member API on empty result", async () => {
+    mockPrisma.eventInvitee.findMany.mockResolvedValue([] as never);
+
+    const result = await getEventInvitees(1);
+
+    expect(result).toEqual([]);
+    expect(mockGetMemberDetails).not.toHaveBeenCalled();
   });
 });

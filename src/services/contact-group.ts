@@ -235,6 +235,18 @@ export async function updateMemberNotifications(
   }
 }
 
+export async function getGroupMembers(groupId: number): Promise<number[]> {
+  try {
+    const members = await prisma.contactGroupMember.findMany({
+      where: { groupId },
+      select: { memberId: true },
+    });
+    return members.map((m) => m.memberId);
+  } catch (error) {
+    throw transformError(error);
+  }
+}
+
 export async function getGroupRecipients(groupId: number, channel: "email" | "sms"): Promise<number[]> {
   try {
     const members = await prisma.contactGroupMember.findMany({

@@ -12,6 +12,7 @@ import {
   addMembersToGroup,
   removeMemberFromGroup,
   updateMemberNotifications,
+  getGroupMembers,
   getGroupRecipients,
 } from "@/services/contact-group";
 
@@ -209,6 +210,24 @@ describe("updateMemberNotifications", () => {
     expect(mockPrisma.contactGroupMember.update).toHaveBeenCalledWith({
       where: { groupId_memberId: { groupId: 1, memberId: 10 } },
       data: prefs,
+    });
+  });
+});
+
+describe("getGroupMembers", () => {
+  it("returns all member ids regardless of notification preferences", async () => {
+    mockPrisma.contactGroupMember.findMany.mockResolvedValue([
+      { memberId: 10 },
+      { memberId: 20 },
+      { memberId: 30 },
+    ] as never);
+
+    const result = await getGroupMembers(1);
+
+    expect(result).toEqual([10, 20, 30]);
+    expect(mockPrisma.contactGroupMember.findMany).toHaveBeenCalledWith({
+      where: { groupId: 1 },
+      select: { memberId: true },
     });
   });
 });

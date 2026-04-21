@@ -9,6 +9,8 @@ export const CreateEventSchema = z.object({
   rsvpDeadline: z.coerce.date().nullish(),
   eventType: z.enum(["social", "networking", "volunteer", "meeting"]),
   groupId: z.number().int().positive().nullish(),
+  memberIds: z.array(z.number().int().positive()).optional(),
+  groupIds: z.array(z.number().int().positive()).optional(),
 });
 
 export const UpdateEventSchema = CreateEventSchema.partial();

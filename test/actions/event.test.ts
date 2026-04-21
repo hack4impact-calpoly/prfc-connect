@@ -14,6 +14,9 @@ vi.mock("@/services/event", () => ({
   rsvpToEvent: vi.fn(),
   getEventRsvps: vi.fn(),
   getUpcomingEvents: vi.fn(),
+  getEventsForMonth: vi.fn(),
+  inviteGroup: vi.fn(),
+  inviteMembers: vi.fn(),
 }));
 
 vi.mock("@/services/dashboard", () => ({
@@ -39,6 +42,9 @@ import {
   rsvpToEvent,
   getEventRsvps,
   getUpcomingEvents,
+  getEventsForMonth,
+  inviteGroup,
+  inviteMembers,
 } from "@/services/event";
 import { getRecentActivity } from "@/services/dashboard";
 import { getAllMessageHistory } from "@/services/message";
@@ -60,6 +66,9 @@ const mockIsEventOwner = isEventOwner as MockedFunction<typeof isEventOwner>;
 const mockRsvpToEvent = rsvpToEvent as MockedFunction<typeof rsvpToEvent>;
 const mockGetEventRsvps = getEventRsvps as MockedFunction<typeof getEventRsvps>;
 const mockGetUpcomingEvents = getUpcomingEvents as MockedFunction<typeof getUpcomingEvents>;
+const mockGetEventsForMonth = getEventsForMonth as MockedFunction<typeof getEventsForMonth>;
+const mockInviteGroup = inviteGroup as MockedFunction<typeof inviteGroup>;
+const mockInviteMembers = inviteMembers as MockedFunction<typeof inviteMembers>;
 const mockGetRecentActivity = getRecentActivity as MockedFunction<typeof getRecentActivity>;
 const mockGetAllMessageHistory = getAllMessageHistory as MockedFunction<typeof getAllMessageHistory>;
 const mockGetAllMembers = getAllMembers as MockedFunction<typeof getAllMembers>;
@@ -110,6 +119,44 @@ describe("createEventAction", () => {
     });
 
     expect(result.success).toBe(false);
+  });
+
+  it("fans out memberIds and groupIds after creating the event, stripping invitee fields from the create call", async () => {
+    mockCreateEvent.mockResolvedValue({ ...sampleEvent } as never);
+    mockInviteGroup.mockResolvedValue(undefined);
+    mockInviteMembers.mockResolvedValue(undefined);
+
+    const result = await createEventAction({
+      title: "Town Hall",
+      startDate: new Date().toISOString(),
+      endDate: new Date().toISOString(),
+      eventType: "meeting",
+      memberIds: [100002, 100003],
+      groupIds: [5, 6],
+    });
+
+    expect(result.success).toBe(true);
+    expect(mockInviteGroup).toHaveBeenCalledWith(1, 5);
+    expect(mockInviteGroup).toHaveBeenCalledWith(1, 6);
+    expect(mockInviteMembers).toHaveBeenCalledWith(1, [100002, 100003]);
+
+    const createCallArg = mockCreateEvent.mock.calls[0][0];
+    expect(createCallArg).not.toHaveProperty("memberIds");
+    expect(createCallArg).not.toHaveProperty("groupIds");
+  });
+
+  it("skips invitee fan-out when memberIds and groupIds are absent", async () => {
+    mockCreateEvent.mockResolvedValue({ ...sampleEvent } as never);
+
+    await createEventAction({
+      title: "Solo",
+      startDate: new Date().toISOString(),
+      endDate: new Date().toISOString(),
+      eventType: "social",
+    });
+
+    expect(mockInviteGroup).not.toHaveBeenCalled();
+    expect(mockInviteMembers).not.toHaveBeenCalled();
   });
 });
 
@@ -216,6 +263,7 @@ describe("fetchDashboardData", () => {
       { ownerid: 1, ownername: "A" },
       { ownerid: 2, ownername: "B" },
     ]);
+    mockGetEventsForMonth.mockResolvedValue([]);
     mockGetUpcomingEvents.mockResolvedValue([]);
     mockGetRecentActivity.mockResolvedValue([]);
     mockGetAllMessageHistory.mockResolvedValue([]);
@@ -225,10 +273,23 @@ describe("fetchDashboardData", () => {
     expect(result.success).toBe(true);
     expect(result.data).toEqual({
       totalMembers: 2,
+      eventsThisMonth: 0,
       upcomingEvents: [],
       recentActivity: [],
       recentMessages: [],
     });
+  });
+
+  it("returns eventsThisMonth equal to the length of getEventsForMonth result", async () => {
+    mockGetAllMembers.mockResolvedValue([{ ownerid: 1, ownername: "A" }]);
+    mockGetEventsForMonth.mockResolvedValue([{ id: 1 } as never, { id: 2 } as never, { id: 3 } as never]);
+    mockGetUpcomingEvents.mockResolvedValue([]);
+    mockGetRecentActivity.mockResolvedValue([]);
+    mockGetAllMessageHistory.mockResolvedValue([]);
+
+    const result = await fetchDashboardData();
+
+    expect(result.data?.eventsThisMonth).toBe(3);
   });
 
   it("returns error when not authenticated", async () => {

@@ -167,14 +167,29 @@ model Event {
   ownerid      Int
   groupId      Int?       @map("group_id")
 
-  group ContactGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
-  rsvps EventRsvp[]
+  group    ContactGroup?  @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  rsvps    EventRsvp[]
+  invitees EventInvitee[]
 
   @@index([ownerid])
   @@index([groupId])
   @@index([startDate])
   @@index([eventType])
   @@map("event")
+}
+
+model EventInvitee {
+  id        Int      @id @default(autoincrement())
+  eventId   Int      @map("event_id")
+  memberId  Int      @map("member_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, memberId])
+  @@index([eventId])
+  @@index([memberId])
+  @@map("event_invitee")
 }
 
 model EventRsvp {
@@ -196,6 +211,7 @@ model UserPreference {
   memberId           Int      @unique @map("member_id")
   notifyEmailDefault Boolean  @default(true) @map("notify_email_default")
   notifySmsDefault   Boolean  @default(false) @map("notify_sms_default")
+  photoUrl           String?  @map("photo_url") @db.VarChar(500)
   createdAt          DateTime @default(now()) @map("created_at")
   updatedAt          DateTime @updatedAt @map("updated_at")
 

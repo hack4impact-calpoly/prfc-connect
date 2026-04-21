@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { verifySession } from "@/lib/dal";
 import { UpdatePreferencesSchema, RevokeSmsConsentSchema } from "@/schema/settings";
 import { getMemberSmsConsent, revokeSmsConsent } from "@/services/sms-consent";
-import { getUserPreferences, updateUserPreferences } from "@/services/user-preference";
+import { getUserPreferences, updateUserPreferences, uploadProfilePhoto } from "@/services/user-preference";
 import { transformError } from "@/utils/errors";
 import type { ActionResult } from "@/lib/action-types";
 import type { SmsConsentRecord } from "@/services/sms-consent";
@@ -55,6 +55,22 @@ export async function updateUserPreferencesAction(input: {
     const updated = await updateUserPreferences(session.ownerid, validated);
     revalidatePath("/settings");
     return { success: true, data: updated };
+  } catch (error) {
+    const appError = transformError(error);
+    return { success: false, error: appError.message };
+  }
+}
+
+export async function uploadPhotoAction(formData: FormData): Promise<ActionResult<{ url: string }>> {
+  try {
+    const session = await verifySession();
+    const file = formData.get("file");
+    if (!(file instanceof File) || file.size === 0) {
+      return { success: false, error: "No file provided" };
+    }
+    const url = await uploadProfilePhoto(session.ownerid, file);
+    revalidatePath("/settings");
+    return { success: true, data: { url } };
   } catch (error) {
     const appError = transformError(error);
     return { success: false, error: appError.message };
