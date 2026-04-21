@@ -41,14 +41,29 @@ export function EntityCard({
               <Button
                 variant="outline"
                 className="p-0 h-6 w-6 rounded-full hover:bg-prfc-border border-transparent bg-transparent drop-shadow-none shadow-none"
+                onClick={(e) => e.stopPropagation}
               >
                 <MoreVertical />
               </Button>
             </DropdownMenuTrigger>
 
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={onQuickEdit}>Quick Edit</DropdownMenuItem>
-              <DropdownMenuItem onClick={onDelete}>Delete</DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onQuickEdit?.();
+                }}
+              >
+                Quick Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete?.();
+                }}
+              >
+                Delete
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
