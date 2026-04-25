@@ -63,7 +63,7 @@ export function ViewMessageModal({ open, onOpenChange, message, recipients }: Vi
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg font-khula !leading-none">
         <DialogHeader>
           <DialogTitle className="font-angkor text-3xl font-normal">View Message</DialogTitle>
           <DialogDescription className="sr-only">View details for this sent message.</DialogDescription>
