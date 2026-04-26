@@ -2,6 +2,7 @@
 
 import { Sidebar } from "@/components/layout/sidebar";
 import { TopBar } from "@/components/layout/top-bar";
+import { QuickActionsCard } from "@/components/dashboard/quick-actions-card";
 import { TopBarActionProvider } from "@/components/layout/top-bar-action-context";
 
 export default function SumanPage() {
@@ -17,6 +18,14 @@ export default function SumanPage() {
           <p className="text-muted-foreground">
             Top bar spans full width. Sidebar is fixed on the left below it (hidden on mobile).
           </p>
+
+          <div className="mt-6 w-1/3">
+            <QuickActionsCard
+              onCreateEvent={() => alert("Create Event clicked")}
+              onCreateGroup={() => alert("Create Group clicked")}
+              onSendMessage={() => alert("Send Message clicked")}
+            />
+          </div>
         </main>
       </TopBarActionProvider>
     </div>
