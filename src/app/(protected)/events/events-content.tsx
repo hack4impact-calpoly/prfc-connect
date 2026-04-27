@@ -162,7 +162,7 @@ export function EventsContent({
     const nextMonth0 = month0 + delta;
     const nextYear = year + Math.floor(nextMonth0 / 12);
     const normalizedMonth0 = ((nextMonth0 % 12) + 12) % 12;
-    return coopFloatingDate(nextYear, normalizedMonth0, 1);
+    return coopWallClockToUtc(nextYear, normalizedMonth0, 1, 12, 0);
   };
 
   const goPrev = () => {
@@ -336,7 +336,7 @@ export function EventsContent({
               </div>
               <MonthCalendar
                 currentMonth={currentDate}
-                onMonthChange={(d) => setCurrentDate(coopFloatingDate(d.getFullYear(), d.getMonth(), 1))}
+                onMonthChange={(d) => setCurrentDate(coopWallClockToUtc(d.getFullYear(), d.getMonth(), 1, 12, 0))}
                 eventsByDate={eventsByDate}
                 onDayClick={handleDayClickInMonth}
               />

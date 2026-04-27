@@ -106,6 +106,43 @@ describe("coopEndOfWeek", () => {
   });
 });
 
+describe("coopEndOfMonth returns full-month range (regression guard against host-tz fallthrough)", () => {
+  it("April 2026 last day is 30, not 1", () => {
+    const end = coopEndOfMonth(2026, 4);
+    const lastDay = parseInt(coopFormatTimed(end, "d"), 10);
+    expect(lastDay).toBe(30);
+  });
+
+  it("February 2026 last day is 28, not 1", () => {
+    const end = coopEndOfMonth(2026, 2);
+    const lastDay = parseInt(coopFormatTimed(end, "d"), 10);
+    expect(lastDay).toBe(28);
+  });
+
+  it("December 2026 last day is 31, crosses year boundary correctly", () => {
+    const end = coopEndOfMonth(2026, 12);
+    const lastDay = parseInt(coopFormatTimed(end, "d"), 10);
+    expect(lastDay).toBe(31);
+  });
+});
+
+describe("utcEndOfMonth returns full-month range (regression guard)", () => {
+  it("April 2026 UTC month ends on day 30", () => {
+    const end = utcEndOfMonth(2026, 4);
+    expect(end.getUTCDate()).toBe(30);
+  });
+
+  it("February 2024 (leap year) ends on day 29", () => {
+    const end = utcEndOfMonth(2024, 2);
+    expect(end.getUTCDate()).toBe(29);
+  });
+
+  it("December 2026 ends on day 31", () => {
+    const end = utcEndOfMonth(2026, 12);
+    expect(end.getUTCDate()).toBe(31);
+  });
+});
+
 describe("coopStartOfMonth / coopEndOfMonth", () => {
   it("April 2026 starts at Apr 1 00:00 PDT = Apr 1 07:00 UTC", () => {
     const start = coopStartOfMonth(2026, 4);

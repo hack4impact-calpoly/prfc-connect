@@ -1,4 +1,4 @@
-import { addDays, endOfMonth, endOfWeek, startOfWeek } from "date-fns";
+import { addDays, endOfWeek, startOfWeek } from "date-fns";
 import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz";
 
 export const COOP_TZ = "America/Los_Angeles";
@@ -72,9 +72,12 @@ export function coopStartOfMonth(year: number, month1Based: number): Date {
   return coopWallClockToUtc(year, month1Based - 1, 1, 0, 0, 0);
 }
 
+function lastDayOfMonth(year: number, month1Based: number): number {
+  return new Date(Date.UTC(year, month1Based, 0)).getUTCDate();
+}
+
 export function coopEndOfMonth(year: number, month1Based: number): Date {
-  const lastDay = endOfMonth(new Date(Date.UTC(year, month1Based - 1, 1))).getUTCDate();
-  return coopWallClockToUtc(year, month1Based - 1, lastDay, 23, 59, 59);
+  return coopWallClockToUtc(year, month1Based - 1, lastDayOfMonth(year, month1Based), 23, 59, 59);
 }
 
 export function utcStartOfMonth(year: number, month1Based: number): Date {
@@ -82,8 +85,7 @@ export function utcStartOfMonth(year: number, month1Based: number): Date {
 }
 
 export function utcEndOfMonth(year: number, month1Based: number): Date {
-  const lastDay = endOfMonth(new Date(Date.UTC(year, month1Based - 1, 1))).getUTCDate();
-  return new Date(Date.UTC(year, month1Based - 1, lastDay, 23, 59, 59, 999));
+  return new Date(Date.UTC(year, month1Based - 1, lastDayOfMonth(year, month1Based), 23, 59, 59, 999));
 }
 
 export function utcStartOfWeek(anchor: Date): Date {
