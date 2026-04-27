@@ -67,7 +67,6 @@ export default function KakaniPage() {
       <AddMembersModal
         open={open}
         onOpenChange={setOpen}
-        groupName="Garden Club"
         members={members}
         onSelectionChange={handleSelectionChange}
         onConfirm={() => {
@@ -79,7 +78,6 @@ export default function KakaniPage() {
       <AddMembersModal
         open={submittingOpen}
         onOpenChange={setSubmittingOpen}
-        groupName="Garden Club"
         members={members}
         onSelectionChange={handleSelectionChange}
         onConfirm={() => {}}

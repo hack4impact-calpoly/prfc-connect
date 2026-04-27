@@ -62,6 +62,7 @@ export function GroupEditModal({ open, onOpenChange, group, onSave, isSubmitting
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
+        className="[&>button:last-child]:hidden"
         onEscapeKeyDown={(e) => {
           if (isSubmitting) e.preventDefault();
         }}

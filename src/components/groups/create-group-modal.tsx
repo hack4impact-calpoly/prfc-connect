@@ -101,7 +101,7 @@ export function CreateGroupModal({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[550px]">
+      <DialogContent className="sm:max-w-[550px] [&>button:last-child]:hidden">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle className="font-angkor text-2xl font-normal">Create a new group</DialogTitle>
