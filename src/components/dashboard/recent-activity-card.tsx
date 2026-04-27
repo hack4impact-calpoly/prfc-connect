@@ -11,12 +11,12 @@ interface RecentActivityCardProps {
 
 export function RecentActivityCard({ activities }: RecentActivityCardProps) {
   return (
-    <Card>
+    <Card className="flex flex-col">
       <CardHeader>
         <CardTitle>Recent Activity</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
+      <CardContent className="flex flex-1 flex-col">
+        <div className="flex-1 space-y-3">
           {activities.length === 0 ? (
             <p className="text-sm text-muted-foreground">No recent activity.</p>
           ) : (
@@ -28,8 +28,11 @@ export function RecentActivityCard({ activities }: RecentActivityCardProps) {
             ))
           )}
         </div>
-        <hr className="my-3 border-prfc-border/30" />
-        <button type="button" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+        <hr className="mt-3 border-prfc-border/30" />
+        <button
+          type="button"
+          className="mt-3 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        >
           View all <ChevronRight className="h-4 w-4" />
         </button>
       </CardContent>
