@@ -1,17 +1,16 @@
 import type { Metadata } from "next";
-import { MessageSquareMore } from "lucide-react";
-import { ComingSoonPage } from "@/components/layout/coming-soon-page";
+import { verifySession } from "@/lib/dal";
+import { getAllMessageHistory } from "@/services/message";
+import { MessagesContent } from "./messages-content";
 
 export const metadata: Metadata = {
   title: "Messages | PRFC Connect",
 };
 
-export default function MessagesPage() {
-  return (
-    <ComingSoonPage
-      icon={MessageSquareMore}
-      title="Messages"
-      description="Coming soon. You'll be able to send messages to your groups here."
-    />
-  );
+export default async function MessagesPage() {
+  const session = await verifySession();
+  const senderId = session.isAdmin ? undefined : session.ownerid;
+  const messages = await getAllMessageHistory({ senderId });
+
+  return <MessagesContent initialMessages={messages} isAdmin={session.isAdmin} />;
 }

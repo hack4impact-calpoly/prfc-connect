@@ -341,6 +341,7 @@ export async function getAllMessageHistory(options: {
       select: {
         id: true,
         subject: true,
+        body: true,
         sentAt: true,
         emailCount: true,
         smsCount: true,
@@ -356,6 +357,7 @@ export async function getAllMessageHistory(options: {
     return messages.map((m) => ({
       id: m.id,
       subject: m.subject,
+      body: m.body,
       sentAt: m.sentAt,
       emailCount: m.emailCount,
       smsCount: m.smsCount,

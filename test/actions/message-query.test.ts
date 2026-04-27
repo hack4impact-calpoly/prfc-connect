@@ -39,6 +39,7 @@ describe("fetchMessageHistory", () => {
       {
         id: 1,
         subject: "Test",
+        body: "Test body content",
         sentAt: new Date(),
         emailCount: 5,
         smsCount: 0,

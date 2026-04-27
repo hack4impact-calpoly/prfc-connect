@@ -19,6 +19,7 @@ export interface MessageSummary {
 export interface MessageHistoryItem {
   id: number;
   subject: string;
+  body: string;
   sentAt: Date;
   emailCount: number;
   smsCount: number;
