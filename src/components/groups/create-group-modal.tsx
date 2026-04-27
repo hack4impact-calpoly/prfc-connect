@@ -165,7 +165,7 @@ export function CreateGroupModal({
                 </div>
                 <div
                   id="member-list"
-                  className="mt-2 max-h-[min(280px,40vh)] overflow-y-auto pr-1"
+                  className="mt-2 max-h-[min(280px,40vh)] overflow-y-auto pr-3"
                   style={{ scrollbarGutter: "stable" }}
                 >
                   {filteredMembers.length === 0 ? (

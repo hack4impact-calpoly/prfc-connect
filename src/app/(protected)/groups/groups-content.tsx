@@ -1,11 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Plus, Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EntityCard } from "@/components/groups/entity-card";
 import { GroupEditModal } from "@/components/groups/group-edit-modal";
 import { CreateGroupModal } from "@/components/groups/create-group-modal";
 import { DeleteGroupModal } from "@/components/groups/delete-group-modal";
-import { useSetTopBarAction } from "@/components/layout/top-bar-action-context";
 import { useGroupsModal, EMPTY_GROUP } from "@/components/groups/use-groups-modal";
 import { useFuzzySearch } from "@/hooks/use-fuzzy-search";
 import type { GroupWithCount } from "@/services/contact-group";
@@ -18,8 +22,10 @@ interface GroupsContentProps {
   members: MemberSummary[];
 }
 
-export function GroupsContent({ groups, isAdmin, ownerId, members }: GroupsContentProps) {
+export function GroupsContent({ groups, ownerId, members }: GroupsContentProps) {
   const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState("all");
   const {
     modal,
     isPending,
@@ -34,41 +40,75 @@ export function GroupsContent({ groups, isAdmin, ownerId, members }: GroupsConte
     handleDeleteCancel,
   } = useGroupsModal(ownerId);
 
-  useSetTopBarAction("New Group", openCreateModal);
+  const filteredGroups = useFuzzySearch(groups, { keys: ["name", "description"] }, searchQuery);
 
-  const filteredGroups = useFuzzySearch(groups, {
-    keys: ["name", "description"],
+  const sortedGroups = [...filteredGroups].sort((a, b) => {
+    if (sortBy === "name") return a.name.localeCompare(b.name);
+    if (sortBy === "members") return b.memberCount - a.memberCount;
+    if (sortBy === "date") return b.createdAt.getTime() - a.createdAt.getTime();
+    return 0;
   });
-  const isSearchActive = filteredGroups.length !== groups.length;
 
   return (
     <div>
-      <h1 className="font-angkor text-2xl text-prfc-brown mb-6">{isAdmin ? "Groups" : "My Groups"}</h1>
+      <h1 className="font-angkor text-3xl text-prfc-brown">Groups</h1>
 
-      {filteredGroups.length === 0 && groups.length > 0 ? (
-        <p className="text-muted-foreground">No groups match your search.</p>
-      ) : (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-          {filteredGroups.map((group) => (
-            <div key={group.id} className="relative">
-              <EntityCard
-                variant="group"
-                name={group.name}
-                memberCount={group.memberCount}
-                onViewGroup={() => router.push(`/groups/${group.id}`)}
-                onQuickEdit={() => handleQuickEdit(group.id)}
-                onDelete={() => handleQuickDelete(group.id)}
-              />
-              {loadingGroupId === group.id ? (
-                <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-white/60">
-                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-prfc-brown border-t-transparent" />
-                </div>
-              ) : null}
-            </div>
-          ))}
-          {!isSearchActive ? <EntityCard variant="add" onClick={openCreateModal} /> : null}
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search"
+            className="pl-9"
+            aria-label="Search groups"
+          />
         </div>
-      )}
+        <Select value={sortBy} onValueChange={setSortBy}>
+          <SelectTrigger className="w-32">
+            <SelectValue placeholder="Filter" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All</SelectItem>
+            <SelectItem value="date">Date</SelectItem>
+            <SelectItem value="name">Name</SelectItem>
+            <SelectItem value="members">Members</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button onClick={openCreateModal} className="ml-auto bg-prfc-red text-white hover:bg-prfc-red/90">
+          <Plus className="mr-2 h-4 w-4" />
+          Create Group
+        </Button>
+      </div>
+
+      <div className="mt-6">
+        {groups.length === 0 ? (
+          <p className="py-20 text-center text-muted-foreground">No groups have been created yet.</p>
+        ) : sortedGroups.length === 0 ? (
+          <p className="text-muted-foreground">No groups match your search.</p>
+        ) : (
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+            {sortedGroups.map((group) => (
+              <div key={group.id} className="relative">
+                <EntityCard
+                  variant="group"
+                  name={group.name}
+                  memberCount={group.memberCount}
+                  createdAt={group.createdAt}
+                  onViewGroup={() => router.push(`/groups/${group.id}`)}
+                  onQuickEdit={() => handleQuickEdit(group.id)}
+                  onDelete={() => handleQuickDelete(group.id)}
+                />
+                {loadingGroupId === group.id ? (
+                  <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-white/60">
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-prfc-brown border-t-transparent" />
+                  </div>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       <GroupEditModal
         key={modal.type === "edit" ? modal.group.id : "closed"}
