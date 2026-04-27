@@ -1,6 +1,6 @@
 import { getSessionWithName } from "@/lib/dal";
 import { getAllGroups, getGroupsByOwner } from "@/services/contact-group";
-import { coopHourOfDay } from "@/lib/time";
+import { coopHourOfDay } from "@/utils/time";
 import { HomeContent } from "./home-content";
 
 function getGreeting(): string {

@@ -28,7 +28,7 @@ import {
   coopWallClockToUtc,
   eventDayKeys,
   floatingDayKey,
-} from "@/lib/time";
+} from "@/utils/time";
 import { cn } from "@/lib/utils";
 
 type Props = {

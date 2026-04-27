@@ -6,7 +6,7 @@ import { UpdatePreferencesSchema, RevokeSmsConsentSchema } from "@/schema/settin
 import { getMemberSmsConsent, revokeSmsConsent } from "@/services/sms-consent";
 import { getUserPreferences, updateUserPreferences, uploadProfilePhoto } from "@/services/user-preference";
 import { transformError } from "@/utils/errors";
-import type { ActionResult } from "@/lib/action-types";
+import type { ActionResult } from "@/types/action";
 import type { SmsConsentRecord } from "@/services/sms-consent";
 import type { UserPreferenceData } from "@/services/user-preference";
 

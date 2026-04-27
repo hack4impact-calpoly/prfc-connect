@@ -3,7 +3,7 @@ import { verifySession } from "@/lib/dal";
 import { getEventsForWeek } from "@/services/event";
 import { getAllGroupsWithMemberIds } from "@/services/contact-group";
 import { getAllMembers } from "@/lib/api/member-api";
-import { coopStartOfWeek } from "@/lib/time";
+import { coopStartOfWeek } from "@/utils/time";
 import { EventsContent } from "./events-content";
 
 export const metadata: Metadata = {

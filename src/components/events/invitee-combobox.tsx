@@ -14,19 +14,8 @@ import {
 import { useFuzzySearch } from "@/hooks/use-fuzzy-search";
 import { cn } from "@/lib/utils";
 import { InviteeAvatarStack, type InviteeAvatar } from "@/components/events/invitee-avatar-stack";
-
-export type GroupOption = {
-  id: number;
-  name: string;
-  memberCount: number;
-  memberIds: number[];
-};
-
-export type MemberOption = {
-  ownerid: number;
-  ownername: string;
-  photoUrl?: string | null;
-};
+import type { GroupOption, MemberOption } from "@/types/member";
+export type { GroupOption, MemberOption } from "@/types/member";
 
 type Props = {
   groups: GroupOption[];

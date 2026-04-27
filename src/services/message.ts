@@ -5,65 +5,25 @@ import { AppError, transformError } from "@/utils/errors";
 import { getGroupRecipients } from "@/services/contact-group";
 import { sendGroupEmails, validateEmailAllowed } from "@/services/email";
 import { getMemberDetails, getAllActiveMemberIds } from "@/lib/api/member-api";
-import { coopHourOfDay } from "@/lib/time";
+import { coopHourOfDay } from "@/utils/time";
 import type { ComposeMessage, BlastMessage } from "@/schema/contact-group";
 import type { MockMember } from "@/lib/mock-members";
-
-export interface MessageResult {
-  messageId: number;
-  emailCount: number;
-  smsCount: number;
-  failedCount: number;
-}
-
-export interface MessageSummary {
-  id: number;
-  subject: string;
-  body: string;
-  sentAt: Date;
-  senderId: number;
-  emailCount: number;
-  smsCount: number;
-  failedCount: number;
-}
-
-export interface MessageHistoryItem {
-  id: number;
-  subject: string;
-  sentAt: Date;
-  emailCount: number;
-  smsCount: number;
-  failedCount: number;
-  isBlast: boolean;
-  groupName: string | null;
-}
-
-export interface MessageDetail {
-  id: number;
-  subject: string;
-  body: string;
-  sentAt: Date;
-  senderId: number;
-  emailCount: number;
-  smsCount: number;
-  failedCount: number;
-  isBlast: boolean;
-  groupName: string | null;
-}
-
-export interface RecipientStatus {
-  memberId: number;
-  memberName: string;
-  channel: string;
-  status: string;
-  sentAt: Date | null;
-}
-
-export interface RecipientCounts {
-  emailEligible: number;
-  smsEligible: number;
-  smsIneligible: number;
-}
+import type {
+  MessageResult,
+  MessageSummary,
+  MessageHistoryItem,
+  MessageDetail,
+  RecipientStatus,
+  RecipientCounts,
+} from "@/types/message";
+export type {
+  MessageResult,
+  MessageSummary,
+  MessageHistoryItem,
+  MessageDetail,
+  RecipientStatus,
+  RecipientCounts,
+} from "@/types/message";
 
 const DEFAULT_MESSAGE_HISTORY_LIMIT = 20;
 const MAX_MESSAGE_HISTORY_LIMIT = 100;

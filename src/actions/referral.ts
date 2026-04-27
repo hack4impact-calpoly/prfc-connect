@@ -7,7 +7,7 @@ import { sendReferralEmails } from "@/services/email";
 import { env } from "@/env";
 import { transformError } from "@/utils/errors";
 import { verifySession, requireAdmin } from "@/lib/dal";
-import type { ActionResult } from "@/lib/action-types";
+import type { ActionResult } from "@/types/action";
 
 export async function submitReferrals(formData: FormData): Promise<ActionResult> {
   try {

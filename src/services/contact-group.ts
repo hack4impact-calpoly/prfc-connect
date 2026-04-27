@@ -4,27 +4,22 @@ import { AppError, transformError } from "@/utils/errors";
 import { getMemberDetails } from "@/lib/api/member-api";
 import type { ContactGroup, ContactGroupMember } from "@/generated/prisma/client";
 import type { CreateContactGroup, UpdateContactGroup, GroupMember, UpdateNotification } from "@/schema/contact-group";
+import type {
+  GroupWithCount,
+  GroupWithMembers,
+  GroupWithMemberIds,
+  EnrichedGroupMember,
+  GroupWithEnrichedMembers,
+} from "@/types/group";
+export type {
+  GroupWithCount,
+  GroupWithMembers,
+  GroupWithMemberIds,
+  EnrichedGroupMember,
+  GroupWithEnrichedMembers,
+} from "@/types/group";
 
 type NotificationPreferences = Pick<UpdateNotification, "notifyEmail" | "notifySms">;
-
-export interface GroupWithCount extends ContactGroup {
-  memberCount: number;
-}
-
-export interface GroupWithMembers extends ContactGroup {
-  members: ContactGroupMember[];
-  memberCount: number;
-}
-
-export interface EnrichedGroupMember extends ContactGroupMember {
-  ownername: string;
-  owneremail: string;
-}
-
-export interface GroupWithEnrichedMembers extends ContactGroup {
-  members: EnrichedGroupMember[];
-  memberCount: number;
-}
 
 export async function getGroupsByOwner(ownerid: number): Promise<GroupWithCount[]> {
   try {
@@ -61,11 +56,6 @@ export async function getAllGroups(): Promise<GroupWithCount[]> {
   } catch (error) {
     throw transformError(error);
   }
-}
-
-export interface GroupWithMemberIds extends ContactGroup {
-  memberCount: number;
-  memberIds: number[];
 }
 
 export async function getAllGroupsWithMemberIds(): Promise<GroupWithMemberIds[]> {

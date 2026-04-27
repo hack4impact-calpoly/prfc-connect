@@ -2,11 +2,8 @@ import "server-only";
 import { env } from "@/env";
 import { AppError } from "@/utils/errors";
 import type { MockMember } from "@/lib/mock-members";
-
-export interface MemberSummary {
-  ownerid: number;
-  ownername: string;
-}
+import type { MemberSummary } from "@/types/member";
+export type { MemberSummary } from "@/types/member";
 
 async function getMockMemberDetails(memberIds: number[]): Promise<MockMember[]> {
   const { findMemberById } = await import("@/lib/mock-members");

@@ -9,14 +9,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogTitle } f
 import { Input } from "@/components/ui/input";
 import { useFuzzySearch } from "@/hooks/use-fuzzy-search";
 import { getAvatarColor, getInitials } from "@/utils/avatar";
-
-export interface MemberRow {
-  memberId: number;
-  ownername: string;
-  photoUrl?: string | null;
-  isOwner: boolean;
-  isSelected: boolean;
-}
+import type { MemberRow } from "@/types/group";
+export type { MemberRow } from "@/types/group";
 
 export interface AddMembersModalProps {
   open: boolean;

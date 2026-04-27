@@ -3,7 +3,7 @@
 import { useCallback, useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import type { MemberRow } from "@/components/groups/add-members-modal";
+import type { MemberRow } from "@/types/group";
 import {
   fetchEnrichedGroup,
   createContactGroup,
@@ -12,7 +12,7 @@ import {
   addMembers,
   removeMembers,
 } from "@/actions/contact-group";
-import type { EnrichedGroupData } from "@/actions/contact-group";
+import type { EnrichedGroupData } from "@/types/group";
 
 export const EMPTY_GROUP: EnrichedGroupData = {
   id: 0,

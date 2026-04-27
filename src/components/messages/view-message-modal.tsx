@@ -12,6 +12,7 @@ import {
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { UsersRound, ChevronRight, ChevronDown } from "lucide-react";
+import { coopFormatTimed } from "@/utils/time";
 import { getInitials, getAvatarColor } from "@/utils/avatar";
 
 export interface ViewMessageModalProps {
@@ -34,17 +35,7 @@ export interface ViewMessageModalProps {
 }
 
 function formatTimestamp(date: Date): string {
-  const formatted = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/Los_Angeles",
-    month: "numeric",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: true,
-  }).format(date);
-  return `${formatted} PST`;
+  return coopFormatTimed(date, "M/d/yyyy h:mm:ss a zzz");
 }
 
 const MAX_VISIBLE_AVATARS = 6;

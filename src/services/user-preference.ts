@@ -2,7 +2,7 @@ import "server-only";
 import { put, del } from "@vercel/blob";
 import prisma from "@/lib/db";
 import { AppError, transformError } from "@/utils/errors";
-import { MAX_PHOTO_BYTES, ALLOWED_PHOTO_TYPES } from "@/lib/photo-constraints";
+import { MAX_PHOTO_BYTES, ALLOWED_PHOTO_TYPES } from "@/utils/photo-constraints";
 
 export interface UserPreferenceData {
   notifyEmailDefault: boolean;

@@ -1,5 +1,5 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { coopFormatTimed } from "@/lib/time";
+import { coopFormatTimed } from "@/utils/time";
 
 interface MessageHistoryTableProps {
   messages: Array<{

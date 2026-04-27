@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { DayPicker, type DayButtonProps } from "react-day-picker";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { addMonths, subMonths } from "date-fns";
-import { coopDateParts, coopFormatTimed, localDayKey } from "@/lib/time";
+import { coopDateParts, coopFormatTimed, localDayKey } from "@/utils/time";
 import { cn } from "@/lib/utils";
 
 export type DayMarker = { allDayCount: number; timedCount: number };

@@ -31,7 +31,7 @@ import {
   previewRecipientCounts,
 } from "@/services/message";
 import { transformError } from "@/utils/errors";
-import type { ActionResult } from "@/lib/action-types";
+import type { ActionResult } from "@/types/action";
 import type {
   MessageResult,
   MessageHistoryItem,
@@ -39,14 +39,8 @@ import type {
   RecipientStatus,
   RecipientCounts,
 } from "@/services/message";
-
-export interface EnrichedGroupData {
-  id: number;
-  name: string;
-  description: string | null;
-  members: Array<{ memberId: number; ownername: string }>;
-  memberCount: number;
-}
+import type { EnrichedGroupData } from "@/types/group";
+export type { EnrichedGroupData } from "@/types/group";
 
 export async function fetchEnrichedGroup(groupId: number): Promise<ActionResult<EnrichedGroupData>> {
   try {

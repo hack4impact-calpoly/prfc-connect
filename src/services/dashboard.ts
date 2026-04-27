@@ -1,12 +1,8 @@
 import "server-only";
 import prisma from "@/lib/db";
 import { transformError } from "@/utils/errors";
-
-export interface ActivityItem {
-  type: "message_sent" | "event_created";
-  title: string;
-  timestamp: Date;
-}
+import type { ActivityItem } from "@/types/dashboard";
+export type { ActivityItem } from "@/types/dashboard";
 
 export async function getRecentActivity(limit: number = 5): Promise<ActivityItem[]> {
   try {

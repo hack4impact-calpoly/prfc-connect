@@ -20,7 +20,7 @@ import {
   utcEndOfWeek,
   utcStartOfMonth,
   utcStartOfWeek,
-} from "@/lib/time";
+} from "@/utils/time";
 
 describe("COOP_TZ constant", () => {
   it("is America/Los_Angeles", () => {

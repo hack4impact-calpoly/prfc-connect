@@ -24,7 +24,7 @@ import autoTable from "jspdf-autotable";
 import type { ApiReferral } from "@/schema/api";
 import { operatorFilter, type FilterOperator, type ColumnFilterValue } from "./table-filters";
 import { toast } from "sonner";
-import { useReferrals } from "@/hooks/use-referrals";
+import { useReferrals } from "@/components/referral/use-referrals";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 import { Skeleton } from "@/components/ui/skeleton";

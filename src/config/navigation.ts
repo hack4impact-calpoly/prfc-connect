@@ -1,4 +1,4 @@
-import type { AuthState } from "@/lib/auth-types";
+import type { AuthState } from "@/types/auth";
 
 export interface NavItem {
   label: string;

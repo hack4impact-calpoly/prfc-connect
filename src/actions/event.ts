@@ -30,12 +30,11 @@ import type { EventType } from "@/generated/prisma/client";
 import { getRecentActivity } from "@/services/dashboard";
 import { getAllMessageHistory } from "@/services/message";
 import { getAllMembers } from "@/lib/api/member-api";
-import { coopNow } from "@/lib/time";
+import { coopNow } from "@/utils/time";
 import { transformError } from "@/utils/errors";
-import type { ActionResult } from "@/lib/action-types";
-import type { EventWithRsvpCount, RsvpDetail, EventSummary } from "@/services/event";
-import type { ActivityItem } from "@/services/dashboard";
-import type { MessageHistoryItem } from "@/services/message";
+import type { ActionResult } from "@/types/action";
+import type { EventWithRsvpCount, RsvpDetail, EventSummary } from "@/types/event";
+import type { DashboardData } from "@/types/dashboard";
 
 export async function createEventAction(input: {
   title: string;
@@ -157,13 +156,7 @@ export async function fetchEventDetail(eventId: number): Promise<
   }
 }
 
-export interface DashboardData {
-  totalMembers: number;
-  eventsThisMonth: number;
-  upcomingEvents: EventSummary[];
-  recentActivity: ActivityItem[];
-  recentMessages: MessageHistoryItem[];
-}
+export type { DashboardData } from "@/types/dashboard";
 
 export async function fetchDashboardData(): Promise<ActionResult<DashboardData>> {
   try {

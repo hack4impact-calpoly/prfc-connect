@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { useNextCalendarApp, ScheduleXCalendar } from "@schedule-x/react";
 import { createViewWeek } from "@schedule-x/calendar";
 import "@schedule-x/theme-default/dist/index.css";
-import { COOP_TZ, DEFAULT_EVENT_DURATION_MS, coopDateParts, coopWallClockToUtc } from "@/lib/time";
+import { COOP_TZ, DEFAULT_EVENT_DURATION_MS, coopDateParts, coopWallClockToUtc } from "@/utils/time";
 import type { EventType } from "@/generated/prisma/client";
 import type { EventSummary } from "@/services/event";
 

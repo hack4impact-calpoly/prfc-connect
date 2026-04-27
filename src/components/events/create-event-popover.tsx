@@ -28,7 +28,7 @@ import {
   coopDateParts,
   coopFloatingDate,
   coopWallClockToUtc,
-} from "@/lib/time";
+} from "@/utils/time";
 import { cn } from "@/lib/utils";
 import type { EventType } from "@/generated/prisma/client";
 import type { EventWithRsvpCount } from "@/services/event";

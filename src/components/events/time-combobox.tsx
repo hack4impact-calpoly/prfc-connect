@@ -10,7 +10,7 @@ import {
   coopFormatTimed,
   formatCoopTimeValue,
   parseTimeInput,
-} from "@/lib/time";
+} from "@/utils/time";
 import { cn } from "@/lib/utils";
 
 type Props = {

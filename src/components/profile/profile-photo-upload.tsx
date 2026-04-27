@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { getAvatarColor, getInitials } from "@/utils/avatar";
-import { MAX_PHOTO_BYTES, ALLOWED_PHOTO_TYPES } from "@/lib/photo-constraints";
+import { MAX_PHOTO_BYTES, ALLOWED_PHOTO_TYPES } from "@/utils/photo-constraints";
 
 type Props = {
   name: string;

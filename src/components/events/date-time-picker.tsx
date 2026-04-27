@@ -17,7 +17,7 @@ import {
   coopSameDay,
   coopWallClockToUtc,
   floatingDateToLocal,
-} from "@/lib/time";
+} from "@/utils/time";
 import { cn } from "@/lib/utils";
 
 type SingleProps = {

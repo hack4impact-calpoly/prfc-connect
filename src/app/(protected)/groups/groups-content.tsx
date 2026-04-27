@@ -6,7 +6,7 @@ import { GroupEditModal } from "@/components/groups/group-edit-modal";
 import { CreateGroupModal } from "@/components/groups/create-group-modal";
 import { DeleteGroupModal } from "@/components/groups/delete-group-modal";
 import { useSetTopBarAction } from "@/components/layout/top-bar-action-context";
-import { useGroupsModal, EMPTY_GROUP } from "@/hooks/use-groups-modal";
+import { useGroupsModal, EMPTY_GROUP } from "@/components/groups/use-groups-modal";
 import { useFuzzySearch } from "@/hooks/use-fuzzy-search";
 import type { GroupWithCount } from "@/services/contact-group";
 import type { MemberSummary } from "@/lib/api/member-api";

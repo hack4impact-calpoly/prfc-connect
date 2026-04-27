@@ -3,7 +3,7 @@
 import { verifySession } from "@/lib/dal";
 import { getMemberProfile } from "@/services/profile";
 import { transformError } from "@/utils/errors";
-import type { ActionResult } from "@/lib/action-types";
+import type { ActionResult } from "@/types/action";
 import type { MemberProfile } from "@/services/profile";
 
 export async function fetchProfile(): Promise<ActionResult<MemberProfile>> {
