@@ -227,9 +227,13 @@ export function useGroupsModal(ownerId: number) {
     });
   }, [modal]);
 
-  const handleCreateSubmit = useCallback((data: { name: string; description: string | null }) => {
+  const handleCreateSubmit = useCallback((data: { name: string; description: string | null; memberIds: number[] }) => {
     startTransition(async () => {
-      const result = await createContactGroup(buildGroupFormData(data));
+      const result = await createContactGroup({
+        name: data.name,
+        description: data.description,
+        memberIds: data.memberIds.length > 0 ? data.memberIds : undefined,
+      });
       if (result.success) {
         toast.success("Group created successfully");
         setModal({ type: "closed" });

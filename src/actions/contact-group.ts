@@ -78,16 +78,26 @@ export async function fetchEnrichedGroup(groupId: number): Promise<ActionResult<
   }
 }
 
-export async function createContactGroup(formData: FormData): Promise<ActionResult<{ id: number }>> {
+export async function createContactGroup(input: {
+  name: string;
+  description: string | null;
+  memberIds?: number[];
+}): Promise<ActionResult<{ id: number }>> {
   try {
     const session = await verifySession();
 
-    const validated = CreateContactGroupSchema.parse({
-      name: formData.get("name"),
-      description: formData.get("description") || null,
-    });
+    const validated = CreateContactGroupSchema.parse(input);
+    const { memberIds, ...groupData } = validated;
 
-    const group = await createGroup(validated, session.ownerid);
+    const group = await createGroup(groupData, session.ownerid);
+
+    if (memberIds && memberIds.length > 0) {
+      await addMembersToGroup(
+        group.id,
+        memberIds.map((id) => ({ memberId: id, notifyEmail: true, notifySms: false })),
+        session.ownerid,
+      );
+    }
 
     revalidatePath("/groups");
     return { success: true, data: { id: group.id } };

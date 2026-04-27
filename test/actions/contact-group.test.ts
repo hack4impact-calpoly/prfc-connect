@@ -73,8 +73,7 @@ describe("createContactGroup", () => {
       updatedAt: new Date(),
     });
 
-    const formData = createFormData({ name: "Neighbors", description: "Local list" });
-    const result = await createContactGroup(formData);
+    const result = await createContactGroup({ name: "Neighbors", description: "Local list" });
 
     expect(result.success).toBe(true);
     expect(result.data?.id).toBe(55);
@@ -83,11 +82,51 @@ describe("createContactGroup", () => {
     expect(mockRevalidatePath).toHaveBeenCalledWith("/groups");
   });
 
+  it("creates group and adds members when memberIds are provided", async () => {
+    mockVerifySession.mockResolvedValue({ ownerid: 10, isAdmin: false });
+    mockCreateGroup.mockResolvedValue({
+      id: 55,
+      name: "Neighbors",
+      description: null,
+      ownerid: 10,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    mockAddMembersToGroup.mockResolvedValue({ count: 2 });
+
+    const result = await createContactGroup({ name: "Neighbors", description: null, memberIds: [100001, 100002] });
+
+    expect(result.success).toBe(true);
+    expect(mockAddMembersToGroup).toHaveBeenCalledWith(
+      55,
+      [
+        { memberId: 100001, notifyEmail: true, notifySms: false },
+        { memberId: 100002, notifyEmail: true, notifySms: false },
+      ],
+      10,
+    );
+  });
+
+  it("skips addMembersToGroup when memberIds is empty", async () => {
+    mockVerifySession.mockResolvedValue({ ownerid: 10, isAdmin: false });
+    mockCreateGroup.mockResolvedValue({
+      id: 55,
+      name: "Solo",
+      description: null,
+      ownerid: 10,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    await createContactGroup({ name: "Solo", description: null, memberIds: [] });
+
+    expect(mockAddMembersToGroup).not.toHaveBeenCalled();
+  });
+
   it("returns validation error when data is invalid", async () => {
     mockVerifySession.mockResolvedValue({ ownerid: 10, isAdmin: false });
 
-    const formData = createFormData({ name: "", description: "Local list" });
-    const result = await createContactGroup(formData);
+    const result = await createContactGroup({ name: "", description: "Local list" });
 
     expect(result.success).toBe(false);
     expect(result.error).toBeDefined();
@@ -97,8 +136,7 @@ describe("createContactGroup", () => {
   it("returns error when session verification fails", async () => {
     mockVerifySession.mockRejectedValue(new AppError("UNAUTHORIZED", "Authentication required"));
 
-    const formData = createFormData({ name: "Neighbors", description: "Local list" });
-    const result = await createContactGroup(formData);
+    const result = await createContactGroup({ name: "Neighbors", description: "Local list" });
 
     expect(result.success).toBe(false);
     expect(result.error).toContain("Authentication required");

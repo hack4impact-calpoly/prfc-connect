@@ -10,14 +10,16 @@ import { useSetTopBarAction } from "@/components/layout/top-bar-action-context";
 import { useGroupsModal, EMPTY_GROUP } from "@/hooks/use-groups-modal";
 import { useFuzzySearch } from "@/hooks/use-fuzzy-search";
 import type { GroupWithCount } from "@/services/contact-group";
+import type { MemberSummary } from "@/lib/api/member-api";
 
 interface GroupsContentProps {
   groups: GroupWithCount[];
   isAdmin: boolean;
   ownerId: number;
+  members: MemberSummary[];
 }
 
-export function GroupsContent({ groups, isAdmin, ownerId }: GroupsContentProps) {
+export function GroupsContent({ groups, isAdmin, ownerId, members }: GroupsContentProps) {
   const {
     modal,
     isPending,
@@ -103,6 +105,7 @@ export function GroupsContent({ groups, isAdmin, ownerId }: GroupsContentProps) 
           if (!open) closeModal();
         }}
         onSubmit={handleCreateSubmit}
+        members={members.map((m) => ({ memberId: m.ownerid, ownername: m.ownername }))}
         isSubmitting={modal.type === "create" && isPending}
       />
 

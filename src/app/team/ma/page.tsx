@@ -4,6 +4,12 @@ import { useState } from "react";
 import { CreateGroupModal } from "@/components/groups/create-group-modal";
 import { Button } from "@/components/ui/button";
 
+const MOCK_MEMBERS = [
+  { memberId: 100001, ownername: "Kevin Rutledge" },
+  { memberId: 100002, ownername: "Mary Jones" },
+  { memberId: 100003, ownername: "Tom Wilson" },
+];
+
 export default function MaPage() {
   const [defaultOpen, setDefaultOpen] = useState(false);
   const [submittingOpen, setSubmittingOpen] = useState(false);
@@ -22,9 +28,16 @@ export default function MaPage() {
           alert(JSON.stringify(data, null, 2));
           setDefaultOpen(false);
         }}
+        members={MOCK_MEMBERS}
       />
 
-      <CreateGroupModal open={submittingOpen} onOpenChange={setSubmittingOpen} onSubmit={() => {}} isSubmitting />
+      <CreateGroupModal
+        open={submittingOpen}
+        onOpenChange={setSubmittingOpen}
+        onSubmit={() => {}}
+        members={MOCK_MEMBERS}
+        isSubmitting
+      />
     </div>
   );
 }
