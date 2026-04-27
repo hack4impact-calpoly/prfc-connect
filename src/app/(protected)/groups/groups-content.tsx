@@ -5,7 +5,6 @@ import { GroupDetailViewModal } from "@/components/groups/group-detail-view-moda
 import { GroupEditModal } from "@/components/groups/group-edit-modal";
 import { CreateGroupModal } from "@/components/groups/create-group-modal";
 import { DeleteGroupModal } from "@/components/groups/delete-group-modal";
-import { AddMembersModal } from "@/components/groups/add-members-modal";
 import { useSetTopBarAction } from "@/components/layout/top-bar-action-context";
 import { useGroupsModal, EMPTY_GROUP } from "@/hooks/use-groups-modal";
 import { useFuzzySearch } from "@/hooks/use-fuzzy-search";
@@ -31,14 +30,9 @@ export function GroupsContent({ groups, isAdmin, ownerId, members }: GroupsConte
     handleQuickEdit,
     handleQuickDelete,
     handleSave,
-    handleDelete,
     handleConfirmDelete,
-    handleAddMembersOpen,
-    handleSelectionChange,
-    handleConfirmAddMembers,
     handleCreateSubmit,
     handleDeleteCancel,
-    handleAddMembersCancel,
   } = useGroupsModal(ownerId);
 
   useSetTopBarAction("New Group", openCreateModal);
@@ -94,8 +88,6 @@ export function GroupsContent({ groups, isAdmin, ownerId, members }: GroupsConte
         }}
         group={modal.type === "edit" ? modal.group : EMPTY_GROUP}
         onSave={handleSave}
-        onDelete={handleDelete}
-        onAddMembers={handleAddMembersOpen}
         isSubmitting={modal.type === "edit" && isPending}
       />
 
@@ -117,18 +109,6 @@ export function GroupsContent({ groups, isAdmin, ownerId, members }: GroupsConte
         groupName={modal.type === "delete" ? modal.group.name : ""}
         onConfirm={handleConfirmDelete}
         isDeleting={modal.type === "delete" && isPending}
-      />
-
-      <AddMembersModal
-        open={modal.type === "addMembers"}
-        onOpenChange={(open) => {
-          if (!open) handleAddMembersCancel();
-        }}
-        groupName={modal.type === "addMembers" ? modal.group.name : ""}
-        members={modal.type === "addMembers" ? modal.memberRows : []}
-        onSelectionChange={handleSelectionChange}
-        onConfirm={handleConfirmAddMembers}
-        isSubmitting={modal.type === "addMembers" && isPending}
       />
     </div>
   );

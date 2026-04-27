@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -13,34 +13,20 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { getAvatarColor, getInitials } from "@/utils/avatar";
 
-interface GroupEditModalProps {
+interface QuickEditModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   group: {
     id: number;
     name: string;
     description: string | null;
-    members: Array<{ memberId: number; ownername: string }>;
-    memberCount: number;
   };
   onSave: (data: { name: string; description: string | null }) => void;
-  onDelete: () => void;
-  onAddMembers: () => void;
   isSubmitting?: boolean;
 }
 
-export function GroupEditModal({
-  open,
-  onOpenChange,
-  group,
-  onSave,
-  onDelete,
-  onAddMembers,
-  isSubmitting = false,
-}: GroupEditModalProps) {
+export function GroupEditModal({ open, onOpenChange, group, onSave, isSubmitting = false }: QuickEditModalProps) {
   const [newName, setNewName] = useState(group.name);
   const [newDescription, setNewDescription] = useState(group.description ?? "");
   const [error, setError] = useState("");
@@ -83,102 +69,55 @@ export function GroupEditModal({
           if (isSubmitting) e.preventDefault();
         }}
       >
-        <DialogHeader className="text-prfc-brown">
-          <DialogTitle className="text-4xl font-black">{group.name}</DialogTitle>
-          <DialogDescription className="sr-only">Edit the details for the {group.name} group.</DialogDescription>
-        </DialogHeader>
+        <form onSubmit={handleSubmit}>
+          <DialogHeader>
+            <DialogTitle className="font-angkor text-2xl font-normal">Quick Edit</DialogTitle>
+            <DialogDescription className="sr-only">Edit the name and description for this group.</DialogDescription>
+          </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 justify-items-stretch gap-4">
-          <Button
-            type="button"
-            onClick={onDelete}
-            disabled={isSubmitting}
-            className="justify-self-end bg-transparent border-none p-0 text-prfc-red hover:underline hover:bg-transparent cursor-pointer shadow-none"
-          >
-            Delete
-          </Button>
+          <div className="mt-4 space-y-4">
+            <div>
+              <Input
+                ref={nameRef}
+                type="text"
+                value={newName}
+                onChange={(e) => {
+                  setNewName(e.target.value);
+                  if (error) setError("");
+                }}
+                placeholder="Group Name"
+                aria-required="true"
+                aria-invalid={error ? true : undefined}
+                aria-describedby={error ? "groupName-error" : undefined}
+              />
+              {error && (
+                <p id="groupName-error" className="mt-1 text-sm text-prfc-red">
+                  {error}
+                </p>
+              )}
+            </div>
 
-          <div className="grid grid-cols-1 gap-2">
-            <label htmlFor="groupName" className="font-bold">
-              Group Name
-            </label>
-            <Input
-              ref={nameRef}
-              type="text"
-              id="groupName"
-              value={newName}
-              onChange={(e) => {
-                setNewName(e.target.value);
-                if (error) setError("");
-              }}
-              aria-required="true"
-              aria-invalid={error ? true : undefined}
-              aria-describedby={error ? "groupName-error" : undefined}
-              className="border-2 border-black"
-            />
-            {error && (
-              <p id="groupName-error" className="text-sm text-prfc-red mt-1">
-                {error}
-              </p>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 gap-2">
-            <label htmlFor="description" className="font-bold">
-              Description (Optional)
-            </label>
             <Textarea
-              id="description"
               value={newDescription}
               onChange={(e) => setNewDescription(e.target.value)}
-              className="border-2 border-black"
+              placeholder="Description..."
+              rows={3}
             />
+
+            <p className="text-sm text-muted-foreground">Add/Remove members in &ldquo;View Group&rdquo; tab.</p>
           </div>
 
-          <div className="flex items-center gap-4">
-            <span className="font-bold">Add Members</span>
-            <Button
-              type="button"
-              onClick={onAddMembers}
-              disabled={isSubmitting}
-              aria-label="Add members to group"
-              className="h-8 w-8 rounded-full bg-gray-200 hover:bg-gray-300 border-none shadow-none p-0"
-            >
-              <Plus className="h-5 w-5 text-gray-700" aria-hidden="true" />
+          <DialogFooter className="mt-6">
+            <Button type="button" onClick={() => handleOpenChange(false)} variant="outline" disabled={isSubmitting}>
+              Cancel
             </Button>
-          </div>
-
-          <div className="flex gap-2" role="group" aria-label="Group members">
-            {group.members.slice(0, 8).map((member) => (
-              <Avatar key={member.memberId} className="h-8 w-8" role="img" aria-label={member.ownername}>
-                <AvatarFallback
-                  style={{ backgroundColor: getAvatarColor(member.ownername) }}
-                  className="text-xs font-semibold text-white"
-                  aria-hidden="true"
-                >
-                  {getInitials(member.ownername)}
-                </AvatarFallback>
-              </Avatar>
-            ))}
-            {group.memberCount > 8 ? (
-              <div
-                className="bg-slate-300 h-8 w-8 rounded-full font-bold text-sm flex justify-center items-center"
-                role="img"
-                aria-label={`${group.memberCount - 8} more members`}
-              >
-                +{group.memberCount - 8}
-              </div>
-            ) : null}
-          </div>
-
-          <DialogFooter className="mt-4">
             <Button
               type="submit"
-              disabled={isSubmitting}
-              className="bg-prfc-brown text-white hover:bg-prfc-dark-brown rounded-full py-6 px-8"
+              disabled={!newName.trim() || isSubmitting}
+              className="bg-prfc-brown text-white hover:bg-prfc-dark-brown"
             >
-              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              {isSubmitting ? "Saving..." : "Save Changes"}
+              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              {isSubmitting ? "Saving..." : "Save"}
             </Button>
           </DialogFooter>
         </form>
