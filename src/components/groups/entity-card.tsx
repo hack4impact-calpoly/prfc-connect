@@ -12,6 +12,7 @@ interface EntityCardProps {
   variant?: "group" | "add";
   name?: string;
   memberCount?: number;
+  onClick?: () => void;
   onViewGroup?: () => void;
   onQuickEdit?: () => void;
   onDelete?: () => void;
@@ -21,6 +22,7 @@ export function EntityCard({
   variant = "group",
   name = "",
   memberCount = 0,
+  onClick,
   onViewGroup,
   onQuickEdit,
   onDelete,
@@ -41,7 +43,7 @@ export function EntityCard({
               <Button
                 variant="outline"
                 className="p-0 h-6 w-6 rounded-full hover:bg-prfc-border border-transparent bg-transparent drop-shadow-none shadow-none"
-                onClick={(e) => e.stopPropagation}
+                onClick={(e) => e.stopPropagation()}
               >
                 <MoreVertical />
               </Button>
@@ -67,7 +69,7 @@ export function EntityCard({
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        <div className="font-bold text-xl">{name ? name : "John Doe"}</div>
+        <div className="font-bold text-xl">{name}</div>
         <div className="inline-flex items-center gap-2 bg-transparent text-prfc-border rounded-full text-md">
           <UsersRound className="h-5 w-5" />
           {memberCount} {memberCount === 1 ? "member" : "members"}
@@ -86,14 +88,20 @@ export function EntityCard({
     </div>
   );
 
+  const isClickable = isAdd && !!onClick;
+  const Component = isClickable ? "button" : "div";
+
   return (
-    <div
+    <Component
+      {...(isClickable ? { type: "button" as const, onClick } : {})}
+      aria-label={isAdd ? "Add new group" : undefined}
       className={cn(
         "relative w-full rounded-2xl border bg-white text-left shadow-sm p-0 min-h-[160px]",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        isClickable && "cursor-pointer hover:shadow-md",
       )}
     >
       {content}
-    </div>
+    </Component>
   );
 }

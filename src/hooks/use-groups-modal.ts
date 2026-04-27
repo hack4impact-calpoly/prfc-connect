@@ -71,6 +71,32 @@ export function useGroupsModal(ownerId: number) {
     }
   }, [modal]);
 
+  const handleQuickEdit = useCallback((groupId: number) => {
+    setLoadingGroupId(groupId);
+    startTransition(async () => {
+      const result = await fetchEnrichedGroup(groupId);
+      setLoadingGroupId(null);
+      if (result.success && result.data) {
+        setModal({ type: "edit", group: result.data });
+      } else {
+        toast.error(result.error ?? "Failed to load group details");
+      }
+    });
+  }, []);
+
+  const handleQuickDelete = useCallback((groupId: number) => {
+    setLoadingGroupId(groupId);
+    startTransition(async () => {
+      const result = await fetchEnrichedGroup(groupId);
+      setLoadingGroupId(null);
+      if (result.success && result.data) {
+        setModal({ type: "delete", group: result.data });
+      } else {
+        toast.error(result.error ?? "Failed to load group details");
+      }
+    });
+  }, []);
+
   const handleSave = useCallback(
     (data: { name: string; description: string | null }) => {
       if (modal.type !== "edit") return;
@@ -233,6 +259,8 @@ export function useGroupsModal(ownerId: number) {
     closeModal,
     handleCardClick,
     handleEdit,
+    handleQuickEdit,
+    handleQuickDelete,
     handleSave,
     handleDelete,
     handleConfirmDelete,

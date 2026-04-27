@@ -24,8 +24,10 @@ export function GroupsContent({ groups, isAdmin, ownerId }: GroupsContentProps) 
     loadingGroupId,
     openCreateModal,
     closeModal,
-    // handleCardClick,
+    handleCardClick,
     handleEdit,
+    handleQuickEdit,
+    handleQuickDelete,
     handleSave,
     handleDelete,
     handleConfirmDelete,
@@ -58,7 +60,9 @@ export function GroupsContent({ groups, isAdmin, ownerId }: GroupsContentProps) 
                 variant="group"
                 name={group.name}
                 memberCount={group.memberCount}
-                // Missing click event handlers
+                onViewGroup={() => handleCardClick(group.id)}
+                onQuickEdit={() => handleQuickEdit(group.id)}
+                onDelete={() => handleQuickDelete(group.id)}
               />
               {loadingGroupId === group.id ? (
                 <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-white/60">
@@ -67,12 +71,7 @@ export function GroupsContent({ groups, isAdmin, ownerId }: GroupsContentProps) 
               ) : null}
             </div>
           ))}
-          {!isSearchActive ? (
-            <EntityCard
-              variant="add"
-              // Missing click event handlers
-            />
-          ) : null}
+          {!isSearchActive ? <EntityCard variant="add" onClick={openCreateModal} /> : null}
         </div>
       )}
 

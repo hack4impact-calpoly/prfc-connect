@@ -27,13 +27,7 @@ export function HomeContent({ groups, greeting, sectionHeading }: HomeContentPro
       ) : (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
           {filteredGroups.map((group) => (
-            <EntityCard
-              key={group.id}
-              variant="group"
-              name={group.name}
-              memberCount={group.memberCount}
-              // Missing click event handlers
-            />
+            <EntityCard key={group.id} variant="group" name={group.name} memberCount={group.memberCount} />
           ))}
         </div>
       )}
