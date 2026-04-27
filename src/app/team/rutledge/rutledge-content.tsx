@@ -10,6 +10,7 @@ import { TotalMembersCard } from "@/components/dashboard/total-members-card";
 import { EventsThisMonthCard } from "@/components/dashboard/events-this-month-card";
 import { ProfilePhotoUpload } from "@/components/profile/profile-photo-upload";
 import { NotificationPreferencesCard } from "@/components/settings/notification-preferences-card";
+import { RecentActivityCard } from "@/components/dashboard/recent-activity-card";
 import { coopFloatingDate, coopWallClockToUtc } from "@/lib/time";
 
 const PREVIEW_EVENTS_BY_DATE = new Map<string, { allDayCount: number; timedCount: number }>([
@@ -106,6 +107,27 @@ export function RutledgeContent() {
               smsFeatureEnabled={false}
               onToggle={() => {}}
             />
+          </div>
+        </div>
+        <div className="mt-10">
+          <h2 className="text-xl font-semibold">Recent Activity Card Preview</h2>
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <RecentActivityCard
+              activities={[
+                {
+                  type: "message_sent",
+                  title: "Message sent to 120 Members",
+                  timestamp: new Date("2026-04-25T10:00:00"),
+                },
+                { type: "event_created", title: "New Member Joined", timestamp: new Date("2026-04-24T14:00:00") },
+                {
+                  type: "event_created",
+                  title: "Event Created: Local Bites",
+                  timestamp: new Date("2026-04-23T09:00:00"),
+                },
+              ]}
+            />
+            <RecentActivityCard activities={[]} />
           </div>
         </div>
         <div className="mt-10">
