@@ -1,6 +1,6 @@
 "use client";
 
-import { RecentActivityCard } from "@/components/dashboard/recent-activity-card";
+import { RecentMessagesCard } from "@/components/dashboard/recent-messages-card";
 
 export function RutledgeContent() {
   return (
@@ -9,24 +9,34 @@ export function RutledgeContent() {
         <h1 className="text-3xl font-bold text-foreground">Kevin Rutledge</h1>
         <p className="mt-2 text-lg text-muted-foreground">Tech Lead</p>
         <div className="mt-10">
-          <h2 className="text-xl font-semibold">Recent Activity Card Preview</h2>
+          <h2 className="text-xl font-semibold">Recent Messages Card Preview</h2>
           <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <RecentActivityCard
-              activities={[
+            <RecentMessagesCard
+              messages={[
                 {
-                  type: "message_sent",
-                  title: "Message sent to 120 Members",
-                  timestamp: new Date("2026-04-25T10:00:00"),
+                  id: 1,
+                  subject: "Meeting tonight at 6 PM",
+                  groupName: "PRFC Members",
+                  isBlast: false,
+                  sentAt: new Date("2026-04-25T10:00:00"),
                 },
-                { type: "event_created", title: "New Member Joined", timestamp: new Date("2026-04-24T14:00:00") },
                 {
-                  type: "event_created",
-                  title: "Event Created: Local Bites",
-                  timestamp: new Date("2026-04-23T09:00:00"),
+                  id: 2,
+                  subject: "Volunteer signup for Saturday",
+                  groupName: "Volunteers",
+                  isBlast: false,
+                  sentAt: new Date("2026-04-24T14:00:00"),
+                },
+                {
+                  id: 3,
+                  subject: "April newsletter",
+                  groupName: null,
+                  isBlast: true,
+                  sentAt: new Date("2026-04-23T09:00:00"),
                 },
               ]}
             />
-            <RecentActivityCard activities={[]} />
+            <RecentMessagesCard messages={[]} />
           </div>
         </div>
       </div>
