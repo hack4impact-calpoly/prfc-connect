@@ -1,7 +1,7 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { EntityCard } from "@/components/groups/entity-card";
-import { GroupDetailViewModal } from "@/components/groups/group-detail-view-modal";
 import { GroupEditModal } from "@/components/groups/group-edit-modal";
 import { CreateGroupModal } from "@/components/groups/create-group-modal";
 import { DeleteGroupModal } from "@/components/groups/delete-group-modal";
@@ -19,14 +19,13 @@ interface GroupsContentProps {
 }
 
 export function GroupsContent({ groups, isAdmin, ownerId, members }: GroupsContentProps) {
+  const router = useRouter();
   const {
     modal,
     isPending,
     loadingGroupId,
     openCreateModal,
     closeModal,
-    handleCardClick,
-    handleEdit,
     handleQuickEdit,
     handleQuickDelete,
     handleSave,
@@ -56,7 +55,7 @@ export function GroupsContent({ groups, isAdmin, ownerId, members }: GroupsConte
                 variant="group"
                 name={group.name}
                 memberCount={group.memberCount}
-                onViewGroup={() => handleCardClick(group.id)}
+                onViewGroup={() => router.push(`/groups/${group.id}`)}
                 onQuickEdit={() => handleQuickEdit(group.id)}
                 onDelete={() => handleQuickDelete(group.id)}
               />
@@ -70,15 +69,6 @@ export function GroupsContent({ groups, isAdmin, ownerId, members }: GroupsConte
           {!isSearchActive ? <EntityCard variant="add" onClick={openCreateModal} /> : null}
         </div>
       )}
-
-      <GroupDetailViewModal
-        open={modal.type === "detail"}
-        onOpenChange={(open) => {
-          if (!open) closeModal();
-        }}
-        group={modal.type === "detail" ? modal.group : EMPTY_GROUP}
-        onEdit={handleEdit}
-      />
 
       <GroupEditModal
         key={modal.type === "edit" ? modal.group.id : "closed"}
