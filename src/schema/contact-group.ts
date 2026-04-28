@@ -56,7 +56,7 @@ export const BaseMessageSchema = z
   });
 
 export const ComposeMessageSchema = BaseMessageSchema.extend({
-  groupId: z.number().int().positive(),
+  groupIds: z.array(z.number().int().positive()).min(1),
 });
 
 export const BlastMessageSchema = BaseMessageSchema.extend({

@@ -8,7 +8,6 @@ import type { Message } from "@/generated/prisma/client";
 // Test fixtures
 const testMessage: Message = {
   id: 1,
-  groupId: 5,
   senderId: 100001,
   subject: "Test Group Message",
   body: "This is a test message for the group.",
@@ -21,7 +20,6 @@ const testMessage: Message = {
 
 const testBlastMessage: Message = {
   id: 2,
-  groupId: null,
   senderId: 100001,
   subject: "Test Blast Message",
   body: "This is a blast message to all members.",
@@ -154,7 +152,7 @@ describe("validateSmsAllowed", () => {
 describe("sendGroupMessage", () => {
   const testRecipients = [mockMembers[1], mockMembers[2], mockMembers[3]];
   const defaultInput = {
-    groupId: 5,
+    groupIds: [5],
     subject: "Test Subject",
     body: "Test Body",
     sendEmail: true,
@@ -182,7 +180,6 @@ describe("sendGroupMessage", () => {
     expect(result.messageId).toBe(1);
     expect(mockPrisma.message.create).toHaveBeenCalledWith({
       data: {
-        groupId: 5,
         senderId: 100001,
         subject: "Test Subject",
         body: "Test Body",
@@ -267,7 +264,7 @@ describe("sendBlastMessage", () => {
     mockInteractiveTransaction();
   });
 
-  it("creates Message with isBlast=true and groupId=null", async () => {
+  it("creates Message with isBlast=true and no groupId", async () => {
     vi.mocked(getAllActiveMemberIds).mockResolvedValue(allMemberIds);
     vi.mocked(getMemberDetails).mockResolvedValue([...mockMembers]);
     vi.mocked(sendGroupEmails).mockResolvedValue({ sent: 389, failed: 0, suppressed: 0 });
@@ -282,9 +279,10 @@ describe("sendBlastMessage", () => {
     expect(mockPrisma.message.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         isBlast: true,
-        groupId: null,
       }),
     });
+    const createCall = mockPrisma.message.create.mock.calls[0][0] as { data: Record<string, unknown> };
+    expect(createCall.data).not.toHaveProperty("groupId");
   });
 
   it("sends to all active members", async () => {

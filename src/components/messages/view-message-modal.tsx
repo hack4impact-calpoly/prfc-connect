@@ -23,7 +23,7 @@ export interface ViewMessageModalProps {
     subject: string;
     body: string;
     sentAt: Date;
-    groupName: string | null;
+    groupNames: string[];
     isBlast: boolean;
   };
   recipients: Array<{
@@ -48,7 +48,11 @@ export function ViewMessageModal({ open, onOpenChange, message, recipients }: Vi
     onOpenChange(next);
   };
 
-  const groupLabel = message.isBlast ? "All Members" : (message.groupName ?? "Unknown Group");
+  const groupLabel = message.isBlast
+    ? "All Members"
+    : message.groupNames.length > 0
+      ? message.groupNames.join(", ")
+      : "Unknown Group";
   const visibleAvatars = recipients.slice(0, MAX_VISIBLE_AVATARS);
   const overflowCount = recipients.length - MAX_VISIBLE_AVATARS;
 

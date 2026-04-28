@@ -110,7 +110,7 @@ export function MessagesContent({ initialMessages }: Props) {
             subject: viewModal.message.subject,
             body: viewModal.message.body,
             sentAt: viewModal.message.sentAt,
-            groupName: viewModal.message.groupName,
+            groupNames: viewModal.message.groupNames,
             isBlast: viewModal.message.isBlast,
           }}
           recipients={viewModal.recipients.map((r) => ({

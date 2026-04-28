@@ -7,7 +7,7 @@ interface MessageHistoryTableProps {
     subject: string;
     body?: string;
     sentAt: Date;
-    groupName: string | null;
+    groupNames: string[];
     isBlast: boolean;
   }>;
   onView: (messageId: number) => void;
@@ -27,8 +27,15 @@ function formatSmartTimestamp(date: Date): string {
   return coopFormatTimed(date, "MMM d, yyyy");
 }
 
-function RecipientLabel({ message }: { message: { isBlast: boolean; groupName: string | null } }) {
-  return <>{message.isBlast ? "All Members" : (message.groupName ?? "Unknown")}</>;
+function RecipientLabel({ message }: { message: { isBlast: boolean; groupNames: string[] } }) {
+  if (message.isBlast) return <>All Members</>;
+  if (message.groupNames.length === 0) return <>Unknown</>;
+  if (message.groupNames.length <= 2) return <>{message.groupNames.join(", ")}</>;
+  return (
+    <>
+      {message.groupNames.slice(0, 2).join(", ")} +{message.groupNames.length - 2} more
+    </>
+  );
 }
 
 function MessagePreview({ message }: { message: { subject: string; body?: string } }) {

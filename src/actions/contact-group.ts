@@ -229,7 +229,7 @@ export async function updateNotifications(input: {
 }
 
 export async function sendMessage(input: {
-  groupId: number;
+  groupIds: number[];
   subject: string;
   body: string;
   sendEmail?: boolean;
@@ -238,8 +238,11 @@ export async function sendMessage(input: {
   try {
     const session = await verifySession();
 
-    if (!session.isAdmin && !(await isGroupOwner(input.groupId, session.ownerid))) {
-      return { success: false, error: "You do not have permission to send messages to this group" };
+    if (!session.isAdmin) {
+      const ownerChecks = await Promise.all(input.groupIds.map((gid) => isGroupOwner(gid, session.ownerid)));
+      if (ownerChecks.some((isOwner) => !isOwner)) {
+        return { success: false, error: "You do not have permission to send messages to one or more selected groups" };
+      }
     }
 
     const validated = ComposeMessageSchema.parse(input);

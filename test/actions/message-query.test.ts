@@ -45,7 +45,7 @@ describe("fetchMessageHistory", () => {
         smsCount: 0,
         failedCount: 0,
         isBlast: false,
-        groupName: "Garden Club",
+        groupNames: ["Garden Club"],
       },
     ];
     mockGetAllMessageHistory.mockResolvedValue(messages);
@@ -99,7 +99,7 @@ describe("fetchMessageDetail", () => {
     smsCount: 0,
     failedCount: 0,
     isBlast: false,
-    groupName: "Garden Club",
+    groupNames: ["Garden Club"],
   };
 
   const recipients = [

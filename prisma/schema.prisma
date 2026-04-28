@@ -31,9 +31,9 @@ model ContactGroup {
   description String?  @db.VarChar(500)
   ownerid     Int
 
-  members  ContactGroupMember[]
-  messages Message[]
-  events   Event[]
+  members       ContactGroupMember[]
+  messageGroups MessageGroup[]
+  events        Event[]
 
   @@index([ownerid])
   @@map("contact_group")
@@ -97,7 +97,6 @@ model EmailSuppression {
 
 model Message {
   id          Int      @id @default(autoincrement())
-  groupId     Int?     @map("group_id")
   senderId    Int      @map("sender_id")
   subject     String   @db.VarChar(200)
   body        String   @db.Text
@@ -107,15 +106,27 @@ model Message {
   failedCount Int      @default(0) @map("failed_count")
   isBlast     Boolean  @default(false) @map("is_blast")
 
-  group      ContactGroup?      @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  groups     MessageGroup[]
   recipients MessageRecipient[]
 
-  @@index([groupId])
   @@index([senderId])
   @@index([sentAt])
-  @@index([groupId, sentAt])
   @@index([isBlast, sentAt])
   @@map("message")
+}
+
+model MessageGroup {
+  id        Int @id @default(autoincrement())
+  messageId Int @map("message_id")
+  groupId   Int @map("group_id")
+
+  message Message      @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  group   ContactGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, groupId])
+  @@index([messageId])
+  @@index([groupId])
+  @@map("message_group")
 }
 
 model MessageRecipient {

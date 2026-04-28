@@ -73,7 +73,7 @@ describe("getGroupMessageHistory", () => {
     await getGroupMessageHistory(5);
 
     expect(mockPrisma.message.findMany).toHaveBeenCalledWith({
-      where: { groupId: 5 },
+      where: { groups: { some: { groupId: 5 } } },
       select: {
         id: true,
         subject: true,

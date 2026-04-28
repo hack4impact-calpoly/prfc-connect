@@ -36,7 +36,7 @@ export async function getGroupMessageHistory(
     const effectiveLimit = Math.min(Math.max(1, limit), MAX_MESSAGE_HISTORY_LIMIT);
 
     const messages = await prisma.message.findMany({
-      where: { groupId },
+      where: { groups: { some: { groupId } } },
       select: {
         id: true,
         subject: true,
@@ -80,7 +80,7 @@ async function sendEmailsForMessage(
   recipients: MockMember[],
   subject: string,
   body: string,
-  groupId: number | null,
+  groupIds: number[] | null,
 ): Promise<{ sent: number; failed: number }> {
   try {
     const emailResult = await sendGroupEmails({
@@ -93,7 +93,7 @@ async function sendEmailsForMessage(
       body,
       senderName: "Paso Robles Food Co-op",
       replyTo: env.FROM_EMAIL ?? "",
-      groupId: groupId ?? 0,
+      groupId: groupIds?.[0] ?? 0,
     });
 
     if (emailResult.failed === 0) {
@@ -131,7 +131,7 @@ async function sendEmailsForMessage(
 
 export async function sendGroupMessage(input: ComposeMessage, senderId: number): Promise<MessageResult> {
   try {
-    const { groupId, subject, body, sendEmail, sendSms } = input;
+    const { groupIds, subject, body, sendEmail, sendSms } = input;
 
     if (!sendEmail && !sendSms) {
       throw new AppError("VALIDATION_ERROR", "At least one delivery method (email or SMS) must be selected");
@@ -145,9 +145,11 @@ export async function sendGroupMessage(input: ComposeMessage, senderId: number):
       validateSmsAllowed();
     }
 
-    const emailRecipientIds = sendEmail ? await getGroupRecipients(groupId, "email") : [];
-    const smsRecipientIds = sendSms ? await getGroupRecipients(groupId, "sms") : [];
+    const emailSets = sendEmail ? await Promise.all(groupIds.map((gid) => getGroupRecipients(gid, "email"))) : [];
+    const smsSets = sendSms ? await Promise.all(groupIds.map((gid) => getGroupRecipients(gid, "sms"))) : [];
 
+    const emailRecipientIds = Array.from(new Set(emailSets.flat()));
+    const smsRecipientIds = Array.from(new Set(smsSets.flat()));
     const allRecipientIds = Array.from(new Set([...emailRecipientIds, ...smsRecipientIds]));
 
     if (allRecipientIds.length === 0) {
@@ -159,7 +161,6 @@ export async function sendGroupMessage(input: ComposeMessage, senderId: number):
     const result = await prisma.$transaction(async (tx) => {
       const message = await tx.message.create({
         data: {
-          groupId,
           senderId,
           subject,
           body,
@@ -168,6 +169,10 @@ export async function sendGroupMessage(input: ComposeMessage, senderId: number):
           failedCount: 0,
           isBlast: false,
         },
+      });
+
+      await tx.messageGroup.createMany({
+        data: groupIds.map((groupId) => ({ messageId: message.id, groupId })),
       });
 
       if (sendEmail && emailRecipientIds.length > 0) {
@@ -200,7 +205,7 @@ export async function sendGroupMessage(input: ComposeMessage, senderId: number):
 
     if (sendEmail && emailRecipientIds.length > 0) {
       const emailRecipients = members.filter((m) => emailRecipientIds.includes(m.ownerid));
-      const emailResult = await sendEmailsForMessage(result.id, emailRecipients, subject, body, groupId);
+      const emailResult = await sendEmailsForMessage(result.id, emailRecipients, subject, body, groupIds);
       emailsSent = emailResult.sent;
       emailsFailed = emailResult.failed;
     }
@@ -255,7 +260,6 @@ export async function sendBlastMessage(input: BlastMessage, senderId: number): P
     const result = await prisma.$transaction(async (tx) => {
       const message = await tx.message.create({
         data: {
-          groupId: null,
           senderId,
           subject,
           body,
@@ -347,7 +351,7 @@ export async function getAllMessageHistory(options: {
         smsCount: true,
         failedCount: true,
         isBlast: true,
-        group: { select: { name: true } },
+        groups: { select: { group: { select: { name: true } } } },
       },
       orderBy: { sentAt: "desc" },
       take: effectiveLimit,
@@ -363,7 +367,7 @@ export async function getAllMessageHistory(options: {
       smsCount: m.smsCount,
       failedCount: m.failedCount,
       isBlast: m.isBlast,
-      groupName: m.group?.name ?? null,
+      groupNames: m.groups.map((mg) => mg.group.name),
     }));
   } catch (error) {
     throw transformError(error);
@@ -384,7 +388,7 @@ export async function getMessageById(messageId: number): Promise<MessageDetail> 
         smsCount: true,
         failedCount: true,
         isBlast: true,
-        group: { select: { name: true } },
+        groups: { select: { group: { select: { name: true } } } },
       },
     });
 
@@ -394,7 +398,7 @@ export async function getMessageById(messageId: number): Promise<MessageDetail> 
 
     return {
       ...message,
-      groupName: message.group?.name ?? null,
+      groupNames: message.groups.map((mg) => mg.group.name),
     };
   } catch (error) {
     throw transformError(error);

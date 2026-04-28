@@ -21,7 +21,7 @@ const mockMessage = {
   subject: "Garden Party Reminder",
   body: "Garden party at 4pm. Be there or be square.",
   sentAt: new Date("2024-01-06T19:57:01Z"),
-  groupName: "Garden Club",
+  groupNames: ["Garden Club"],
   isBlast: false,
 };
 
@@ -41,7 +41,7 @@ const mockBlastMessage = {
   subject: "All Hands Update",
   body: "Monthly meeting this Friday at noon. Attendance is mandatory.",
   sentAt: new Date("2024-01-06T19:57:01Z"),
-  groupName: null,
+  groupNames: [],
   isBlast: true,
 };
 

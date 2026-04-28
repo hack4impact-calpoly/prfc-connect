@@ -25,12 +25,12 @@ export interface MessageHistoryItem {
   smsCount: number;
   failedCount: number;
   isBlast: boolean;
-  groupName: string | null;
+  groupNames: string[];
 }
 
 export interface MessageDetail extends MessageSummary {
   isBlast: boolean;
-  groupName: string | null;
+  groupNames: string[];
 }
 
 export interface RecipientStatus {

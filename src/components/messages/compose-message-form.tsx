@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { AlertCircle, Loader2, Mail, MessageCircle } from "lucide-react";
+import { AlertCircle, Check, ChevronDown, Loader2, Mail, MessageCircle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import { getAvatarColor, getInitials } from "@/utils/avatar";
 
 const SMS_CHAR_LIMIT = 160;
@@ -17,7 +18,7 @@ interface ComposeMessageFormProps {
   currentUser: { name: string; photoUrl?: string | null };
   smsConsent?: { eligible: number; total: number };
   onSend: (data: {
-    groupId: number | null;
+    groupIds: number[];
     isBlast: boolean;
     subject: string;
     body: string;
@@ -35,7 +36,9 @@ export function ComposeMessageForm({
   onSend,
   isSending = false,
 }: ComposeMessageFormProps) {
-  const [groupId, setGroupId] = useState<string>("");
+  const [isBlast, setIsBlast] = useState(false);
+  const [selectedGroupIds, setSelectedGroupIds] = useState<Set<number>>(new Set());
+  const [groupPickerOpen, setGroupPickerOpen] = useState(false);
   const [sendSms, setSendSms] = useState(false);
   const [sendEmail, setSendEmail] = useState(false);
   const [smsBody, setSmsBody] = useState("");
@@ -43,15 +46,35 @@ export function ComposeMessageForm({
   const [emailBody, setEmailBody] = useState("");
   const [error, setError] = useState("");
 
-  const isBlast = groupId === "all";
-  const selectedGroupId = isBlast ? null : groupId ? Number(groupId) : null;
+  const toggleGroup = (id: number) => {
+    setSelectedGroupIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+    setIsBlast(false);
+  };
+
+  const handleBlastToggle = () => {
+    setIsBlast(true);
+    setSelectedGroupIds(new Set());
+  };
+
+  const recipientLabel = isBlast
+    ? "All Members"
+    : selectedGroupIds.size === 0
+      ? "Select Groups"
+      : selectedGroupIds.size === 1
+        ? (groups.find((g) => selectedGroupIds.has(g.id))?.name ?? "1 group")
+        : `${selectedGroupIds.size} groups`;
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
 
-    if (!groupId) {
-      setError("Please select a recipient group.");
+    if (!isBlast && selectedGroupIds.size === 0) {
+      setError("Please select at least one recipient group.");
       return;
     }
     if (!sendSms && !sendEmail) {
@@ -76,7 +99,7 @@ export function ComposeMessageForm({
     }
 
     onSend({
-      groupId: selectedGroupId,
+      groupIds: Array.from(selectedGroupIds),
       isBlast,
       subject: emailSubject.trim() || smsBody.trim().slice(0, 200),
       body: emailBody.trim() || smsBody.trim(),
@@ -92,21 +115,43 @@ export function ComposeMessageForm({
 
       <div>
         <p className="mb-2 text-sm font-semibold">To:</p>
-        <div className="flex gap-3">
-          <Select value={groupId} onValueChange={setGroupId}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Select Groups" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              {groups.map((g) => (
-                <SelectItem key={g.id} value={String(g.id)}>
-                  {g.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <Popover open={groupPickerOpen} onOpenChange={setGroupPickerOpen}>
+          <PopoverTrigger asChild>
+            <Button variant="outline" role="combobox" aria-expanded={groupPickerOpen} className="w-64 justify-between">
+              {recipientLabel}
+              <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-64 p-0">
+            <Command>
+              <CommandInput placeholder="Search groups..." />
+              <CommandList>
+                <CommandEmpty>No groups found.</CommandEmpty>
+                <CommandGroup>
+                  <CommandItem
+                    value="all-members-blast"
+                    onSelect={handleBlastToggle}
+                    className="flex items-center gap-2"
+                  >
+                    <Check className={cn("h-4 w-4", isBlast ? "opacity-100" : "opacity-0")} />
+                    All Members
+                  </CommandItem>
+                  {groups.map((g) => (
+                    <CommandItem
+                      key={g.id}
+                      value={g.name}
+                      onSelect={() => toggleGroup(g.id)}
+                      className="flex items-center gap-2"
+                    >
+                      <Check className={cn("h-4 w-4", selectedGroupIds.has(g.id) ? "opacity-100" : "opacity-0")} />
+                      {g.name}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
       </div>
 
       <div>
@@ -162,15 +207,16 @@ export function ComposeMessageForm({
       {sendEmail && (
         <div>
           <p className="mb-2 text-sm font-semibold">Compose Email</p>
-          <div className="rounded-lg border border-prfc-border/30 p-4 space-y-3">
+          <div className="space-y-3 rounded-lg border border-prfc-border/30 p-4">
             <div>
               <p className="text-sm font-semibold">Subject Line</p>
-              <Input
+              <input
+                type="text"
                 value={emailSubject}
                 onChange={(e) => setEmailSubject(e.target.value)}
                 placeholder="Subject"
                 maxLength={200}
-                className="mt-1 border-none p-0 shadow-none focus-visible:ring-0"
+                className="mt-1 w-full border-none bg-transparent p-0 text-sm outline-none placeholder:text-muted-foreground"
               />
             </div>
             <hr className="border-prfc-border/30" />

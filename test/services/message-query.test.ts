@@ -29,12 +29,13 @@ describe("getAllMessageHistory", () => {
       {
         id: 1,
         subject: "Hello",
+        body: "Hello body",
         sentAt: new Date("2026-04-01"),
         emailCount: 5,
         smsCount: 0,
         failedCount: 0,
         isBlast: false,
-        group: { name: "Garden Club" },
+        groups: [{ group: { name: "Garden Club" } }],
       },
     ] as never);
 
@@ -44,33 +45,35 @@ describe("getAllMessageHistory", () => {
       {
         id: 1,
         subject: "Hello",
+        body: "Hello body",
         sentAt: new Date("2026-04-01"),
         emailCount: 5,
         smsCount: 0,
         failedCount: 0,
         isBlast: false,
-        groupName: "Garden Club",
+        groupNames: ["Garden Club"],
       },
     ]);
   });
 
-  it("returns null groupName for blast messages", async () => {
+  it("returns empty groupNames for blast messages", async () => {
     mockPrisma.message.findMany.mockResolvedValue([
       {
         id: 2,
         subject: "Blast",
+        body: "Blast body",
         sentAt: new Date("2026-04-01"),
         emailCount: 100,
         smsCount: 0,
         failedCount: 0,
         isBlast: true,
-        group: null,
+        groups: [],
       },
     ] as never);
 
     const result = await getAllMessageHistory({});
 
-    expect(result[0].groupName).toBeNull();
+    expect(result[0].groupNames).toEqual([]);
     expect(result[0].isBlast).toBe(true);
   });
 
@@ -122,7 +125,7 @@ describe("getAllMessageHistory", () => {
 });
 
 describe("getMessageById", () => {
-  it("returns message with group name", async () => {
+  it("returns message with group names", async () => {
     mockPrisma.message.findUnique.mockResolvedValue({
       id: 1,
       subject: "Hello",
@@ -133,12 +136,12 @@ describe("getMessageById", () => {
       smsCount: 0,
       failedCount: 0,
       isBlast: false,
-      group: { name: "Garden Club" },
+      groups: [{ group: { name: "Garden Club" } }],
     } as never);
 
     const result = await getMessageById(1);
 
-    expect(result).toHaveProperty("groupName", "Garden Club");
+    expect(result).toHaveProperty("groupNames", ["Garden Club"]);
     expect(result).toHaveProperty("body", "Body text");
     expect(result).toHaveProperty("senderId", 100001);
   });

@@ -6,7 +6,7 @@ interface RecentMessagesCardProps {
   messages: Array<{
     id: number;
     subject: string;
-    groupName: string | null;
+    groupNames: string[];
     isBlast: boolean;
     sentAt: Date;
   }>;
@@ -29,7 +29,12 @@ export function RecentMessagesCard({ messages }: RecentMessagesCardProps) {
                 <div className="mt-0.5 h-8 w-[3px] shrink-0 rounded-full bg-green-600" />
                 <div>
                   <p className="text-sm font-semibold">
-                    To: {message.isBlast ? "All Members" : (message.groupName ?? "Unknown Group")}
+                    To:{" "}
+                    {message.isBlast
+                      ? "All Members"
+                      : message.groupNames.length > 0
+                        ? message.groupNames.join(", ")
+                        : "Unknown Group"}
                   </p>
                   <p className="text-sm italic text-muted-foreground">&ldquo;{message.subject}&rdquo;</p>
                 </div>

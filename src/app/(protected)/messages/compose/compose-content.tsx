@@ -22,7 +22,7 @@ export function ComposeContent({ groups, currentUser, isAdmin }: Props) {
   const [isPending, startTransition] = useTransition();
 
   const handleSend = (data: {
-    groupId: number | null;
+    groupIds: number[];
     isBlast: boolean;
     subject: string;
     body: string;
@@ -52,12 +52,12 @@ export function ComposeContent({ groups, currentUser, isAdmin }: Props) {
           toast.error(result.error ?? "Failed to send message");
         }
       } else {
-        if (!data.groupId) {
-          toast.error("Please select a group");
+        if (data.groupIds.length === 0) {
+          toast.error("Please select at least one group");
           return;
         }
         const result = await sendMessage({
-          groupId: data.groupId,
+          groupIds: data.groupIds,
           subject: data.subject,
           body: data.body,
           sendEmail: data.sendEmail,

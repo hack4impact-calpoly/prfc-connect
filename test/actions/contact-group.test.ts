@@ -341,7 +341,7 @@ describe("sendMessage", () => {
     mockSendGroupMessage.mockResolvedValue(messageResult);
 
     const result = await sendMessage({
-      groupId: 3,
+      groupIds: [3],
       subject: "Hello",
       body: "Body text",
       sendEmail: true,
@@ -352,7 +352,7 @@ describe("sendMessage", () => {
     expect(result.data).toEqual(messageResult);
     expect(mockSendGroupMessage).toHaveBeenCalledWith(
       {
-        groupId: 3,
+        groupIds: [3],
         subject: "Hello",
         body: "Body text",
         sendEmail: true,
@@ -367,7 +367,7 @@ describe("sendMessage", () => {
     mockSendGroupMessage.mockResolvedValue(messageResult);
 
     const result = await sendMessage({
-      groupId: 3,
+      groupIds: [3],
       subject: "Admin",
       body: "Admin body",
       sendEmail: true,
@@ -383,7 +383,7 @@ describe("sendMessage", () => {
     mockIsGroupOwner.mockResolvedValue(false);
 
     const result = await sendMessage({
-      groupId: 3,
+      groupIds: [3],
       subject: "Nope",
       body: "Body text",
       sendEmail: true,
@@ -400,7 +400,7 @@ describe("sendMessage", () => {
     mockIsGroupOwner.mockResolvedValue(true);
 
     const result = await sendMessage({
-      groupId: 3,
+      groupIds: [3],
       subject: "",
       body: "Body text",
       sendEmail: true,
@@ -418,7 +418,7 @@ describe("sendMessage", () => {
     mockSendGroupMessage.mockRejectedValue(new AppError("MESSAGE_SEND_FAILED", "Email delivery failed"));
 
     const result = await sendMessage({
-      groupId: 3,
+      groupIds: [3],
       subject: "Hello",
       body: "Body text",
       sendEmail: true,
