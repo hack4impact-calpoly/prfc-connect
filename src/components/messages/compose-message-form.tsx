@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { AlertCircle, Check, ChevronDown, Loader2, Mail, MessageCircle } from "lucide-react";
+import { AlertCircle, Check, ChevronDown, Loader2, Mail, MessageCircle, X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
@@ -61,13 +62,7 @@ export function ComposeMessageForm({
     setSelectedGroupIds(new Set());
   };
 
-  const recipientLabel = isBlast
-    ? "All Members"
-    : selectedGroupIds.size === 0
-      ? "Select Groups"
-      : selectedGroupIds.size === 1
-        ? (groups.find((g) => selectedGroupIds.has(g.id))?.name ?? "1 group")
-        : `${selectedGroupIds.size} groups`;
+  const selectedGroups = groups.filter((g) => selectedGroupIds.has(g.id));
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -115,10 +110,41 @@ export function ComposeMessageForm({
 
       <div>
         <p className="mb-2 text-sm font-semibold">To:</p>
+        {(isBlast || selectedGroups.length > 0) && (
+          <div className="mb-2 flex flex-wrap gap-1.5">
+            {isBlast ? (
+              <Badge variant="secondary" className="gap-1 pl-2 pr-1">
+                All Members
+                <button
+                  type="button"
+                  onClick={() => setIsBlast(false)}
+                  className="ml-0.5 rounded-full p-0.5 hover:bg-muted"
+                  aria-label="Remove All Members"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            ) : (
+              selectedGroups.map((g) => (
+                <Badge key={g.id} variant="secondary" className="gap-1 pl-2 pr-1">
+                  {g.name}
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(g.id)}
+                    className="ml-0.5 rounded-full p-0.5 hover:bg-muted"
+                    aria-label={`Remove ${g.name}`}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              ))
+            )}
+          </div>
+        )}
         <Popover open={groupPickerOpen} onOpenChange={setGroupPickerOpen}>
           <PopoverTrigger asChild>
             <Button variant="outline" role="combobox" aria-expanded={groupPickerOpen} className="w-64 justify-between">
-              {recipientLabel}
+              {isBlast || selectedGroups.length > 0 ? "Add more..." : "Select groups"}
               <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
