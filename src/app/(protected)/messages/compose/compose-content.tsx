@@ -1,0 +1,90 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { ComposeMessageForm } from "@/components/messages/compose-message-form";
+import { MessageSentConfirmation } from "@/components/messages/message-sent-confirmation";
+import { sendMessage, sendBlast } from "@/actions/contact-group";
+
+type Props = {
+  groups: Array<{ id: number; name: string }>;
+  currentUser: { name: string; photoUrl?: string | null };
+  isAdmin: boolean;
+};
+
+export function ComposeContent({ groups, currentUser, isAdmin }: Props) {
+  const router = useRouter();
+  const [sentResult, setSentResult] = useState<{
+    recipientCount: number;
+    channels: { email: boolean; sms: boolean };
+  } | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  const handleSend = (data: {
+    groupId: number | null;
+    isBlast: boolean;
+    subject: string;
+    body: string;
+    smsBody?: string;
+    sendEmail: boolean;
+    sendSms: boolean;
+  }) => {
+    startTransition(async () => {
+      if (data.isBlast) {
+        if (!isAdmin) {
+          toast.error("Only admins can send blast messages");
+          return;
+        }
+        const result = await sendBlast({
+          subject: data.subject,
+          body: data.body,
+          sendEmail: data.sendEmail,
+          sendSms: data.sendSms,
+          confirmationText: "SEND TO ALL",
+        });
+        if (result.success && result.data) {
+          setSentResult({
+            recipientCount: result.data.emailCount + result.data.smsCount,
+            channels: { email: data.sendEmail, sms: data.sendSms },
+          });
+        } else {
+          toast.error(result.error ?? "Failed to send message");
+        }
+      } else {
+        if (!data.groupId) {
+          toast.error("Please select a group");
+          return;
+        }
+        const result = await sendMessage({
+          groupId: data.groupId,
+          subject: data.subject,
+          body: data.body,
+          sendEmail: data.sendEmail,
+          sendSms: data.sendSms,
+        });
+        if (result.success && result.data) {
+          setSentResult({
+            recipientCount: result.data.emailCount + result.data.smsCount,
+            channels: { email: data.sendEmail, sms: data.sendSms },
+          });
+        } else {
+          toast.error(result.error ?? "Failed to send message");
+        }
+      }
+    });
+  };
+
+  if (sentResult) {
+    return (
+      <MessageSentConfirmation
+        recipientCount={sentResult.recipientCount}
+        channels={sentResult.channels}
+        onTrackRsvps={() => router.push("/events")}
+        onDeliveryStatus={() => router.push("/messages")}
+      />
+    );
+  }
+
+  return <ComposeMessageForm groups={groups} currentUser={currentUser} onSend={handleSend} isSending={isPending} />;
+}
