@@ -11,6 +11,7 @@ import { GroupMemberTable } from "@/components/groups/group-member-table";
 import { AddMembersModal, type MemberRow } from "@/components/groups/add-members-modal";
 import { addMembers, removeMember } from "@/actions/contact-group";
 import { useFuzzySearch } from "@/hooks/use-fuzzy-search";
+import { useSidebar } from "@/components/layout/sidebar-context";
 import type { MemberSummary } from "@/types/member";
 
 type Props = {
@@ -32,6 +33,7 @@ type Props = {
 
 export function GroupDetailContent({ group, allMembers, currentUserOwnerid, isAdmin }: Props) {
   const router = useRouter();
+  const { width: sidebarWidth } = useSidebar();
   const [mode, setMode] = useState<"view" | "edit">("view");
   const [searchQuery, setSearchQuery] = useState("");
   const [addMembersOpen, setAddMembersOpen] = useState(false);
@@ -176,7 +178,10 @@ export function GroupDetailContent({ group, allMembers, currentUserOwnerid, isAd
       </div>
 
       {mode === "edit" && (
-        <div className="fixed bottom-0 left-0 right-0 z-10 flex justify-end border-t border-prfc-border/30 bg-background px-8 py-4 md:pl-[calc(220px+2rem)]">
+        <div
+          style={{ paddingLeft: sidebarWidth + 32 }}
+          className="fixed bottom-0 left-0 right-0 z-10 flex justify-end border-t border-prfc-border/30 bg-background px-8 py-4 transition-[padding-left] duration-200 ease-in-out"
+        >
           <Button
             onClick={handleSave}
             disabled={isPending}
