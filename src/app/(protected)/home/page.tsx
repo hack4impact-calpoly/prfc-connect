@@ -1,23 +1,30 @@
-import { getSessionWithName } from "@/lib/dal";
-import { getAllGroups, getGroupsByOwner } from "@/services/contact-group";
-import { coopHourOfDay } from "@/utils/time";
+import { verifySession } from "@/lib/dal";
+import { getAllMembers } from "@/lib/api/member-api";
+import { getEventsForMonth, getUpcomingEvents } from "@/services/event";
+import { getRecentActivity } from "@/services/dashboard";
+import { getAllMessageHistory } from "@/services/message";
+import { coopNow } from "@/utils/time";
 import { HomeContent } from "./home-content";
 
-function getGreeting(): string {
-  const hour = coopHourOfDay(new Date());
-  if (hour < 12) return "Good Morning";
-  if (hour < 17) return "Good Afternoon";
-  return "Good Evening";
-}
-
 export default async function HomePage() {
-  const session = await getSessionWithName();
-  const groups = session.isAdmin ? await getAllGroups() : await getGroupsByOwner(session.ownerid);
+  await verifySession();
+  const now = coopNow();
 
-  const greeting = getGreeting();
-  const sectionHeading = session.isAdmin ? "All Groups" : "My Groups";
+  const [memberList, monthEvents, upcomingEvents, recentActivity, recentMessages] = await Promise.all([
+    getAllMembers(),
+    getEventsForMonth(now.year, now.month0 + 1),
+    getUpcomingEvents(4),
+    getRecentActivity(3),
+    getAllMessageHistory({ limit: 3 }),
+  ]);
 
   return (
-    <HomeContent groups={groups} greeting={`${greeting}, ${session.ownername}!`} sectionHeading={sectionHeading} />
+    <HomeContent
+      totalMembers={memberList.length}
+      eventsThisMonth={monthEvents.length}
+      upcomingEvents={upcomingEvents}
+      recentActivity={recentActivity}
+      recentMessages={recentMessages}
+    />
   );
 }

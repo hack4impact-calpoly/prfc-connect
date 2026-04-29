@@ -19,7 +19,7 @@ export function QuickActionsCard({ onCreateEvent, onCreateGroup, onSendMessage }
           variant="ghost"
           size="lg"
           onClick={onCreateEvent}
-          className="w-full justify-start bg-gray-50 text-left hover:bg-gray-100 border border-gray-100 shadow-sm"
+          className="w-full justify-start bg-paso-grey text-left hover:bg-prfc-brown/[0.08] border border-prfc-border/20 shadow-sm"
         >
           <Plus className="mr-2 h-4 w-4" />
           Create Event
@@ -28,7 +28,7 @@ export function QuickActionsCard({ onCreateEvent, onCreateGroup, onSendMessage }
           variant="ghost"
           size="lg"
           onClick={onCreateGroup}
-          className="w-full justify-start bg-gray-50 text-left hover:bg-gray-100 border border-gray-100 shadow-sm"
+          className="w-full justify-start bg-paso-grey text-left hover:bg-prfc-brown/[0.08] border border-prfc-border/20 shadow-sm"
         >
           <UsersRound className="mr-2 h-4 w-4" />
           Create Group
@@ -37,7 +37,7 @@ export function QuickActionsCard({ onCreateEvent, onCreateGroup, onSendMessage }
           variant="ghost"
           size="lg"
           onClick={onSendMessage}
-          className="w-full justify-start bg-gray-50 text-left hover:bg-gray-100 border border-gray-100 shadow-sm"
+          className="w-full justify-start bg-paso-grey text-left hover:bg-prfc-brown/[0.08] border border-prfc-border/20 shadow-sm"
         >
           <SquarePen className="mr-2 h-4 w-4" />
           Send Message

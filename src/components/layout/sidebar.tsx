@@ -17,7 +17,7 @@ interface SidebarNavItem {
 }
 
 const SIDEBAR_ITEMS: SidebarNavItem[] = [
-  { label: "Home", href: "/home", icon: LayoutGrid },
+  { label: "Dashboard", href: "/home", icon: LayoutGrid },
   { label: "Messages", href: "/messages", icon: MessageSquareMore },
   { label: "Groups", href: "/groups", icon: UsersRound },
   { label: "Events", href: "/events", icon: CalendarDays },
@@ -34,7 +34,7 @@ export function Sidebar({ className }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "fixed left-0 top-[var(--header-height)] z-20 hidden h-[calc(100vh-var(--header-height))] w-[220px] bg-white md:block",
+        "fixed left-0 top-[var(--header-height)] z-20 hidden h-[calc(100vh-var(--header-height))] w-[220px] bg-paso-grey md:block",
         "border-r border-border",
         className,
       )}
@@ -55,7 +55,7 @@ export function Sidebar({ className }: SidebarProps) {
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                     active
                       ? "bg-paso-light-brown font-semibold text-foreground"
-                      : "font-normal text-muted-foreground hover:bg-muted/60",
+                      : "font-normal text-muted-foreground hover:bg-prfc-brown/[0.08]",
                   )}
                 >
                   {active ? (
