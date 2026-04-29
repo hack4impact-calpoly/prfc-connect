@@ -46,11 +46,11 @@ export function GroupMemberTable({ members, mode, removedIds, onRemove, onRestor
                       {getInitials(member.ownername)}
                     </AvatarFallback>
                   </Avatar>
-                  <span className={cn("text-sm", isRemoved && "line-through")}>{member.ownername}</span>
+                  <span className={cn("text-base", isRemoved && "line-through")}>{member.ownername}</span>
                 </div>
               </TableCell>
-              <TableCell className={cn("text-sm", isRemoved && "line-through")}>{member.owneremail}</TableCell>
-              <TableCell className="text-sm">Member</TableCell>
+              <TableCell className={cn("text-base", isRemoved && "line-through")}>{member.owneremail}</TableCell>
+              <TableCell className="text-base">Member</TableCell>
               <TableCell>
                 {mode === "view" ? (
                   <Lock className="h-4 w-4 text-muted-foreground" />
@@ -59,7 +59,7 @@ export function GroupMemberTable({ members, mode, removedIds, onRemove, onRestor
                     type="button"
                     onClick={() => onRestore?.(member.memberId)}
                     aria-label={`Restore ${member.ownername}`}
-                    className="flex items-center gap-2 text-sm font-semibold text-prfc-brown hover:text-prfc-brown/80"
+                    className="flex items-center gap-2 text-base font-semibold text-prfc-brown hover:text-prfc-brown/80"
                   >
                     <Undo2 className="h-4 w-4" />
                     Restore
@@ -69,7 +69,7 @@ export function GroupMemberTable({ members, mode, removedIds, onRemove, onRestor
                     type="button"
                     onClick={() => onRemove?.(member.memberId)}
                     aria-label={`Remove ${member.ownername}`}
-                    className="flex items-center gap-2 text-sm font-semibold text-prfc-red hover:text-prfc-red/80"
+                    className="flex items-center gap-2 text-base font-semibold text-prfc-red hover:text-prfc-red/80"
                   >
                     <UserMinus className="h-4 w-4" />
                     Remove

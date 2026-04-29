@@ -54,7 +54,7 @@ export function SmsConsentCard({ phone, hasConsent, onRevoke, isRevoking = false
             </Button>
           )}
 
-          <p className="text-xs text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Message &amp; data rates may apply. Reply STOP to any message to unsubscribe.
           </p>
         </CardContent>

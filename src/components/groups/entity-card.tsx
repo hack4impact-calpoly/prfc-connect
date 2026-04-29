@@ -77,7 +77,7 @@ export function EntityCard({
           {memberCount} {memberCount === 1 ? "member" : "members"}
         </div>
         {createdAt && (
-          <p className="mt-auto pt-3 text-xs text-muted-foreground">
+          <p className="mt-auto pt-3 text-sm text-muted-foreground">
             Created {coopFormatTimed(createdAt, "MMM d, yyyy")}
           </p>
         )}

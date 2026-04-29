@@ -47,13 +47,13 @@ export function UpcomingEventsCard({ events }: UpcomingEventsCardProps) {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold">{event.title}</p>
-                  {event.groupName && <p className="truncate text-xs text-muted-foreground">{event.groupName}</p>}
+                  {event.groupName && <p className="truncate text-sm text-muted-foreground">{event.groupName}</p>}
                 </div>
                 <div className="shrink-0 text-right">
                   <p className="text-sm">
                     {coopFormatTimed(event.startDate, "MMM d")} &middot; {coopFormatTimed(event.startDate, "h:mm a")}
                   </p>
-                  <p className="text-xs text-muted-foreground">RSVPs: {event.rsvpCount}</p>
+                  <p className="text-sm text-muted-foreground">RSVPs: {event.rsvpCount}</p>
                 </div>
               </div>
             ))

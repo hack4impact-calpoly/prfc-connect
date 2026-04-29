@@ -358,8 +358,8 @@ export function EventsContent({
                       onClick={() => handleEventClick(e.id)}
                       className="w-full rounded-md border border-prfc-border/20 p-2 text-left hover:bg-paso-grey"
                     >
-                      <p className="text-sm font-semibold">{e.title}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-base font-semibold">{e.title}</p>
+                      <p className="text-sm text-muted-foreground">
                         {e.isAllDay
                           ? "All day"
                           : `${coopFormatTimed(e.startDate, "h:mm a")} - ${coopFormatTimed(e.endDate, "h:mm a")}`}

@@ -30,7 +30,7 @@ function IconInput({ icon, value, id }: { icon: React.ReactNode; value: string; 
 export function PersonalInformationCard({ firstName, lastName, email, phone }: PersonalInformationCardProps) {
   return (
     <section>
-      <h2 className="font-angkor text-4xl mb-4">Personal Information</h2>
+      <h2 className="font-angkor text-2xl mb-4">Personal Information</h2>
       <Card>
         <CardContent className="p-6 space-y-4 font-khula">
           <div className="grid grid-cols-2 gap-6">

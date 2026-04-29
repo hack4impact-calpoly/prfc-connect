@@ -65,10 +65,10 @@ export function MessageHistoryTable({ messages, onView }: MessageHistoryTablePro
         <TableBody>
           {messages.map((message) => (
             <TableRow key={message.id} onClick={() => onView(message.id)} className="cursor-pointer hover:bg-muted/50">
-              <TableCell className="whitespace-nowrap text-sm">
+              <TableCell className="whitespace-nowrap text-base">
                 <RecipientLabel message={message} />
               </TableCell>
-              <TableCell className="truncate text-sm">
+              <TableCell className="truncate text-base">
                 <MessagePreview message={message} />
               </TableCell>
               <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
@@ -88,12 +88,12 @@ export function MessageHistoryTable({ messages, onView }: MessageHistoryTablePro
             className="w-full px-3 py-3 text-left hover:bg-muted/50"
           >
             <div className="flex items-center justify-between gap-2">
-              <span className="text-sm font-medium">
+              <span className="text-base font-medium">
                 <RecipientLabel message={message} />
               </span>
-              <span className="shrink-0 text-xs text-muted-foreground">{formatSmartTimestamp(message.sentAt)}</span>
+              <span className="shrink-0 text-sm text-muted-foreground">{formatSmartTimestamp(message.sentAt)}</span>
             </div>
-            <p className="mt-1 truncate text-sm">
+            <p className="mt-1 truncate text-base">
               <MessagePreview message={message} />
             </p>
           </button>
