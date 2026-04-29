@@ -14,7 +14,7 @@ type StatCardProps = {
 export function StatCard({ label, value, icon, viewAllHref, className }: StatCardProps) {
   return (
     <Card className={cn("flex flex-col", className)}>
-      <div className="flex items-center justify-between p-6 pb-4">
+      <div className="flex flex-1 items-center justify-between p-6 pb-4">
         <div className="min-w-0 flex-1">
           <p className="font-semibold text-foreground">{label}</p>
           <p className="mt-3 text-4xl font-bold text-foreground">{value}</p>

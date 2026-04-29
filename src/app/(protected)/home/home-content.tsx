@@ -44,7 +44,7 @@ export function HomeContent({
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr]">
         <UpcomingEventsCard events={upcomingEvents} />
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-4">
           <RecentActivityCard activities={recentActivity} />
           <RecentMessagesCard messages={recentMessages} />
         </div>

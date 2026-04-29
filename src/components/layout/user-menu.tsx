@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import Link from "next/link";
-import { ChevronDown, LogOut, SlidersVertical, UserRound } from "lucide-react";
+import { ChevronDown, ExternalLink, Settings, UserRound } from "lucide-react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -35,15 +35,15 @@ export function UserMenu({ userName, userRole }: UserMenuProps) {
           id="user-menu-trigger"
           aria-label="User menu"
         >
+          <div className="min-w-0">
+            <p className="truncate text-base font-semibold leading-tight text-foreground">{userName}</p>
+            <p className="truncate text-sm text-muted-foreground">{userRole}</p>
+          </div>
           <Avatar className="h-10 w-10">
             <AvatarFallback className={cn("text-sm font-semibold text-white")} style={{ backgroundColor: avatarColor }}>
               {initials}
             </AvatarFallback>
           </Avatar>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold leading-tight text-foreground">{userName}</p>
-            <p className="truncate text-xs text-muted-foreground">{userRole}</p>
-          </div>
           <ChevronDown
             className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180"
             aria-hidden="true"
@@ -52,7 +52,7 @@ export function UserMenu({ userName, userRole }: UserMenuProps) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuItem asChild>
-          <Link href="/settings">
+          <Link href="/profile">
             <UserRound />
             Profile
           </Link>
@@ -60,13 +60,12 @@ export function UserMenu({ userName, userRole }: UserMenuProps) {
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href="/settings">
-            <SlidersVertical />
-            Account Settings
+            <Settings />
+            Settings
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          className="text-destructive focus:text-destructive"
           disabled={isPending}
           onSelect={(e) => {
             e.preventDefault();
@@ -75,8 +74,8 @@ export function UserMenu({ userName, userRole }: UserMenuProps) {
             });
           }}
         >
-          <LogOut />
-          {isPending ? "Signing out…" : "Sign out"}
+          <ExternalLink />
+          {isPending ? "Redirecting…" : "Back to Portal"}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

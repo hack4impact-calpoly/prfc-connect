@@ -11,9 +11,9 @@ export default async function ProtectedLayout({ children }: { children: React.Re
   return (
     <TopBarActionProvider>
       <TopBarSearchProvider>
-        <TopBar userName={session.ownername} userRole={userRole} />
         <Sidebar />
-        <main className="min-h-[calc(100vh-var(--header-height))] p-8 pt-[calc(var(--header-height)+2rem)] md:pl-[calc(220px+2rem)]">
+        <TopBar userName={session.ownername} userRole={userRole} />
+        <main className="min-h-screen p-8 pt-[calc(var(--header-height)+2rem)] md:pl-[calc(220px+2rem)]">
           {children}
         </main>
       </TopBarSearchProvider>
