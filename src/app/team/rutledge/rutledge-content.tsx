@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageSentConfirmation } from "@/components/messages/message-sent-confirmation";
+import { UpcomingEventsCard } from "@/components/dashboard/upcoming-events-card";
 
 export function RutledgeContent() {
   return (
@@ -8,28 +8,44 @@ export function RutledgeContent() {
       <div className="mx-auto max-w-2xl">
         <h1 className="text-3xl font-bold text-foreground">Kevin Rutledge</h1>
         <p className="mt-2 text-lg text-muted-foreground">Tech Lead</p>
-        <div className="mt-10">
-          <h2 className="text-xl font-semibold">Message Sent Confirmation Preview</h2>
-          <div className="mt-4 space-y-6">
-            <MessageSentConfirmation
-              recipientCount={120}
-              channels={{ email: true, sms: true }}
-              onTrackRsvps={() => console.log("Track RSVPs")}
-              onDeliveryStatus={() => console.log("Delivery Status")}
-            />
-            <MessageSentConfirmation
-              recipientCount={45}
-              channels={{ email: true, sms: false }}
-              onTrackRsvps={() => console.log("Track RSVPs")}
-              onDeliveryStatus={() => console.log("Delivery Status")}
-            />
-            <MessageSentConfirmation
-              recipientCount={30}
-              channels={{ email: false, sms: true }}
-              onTrackRsvps={() => console.log("Track RSVPs")}
-              onDeliveryStatus={() => console.log("Delivery Status")}
-            />
-          </div>
+        <div className="mt-10 space-y-6">
+          <UpcomingEventsCard
+            events={[
+              {
+                id: 1,
+                title: "Local Bites @ Winery",
+                startDate: new Date("2026-04-30T01:00:00Z"),
+                eventType: "social",
+                groupName: "Food Lovers",
+                rsvpCount: 25,
+              },
+              {
+                id: 2,
+                title: "Co-Op Info Session",
+                startDate: new Date("2026-05-05T19:00:00Z"),
+                eventType: "networking",
+                groupName: "New Members",
+                rsvpCount: 18,
+              },
+              {
+                id: 3,
+                title: "Member Town Hall",
+                startDate: new Date("2026-05-08T01:00:00Z"),
+                eventType: "meeting",
+                groupName: "PRFC Members",
+                rsvpCount: 20,
+              },
+              {
+                id: 4,
+                title: "Chamber Networking",
+                startDate: new Date("2026-05-12T00:30:00Z"),
+                eventType: "volunteer",
+                groupName: "PRFC Members",
+                rsvpCount: 12,
+              },
+            ]}
+          />
+          <UpcomingEventsCard events={[]} />
         </div>
       </div>
     </div>
