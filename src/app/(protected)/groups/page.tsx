@@ -7,10 +7,19 @@ export default async function GroupsPage() {
   const session = await getSessionWithName();
   const isAdmin = session.isAdmin;
 
-  const [groups, members] = await Promise.all([
-    isAdmin ? getAllGroups() : getGroupsByOwner(session.ownerid),
+  const [myGroups, allGroups, members] = await Promise.all([
+    getGroupsByOwner(session.ownerid),
+    isAdmin ? getAllGroups() : Promise.resolve([]),
     getAllMembers(),
   ]);
 
-  return <GroupsContent groups={groups} isAdmin={isAdmin} ownerId={session.ownerid} members={members} />;
+  return (
+    <GroupsContent
+      myGroups={myGroups}
+      allGroups={allGroups}
+      isAdmin={isAdmin}
+      ownerId={session.ownerid}
+      members={members}
+    />
+  );
 }

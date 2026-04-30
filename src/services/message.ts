@@ -383,6 +383,7 @@ export async function getMessageHistoryPage(query: MessageHistoryQuery): Promise
   try {
     const {
       senderId,
+      recipientId,
       search,
       channel,
       sort = "recent",
@@ -393,7 +394,12 @@ export async function getMessageHistoryPage(query: MessageHistoryQuery): Promise
 
     const where: Record<string, unknown> = {};
     if (senderId) where.senderId = senderId;
-    if (channel) where.recipients = { some: { channel } };
+    const recipientFilter: Record<string, unknown> = {};
+    if (recipientId) recipientFilter.memberId = recipientId;
+    if (channel) recipientFilter.channel = channel;
+    if (Object.keys(recipientFilter).length > 0) {
+      where.recipients = { some: recipientFilter };
+    }
     if (search) where.subject = { contains: search };
 
     const isBackward = direction === "backward";

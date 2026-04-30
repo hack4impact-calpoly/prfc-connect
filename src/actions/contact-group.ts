@@ -25,19 +25,18 @@ import {
 import {
   sendGroupMessage,
   sendBlastMessage,
-  getAllMessageHistory,
   getMessageHistoryPage,
   getMessageById,
   getMessageRecipients,
   previewRecipientCounts,
 } from "@/services/message";
 import { MessageHistoryQuerySchema } from "@/schema/message";
+import { getMemberById } from "@/lib/api/member-api";
 import { transformError } from "@/utils/errors";
 import type { ActionResult } from "@/types/action";
 import type { MessageHistoryQueryInput } from "@/schema/message";
 import type {
   MessageResult,
-  MessageHistoryItem,
   MessageHistoryPage,
   MessageDetail,
   RecipientStatus,
@@ -55,7 +54,7 @@ export async function fetchEnrichedGroup(groupId: number): Promise<ActionResult<
     }
 
     const group = await getGroupById(groupId);
-    const enriched = await enrichGroupMembers(group);
+    const [enriched, owner] = await Promise.all([enrichGroupMembers(group), getMemberById(group.ownerid)]);
 
     return {
       success: true,
@@ -68,6 +67,7 @@ export async function fetchEnrichedGroup(groupId: number): Promise<ActionResult<
           ownername: m.ownername,
         })),
         memberCount: enriched.memberCount,
+        ownerName: owner?.ownername ?? null,
       },
     };
   } catch (error) {
@@ -283,30 +283,14 @@ export async function sendBlast(input: {
   }
 }
 
-export async function fetchMessageHistory(options: {
-  limit?: number;
-  offset?: number;
-  channel?: "email" | "sms";
-}): Promise<ActionResult<MessageHistoryItem[]>> {
-  try {
-    const session = await verifySession();
-    const senderId = session.isAdmin ? undefined : session.ownerid;
-    const messages = await getAllMessageHistory({ ...options, senderId });
-    return { success: true, data: messages };
-  } catch (error) {
-    const appError = transformError(error);
-    return { success: false, error: appError.message };
-  }
-}
-
 export async function fetchMessageHistoryPage(
   input: MessageHistoryQueryInput,
 ): Promise<ActionResult<MessageHistoryPage>> {
   try {
     const session = await verifySession();
     const validated = MessageHistoryQuerySchema.parse(input);
-    const senderId = session.isAdmin ? undefined : session.ownerid;
-    const page = await getMessageHistoryPage({ ...validated, senderId });
+    const roleFilter = session.isAdmin ? {} : { recipientId: session.ownerid };
+    const page = await getMessageHistoryPage({ ...validated, ...roleFilter });
     return { success: true, data: page };
   } catch (error) {
     const appError = transformError(error);

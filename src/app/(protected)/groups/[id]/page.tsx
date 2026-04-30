@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { verifySession } from "@/lib/dal";
 import { getGroupById, enrichGroupMembers, isGroupOwner } from "@/services/contact-group";
-import { getAllMembers } from "@/lib/api/member-api";
+import { getAllMembers, getMemberById } from "@/lib/api/member-api";
 import { AppError } from "@/utils/errors";
 import { GroupDetailContent } from "./group-detail-content";
 
@@ -24,6 +24,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
   if (!session.isAdmin && !(await isGroupOwner(groupId, session.ownerid))) notFound();
 
   const [enriched, allMembers] = await Promise.all([loadGroup(groupId), getAllMembers()]);
+  const owner = await getMemberById(enriched.ownerid);
 
   return (
     <GroupDetailContent
@@ -32,6 +33,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
         name: enriched.name,
         description: enriched.description,
         ownerid: enriched.ownerid,
+        ownerName: owner?.ownername ?? null,
         members: enriched.members.map((m) => ({
           memberId: m.memberId,
           ownername: m.ownername,

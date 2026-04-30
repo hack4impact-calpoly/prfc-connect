@@ -20,6 +20,7 @@ export const EMPTY_GROUP: EnrichedGroupData = {
   description: null,
   members: [],
   memberCount: 0,
+  ownerName: null,
 };
 
 function buildGroupFormData(data: { name: string; description: string | null }): FormData {

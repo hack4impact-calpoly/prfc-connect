@@ -20,6 +20,7 @@ type Props = {
     name: string;
     description: string | null;
     ownerid: number;
+    ownerName: string | null;
     members: Array<{
       memberId: number;
       ownername: string;
@@ -140,6 +141,7 @@ export function GroupDetailContent({ group, allMembers, currentUserOwnerid, isAd
 
       <h1 className="font-angkor text-3xl text-prfc-brown">{group.name}</h1>
       {group.description && <p className="mt-2 text-muted-foreground">{group.description}</p>}
+      {isAdmin && group.ownerName && <p className="mt-1 text-sm text-muted-foreground">Created by {group.ownerName}</p>}
 
       <div className="mt-6 flex items-center gap-3">
         <div className="relative flex-1 max-w-md">

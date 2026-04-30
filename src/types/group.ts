@@ -30,6 +30,7 @@ export interface EnrichedGroupData {
   description: string | null;
   members: Array<{ memberId: number; ownername: string }>;
   memberCount: number;
+  ownerName: string | null;
 }
 
 export interface MemberRow {

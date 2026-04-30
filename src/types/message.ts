@@ -56,6 +56,7 @@ export interface MessageHistoryPage {
 
 export interface MessageHistoryQuery {
   senderId?: number;
+  recipientId?: number;
   search?: string;
   channel?: "email" | "sms";
   sort?: "recent" | "oldest";

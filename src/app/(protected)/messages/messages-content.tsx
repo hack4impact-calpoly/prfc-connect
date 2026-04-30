@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useEffectEvent, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { Plus, Search } from "lucide-react";
 import { toast } from "sonner";
@@ -18,6 +18,7 @@ import type { MessageDetail, RecipientStatus } from "@/types/message";
 type Props = {
   initialPage: MessageHistoryPage;
   isAdmin: boolean;
+  smsFeatureEnabled: boolean;
 };
 
 function useMessagePagination(initialPage: MessageHistoryPage) {
@@ -62,7 +63,7 @@ function useMessagePagination(initialPage: MessageHistoryPage) {
   return { page, startIndex, isPending, refetch, goNext, goPrev };
 }
 
-export function MessagesContent({ initialPage }: Props) {
+export function MessagesContent({ initialPage, smsFeatureEnabled }: Props) {
   const { page, startIndex, isPending, refetch, goNext, goPrev } = useMessagePagination(initialPage);
   const [searchQuery, setSearchQuery] = useState("");
   const [channelFilter, setChannelFilter] = useState<string>("all");
@@ -73,13 +74,17 @@ export function MessagesContent({ initialPage }: Props) {
   const debouncedSearch = useDebounce(searchQuery, 300);
   const isInitialMount = useRef(true);
 
+  const onSearchChange = useEffectEvent(() => {
+    const channel = channelFilter === "all" ? undefined : (channelFilter as "email" | "sms");
+    refetch({ search: debouncedSearch, channel, sort: sortOrder, pageSize });
+  });
+
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
       return;
     }
-    fetchFirstPage();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    onSearchChange();
   }, [debouncedSearch]);
 
   const fetchFirstPage = (overrides?: { channel?: string; sort?: "recent" | "oldest"; pageSize?: 10 | 25 | 50 }) => {
@@ -153,22 +158,24 @@ export function MessagesContent({ initialPage }: Props) {
             aria-label="Search messages"
           />
         </div>
-        <Select
-          value={channelFilter}
-          onValueChange={(v) => {
-            setChannelFilter(v);
-            fetchFirstPage({ channel: v });
-          }}
-        >
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Message Type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            <SelectItem value="email">Email</SelectItem>
-            <SelectItem value="sms">SMS</SelectItem>
-          </SelectContent>
-        </Select>
+        {smsFeatureEnabled && (
+          <Select
+            value={channelFilter}
+            onValueChange={(v) => {
+              setChannelFilter(v);
+              fetchFirstPage({ channel: v });
+            }}
+          >
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Message Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="email">Email</SelectItem>
+              <SelectItem value="sms">SMS</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
         <Select
           value={sortOrder}
           onValueChange={(v) => {

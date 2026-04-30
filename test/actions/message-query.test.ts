@@ -8,7 +8,6 @@ import { mockVerifySession } from "../mocks";
 vi.mock("@/services/message", () => ({
   sendGroupMessage: vi.fn(),
   sendBlastMessage: vi.fn(),
-  getAllMessageHistory: vi.fn(),
   getMessageHistoryPage: vi.fn(),
   getMessageById: vi.fn(),
   getMessageRecipients: vi.fn(),
@@ -20,82 +19,19 @@ vi.mock("@/services/contact-group", () => ({
 }));
 
 import {
-  getAllMessageHistory,
   getMessageHistoryPage,
   getMessageById,
   getMessageRecipients,
   previewRecipientCounts,
 } from "@/services/message";
 import { isGroupOwner } from "@/services/contact-group";
-import {
-  fetchMessageHistory,
-  fetchMessageHistoryPage,
-  fetchMessageDetail,
-  fetchRecipientPreview,
-} from "@/actions/contact-group";
+import { fetchMessageHistoryPage, fetchMessageDetail, fetchRecipientPreview } from "@/actions/contact-group";
 
-const mockGetAllMessageHistory = getAllMessageHistory as MockedFunction<typeof getAllMessageHistory>;
 const mockGetMessageHistoryPage = getMessageHistoryPage as MockedFunction<typeof getMessageHistoryPage>;
 const mockGetMessageById = getMessageById as MockedFunction<typeof getMessageById>;
 const mockGetMessageRecipients = getMessageRecipients as MockedFunction<typeof getMessageRecipients>;
 const mockPreviewRecipientCounts = previewRecipientCounts as MockedFunction<typeof previewRecipientCounts>;
 const mockIsGroupOwner = isGroupOwner as MockedFunction<typeof isGroupOwner>;
-
-describe("fetchMessageHistory", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it("returns all messages for admin", async () => {
-    mockVerifySession.mockResolvedValue({ ownerid: 100001, isAdmin: true });
-    const messages = [
-      {
-        id: 1,
-        subject: "Test",
-        body: "Test body content",
-        sentAt: new Date(),
-        emailCount: 5,
-        smsCount: 0,
-        failedCount: 0,
-        isBlast: false,
-        groupNames: ["Garden Club"],
-      },
-    ];
-    mockGetAllMessageHistory.mockResolvedValue(messages);
-
-    const result = await fetchMessageHistory({});
-
-    expect(result).toEqual({ success: true, data: messages });
-    expect(mockGetAllMessageHistory).toHaveBeenCalledWith({ senderId: undefined });
-  });
-
-  it("filters by senderId for non-admin member", async () => {
-    mockVerifySession.mockResolvedValue({ ownerid: 100003, isAdmin: false });
-    mockGetAllMessageHistory.mockResolvedValue([]);
-
-    await fetchMessageHistory({});
-
-    expect(mockGetAllMessageHistory).toHaveBeenCalledWith({ senderId: 100003 });
-  });
-
-  it("passes channel filter through", async () => {
-    mockVerifySession.mockResolvedValue({ ownerid: 100001, isAdmin: true });
-    mockGetAllMessageHistory.mockResolvedValue([]);
-
-    await fetchMessageHistory({ channel: "email" });
-
-    expect(mockGetAllMessageHistory).toHaveBeenCalledWith(expect.objectContaining({ channel: "email" }));
-  });
-
-  it("returns error when not authenticated", async () => {
-    mockVerifySession.mockRejectedValue(new AppError("UNAUTHORIZED", "Authentication required"));
-
-    const result = await fetchMessageHistory({});
-
-    expect(result.success).toBe(false);
-    expect(result.error).toBe("Authentication required");
-  });
-});
 
 describe("fetchMessageDetail", () => {
   beforeEach(() => {
@@ -222,23 +158,23 @@ describe("fetchMessageHistoryPage", () => {
     vi.clearAllMocks();
   });
 
-  it("returns paginated messages for admin without senderId filter", async () => {
+  it("returns paginated messages for admin without role filter", async () => {
     mockVerifySession.mockResolvedValue({ ownerid: 100001, isAdmin: true });
     mockGetMessageHistoryPage.mockResolvedValue(mockPage);
 
     const result = await fetchMessageHistoryPage({});
 
     expect(result).toEqual({ success: true, data: mockPage });
-    expect(mockGetMessageHistoryPage).toHaveBeenCalledWith({ senderId: undefined });
+    expect(mockGetMessageHistoryPage).toHaveBeenCalledWith({});
   });
 
-  it("filters by senderId for non-admin member", async () => {
+  it("filters by recipientId for non-admin member", async () => {
     mockVerifySession.mockResolvedValue({ ownerid: 100003, isAdmin: false });
     mockGetMessageHistoryPage.mockResolvedValue(mockPage);
 
     await fetchMessageHistoryPage({});
 
-    expect(mockGetMessageHistoryPage).toHaveBeenCalledWith({ senderId: 100003 });
+    expect(mockGetMessageHistoryPage).toHaveBeenCalledWith({ recipientId: 100003 });
   });
 
   it("rejects invalid pageSize via Zod", async () => {
