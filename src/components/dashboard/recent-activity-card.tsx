@@ -11,7 +11,7 @@ interface RecentActivityCardProps {
 
 export function RecentActivityCard({ activities }: RecentActivityCardProps) {
   return (
-    <Card className="flex flex-col">
+    <Card className="flex flex-1 flex-col">
       <CardHeader>
         <CardTitle>Recent Activity</CardTitle>
       </CardHeader>

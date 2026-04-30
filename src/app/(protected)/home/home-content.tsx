@@ -29,7 +29,7 @@ export function HomeContent({
   const router = useRouter();
 
   return (
-    <div>
+    <div className="flex flex-1 flex-col">
       <h1 className="font-angkor text-3xl text-prfc-brown">Dashboard</h1>
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -42,7 +42,7 @@ export function HomeContent({
         />
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr]">
+      <div className="mt-6 grid flex-1 grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr]">
         <UpcomingEventsCard events={upcomingEvents} />
         <div className="flex flex-col gap-4">
           <RecentActivityCard activities={recentActivity} />

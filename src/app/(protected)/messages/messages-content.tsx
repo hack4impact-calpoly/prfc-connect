@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { Plus, Search } from "lucide-react";
 import { toast } from "sonner";
@@ -9,41 +9,124 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MessageHistoryTable } from "@/components/messages/message-history-table";
 import { ViewMessageModal } from "@/components/messages/view-message-modal";
-import { fetchMessageDetail } from "@/actions/contact-group";
-import { useFuzzySearch } from "@/hooks/use-fuzzy-search";
+import { fetchMessageDetail, fetchMessageHistoryPage } from "@/actions/contact-group";
+import { useDebounce } from "@/hooks/use-debounce";
 import { cn } from "@/lib/utils";
-import type { MessageHistoryItem } from "@/types/message";
+import type { MessageHistoryPage } from "@/types/message";
 import type { MessageDetail, RecipientStatus } from "@/types/message";
 
 type Props = {
-  initialMessages: MessageHistoryItem[];
+  initialPage: MessageHistoryPage;
   isAdmin: boolean;
 };
 
-export function MessagesContent({ initialMessages }: Props) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [channelFilter, setChannelFilter] = useState("all");
-  const [sortOrder, setSortOrder] = useState("recent");
-  const [viewModal, setViewModal] = useState<{ message: MessageDetail; recipients: RecipientStatus[] } | null>(null);
+function useMessagePagination(initialPage: MessageHistoryPage) {
+  const [page, setPage] = useState(initialPage);
+  const [startIndex, setStartIndex] = useState(1);
   const [isPending, startTransition] = useTransition();
 
-  const channelFiltered = useMemo(() => {
-    if (channelFilter === "all") return initialMessages;
-    if (channelFilter === "email") return initialMessages.filter((m) => m.emailCount > 0);
-    return initialMessages.filter((m) => m.smsCount > 0);
-  }, [initialMessages, channelFilter]);
+  const refetch = (params: {
+    search?: string;
+    channel?: "email" | "sms";
+    sort: "recent" | "oldest";
+    pageSize: 10 | 25 | 50;
+    cursor?: number;
+    direction?: "forward" | "backward";
+  }) => {
+    if (!params.cursor) setStartIndex(1);
+    startTransition(async () => {
+      const result = await fetchMessageHistoryPage({
+        search: params.search || undefined,
+        channel: params.channel,
+        sort: params.sort,
+        cursor: params.cursor,
+        direction: params.direction,
+        pageSize: params.pageSize,
+      });
+      if (result.success && result.data) {
+        setPage(result.data);
+      } else {
+        toast.error(result.error ?? "Failed to load messages");
+      }
+    });
+  };
 
-  const searched = useFuzzySearch(channelFiltered, { keys: ["subject"] }, searchQuery);
+  const goNext = () => {
+    setStartIndex((prev) => prev + page.items.length);
+  };
 
-  const sorted = useMemo(() => {
-    const copy = [...searched];
-    if (sortOrder === "oldest") copy.sort((a, b) => a.sentAt.getTime() - b.sentAt.getTime());
-    else copy.sort((a, b) => b.sentAt.getTime() - a.sentAt.getTime());
-    return copy;
-  }, [searched, sortOrder]);
+  const goPrev = (currentPageSize: number) => {
+    setStartIndex((prev) => Math.max(1, prev - currentPageSize));
+  };
+
+  return { page, startIndex, isPending, refetch, goNext, goPrev };
+}
+
+export function MessagesContent({ initialPage }: Props) {
+  const { page, startIndex, isPending, refetch, goNext, goPrev } = useMessagePagination(initialPage);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [channelFilter, setChannelFilter] = useState<string>("all");
+  const [sortOrder, setSortOrder] = useState<"recent" | "oldest">("recent");
+  const [pageSize, setPageSize] = useState<10 | 25 | 50>(25);
+  const [viewModal, setViewModal] = useState<{ message: MessageDetail; recipients: RecipientStatus[] } | null>(null);
+
+  const debouncedSearch = useDebounce(searchQuery, 300);
+  const isInitialMount = useRef(true);
+
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    fetchFirstPage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch]);
+
+  const fetchFirstPage = (overrides?: { channel?: string; sort?: "recent" | "oldest"; pageSize?: 10 | 25 | 50 }) => {
+    const ch = overrides?.channel ?? channelFilter;
+    const channel = ch === "all" ? undefined : (ch as "email" | "sms");
+    refetch({
+      search: debouncedSearch,
+      channel,
+      sort: overrides?.sort ?? sortOrder,
+      pageSize: overrides?.pageSize ?? pageSize,
+    });
+  };
+
+  const handleNextPage = () => {
+    if (page.nextCursor) {
+      goNext();
+      const channel = channelFilter === "all" ? undefined : (channelFilter as "email" | "sms");
+      refetch({
+        search: debouncedSearch,
+        channel,
+        sort: sortOrder,
+        pageSize,
+        cursor: page.nextCursor,
+        direction: "forward",
+      });
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (page.prevCursor) {
+      goPrev(pageSize);
+      const channel = channelFilter === "all" ? undefined : (channelFilter as "email" | "sms");
+      refetch({
+        search: debouncedSearch,
+        channel,
+        sort: sortOrder,
+        pageSize,
+        cursor: page.prevCursor,
+        direction: "backward",
+      });
+    }
+  };
+
+  const [isViewPending, startViewTransition] = useTransition();
 
   const handleView = (messageId: number) => {
-    startTransition(async () => {
+    startViewTransition(async () => {
       const result = await fetchMessageDetail(messageId);
       if (result.success && result.data) {
         setViewModal({ message: result.data.message, recipients: result.data.recipients });
@@ -53,12 +136,14 @@ export function MessagesContent({ initialMessages }: Props) {
     });
   };
 
+  const endIndex = Math.min(startIndex + page.items.length - 1, page.totalCount);
+
   return (
     <div>
       <h1 className="font-angkor text-3xl text-prfc-brown">Message History</h1>
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 max-w-md">
+        <div className="relative max-w-md flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={searchQuery}
@@ -68,7 +153,13 @@ export function MessagesContent({ initialMessages }: Props) {
             aria-label="Search messages"
           />
         </div>
-        <Select value={channelFilter} onValueChange={setChannelFilter}>
+        <Select
+          value={channelFilter}
+          onValueChange={(v) => {
+            setChannelFilter(v);
+            fetchFirstPage({ channel: v });
+          }}
+        >
           <SelectTrigger className="w-40">
             <SelectValue placeholder="Message Type" />
           </SelectTrigger>
@@ -78,7 +169,14 @@ export function MessagesContent({ initialMessages }: Props) {
             <SelectItem value="sms">SMS</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={sortOrder} onValueChange={setSortOrder}>
+        <Select
+          value={sortOrder}
+          onValueChange={(v) => {
+            const sort = v as "recent" | "oldest";
+            setSortOrder(sort);
+            fetchFirstPage({ sort });
+          }}
+        >
           <SelectTrigger className="w-32">
             <SelectValue placeholder="Date" />
           </SelectTrigger>
@@ -95,8 +193,56 @@ export function MessagesContent({ initialMessages }: Props) {
         </Link>
       </div>
 
-      <div className={cn("mt-6 transition-opacity", isPending && "pointer-events-none opacity-60")}>
-        <MessageHistoryTable messages={sorted} onView={handleView} />
+      <div className={cn("mt-6 transition-opacity", (isPending || isViewPending) && "pointer-events-none opacity-60")}>
+        <MessageHistoryTable messages={page.items} onView={handleView} />
+      </div>
+
+      <div className="mt-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Rows per page</span>
+          <Select
+            value={String(pageSize)}
+            onValueChange={(v) => {
+              const size = Number(v) as 10 | 25 | 50;
+              setPageSize(size);
+              fetchFirstPage({ pageSize: size });
+            }}
+          >
+            <SelectTrigger className="w-20">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="10">10</SelectItem>
+              <SelectItem value="25">25</SelectItem>
+              <SelectItem value="50">50</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <span className="text-sm text-muted-foreground">
+          {page.totalCount === 0 ? "No messages" : `Showing ${startIndex}-${endIndex} of ${page.totalCount}`}
+        </span>
+
+        <nav className="flex items-center gap-2" aria-label="Pagination">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handlePrevPage}
+            disabled={!page.prevCursor || isPending}
+            aria-disabled={!page.prevCursor || isPending}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleNextPage}
+            disabled={!page.nextCursor || isPending}
+            aria-disabled={!page.nextCursor || isPending}
+          >
+            Next
+          </Button>
+        </nav>
       </div>
 
       {viewModal && (

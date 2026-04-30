@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { verifySession } from "@/lib/dal";
-import { getAllMessageHistory } from "@/services/message";
+import { getMessageHistoryPage } from "@/services/message";
 import { MessagesContent } from "./messages-content";
 
 export const metadata: Metadata = {
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default async function MessagesPage() {
   const session = await verifySession();
   const senderId = session.isAdmin ? undefined : session.ownerid;
-  const messages = await getAllMessageHistory({ senderId });
+  const initialPage = await getMessageHistoryPage({ senderId });
 
-  return <MessagesContent initialMessages={messages} isAdmin={session.isAdmin} />;
+  return <MessagesContent initialPage={initialPage} isAdmin={session.isAdmin} />;
 }

@@ -87,7 +87,7 @@ export function GroupsContent({ groups, ownerId, members }: GroupsContentProps) 
         ) : sortedGroups.length === 0 ? (
           <p className="text-muted-foreground">No groups match your search.</p>
         ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 min-[1920px]:grid-cols-5">
             {sortedGroups.map((group) => (
               <div key={group.id} className="relative">
                 <EntityCard

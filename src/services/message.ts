@@ -15,6 +15,8 @@ import type {
   MessageDetail,
   RecipientStatus,
   RecipientCounts,
+  MessageHistoryPage,
+  MessageHistoryQuery,
 } from "@/types/message";
 export type {
   MessageResult,
@@ -23,10 +25,13 @@ export type {
   MessageDetail,
   RecipientStatus,
   RecipientCounts,
+  MessageHistoryPage,
+  MessageHistoryQuery,
 } from "@/types/message";
 
 const DEFAULT_MESSAGE_HISTORY_LIMIT = 20;
 const MAX_MESSAGE_HISTORY_LIMIT = 100;
+const DEFAULT_PAGE_SIZE = 25;
 
 export async function getGroupMessageHistory(
   groupId: number,
@@ -369,6 +374,99 @@ export async function getAllMessageHistory(options: {
       isBlast: m.isBlast,
       groupNames: m.groups.map((mg) => mg.group.name),
     }));
+  } catch (error) {
+    throw transformError(error);
+  }
+}
+
+export async function getMessageHistoryPage(query: MessageHistoryQuery): Promise<MessageHistoryPage> {
+  try {
+    const {
+      senderId,
+      search,
+      channel,
+      sort = "recent",
+      cursor,
+      direction = "forward",
+      pageSize = DEFAULT_PAGE_SIZE,
+    } = query;
+
+    const where: Record<string, unknown> = {};
+    if (senderId) where.senderId = senderId;
+    if (channel) where.recipients = { some: { channel } };
+    if (search) where.subject = { contains: search };
+
+    const isBackward = direction === "backward";
+    const orderDirection = sort === "oldest" ? ("asc" as const) : ("desc" as const);
+    const take = isBackward ? -(pageSize + 1) : pageSize + 1;
+
+    const select = {
+      id: true,
+      subject: true,
+      body: true,
+      sentAt: true,
+      emailCount: true,
+      smsCount: true,
+      failedCount: true,
+      isBlast: true,
+      groups: { select: { group: { select: { name: true } } } },
+    } as const;
+
+    const [rawMessages, totalCount] = await Promise.all([
+      cursor
+        ? prisma.message.findMany({
+            where,
+            select,
+            orderBy: { sentAt: orderDirection },
+            take,
+            cursor: { id: cursor },
+            skip: 1,
+          })
+        : prisma.message.findMany({ where, select, orderBy: { sentAt: orderDirection }, take }),
+      prisma.message.count({ where }),
+    ]);
+
+    let messages = [...rawMessages];
+    let hasMore = false;
+
+    if (isBackward) {
+      if (messages.length > pageSize) {
+        hasMore = true;
+        messages = messages.slice(1);
+      }
+    } else {
+      if (messages.length > pageSize) {
+        hasMore = true;
+        messages = messages.slice(0, pageSize);
+      }
+    }
+
+    const items: MessageHistoryItem[] = messages.map((m) => ({
+      id: m.id,
+      subject: m.subject,
+      body: m.body,
+      sentAt: m.sentAt,
+      emailCount: m.emailCount,
+      smsCount: m.smsCount,
+      failedCount: m.failedCount,
+      isBlast: m.isBlast,
+      groupNames: m.groups.map((mg) => mg.group.name),
+    }));
+
+    let nextCursor: number | null = null;
+    let prevCursor: number | null = null;
+
+    if (items.length > 0) {
+      if (isBackward) {
+        nextCursor = items[items.length - 1].id;
+        prevCursor = hasMore ? items[0].id : null;
+      } else {
+        nextCursor = hasMore ? items[items.length - 1].id : null;
+        prevCursor = cursor ? items[0].id : null;
+      }
+    }
+
+    return { items, totalCount, nextCursor, prevCursor };
   } catch (error) {
     throw transformError(error);
   }

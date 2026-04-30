@@ -46,3 +46,20 @@ export interface RecipientCounts {
   smsEligible: number;
   smsIneligible: number;
 }
+
+export interface MessageHistoryPage {
+  items: MessageHistoryItem[];
+  totalCount: number;
+  nextCursor: number | null;
+  prevCursor: number | null;
+}
+
+export interface MessageHistoryQuery {
+  senderId?: number;
+  search?: string;
+  channel?: "email" | "sms";
+  sort?: "recent" | "oldest";
+  cursor?: number;
+  direction?: "forward" | "backward";
+  pageSize?: number;
+}

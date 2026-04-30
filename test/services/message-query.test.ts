@@ -19,7 +19,13 @@ vi.mock("@/env", () => ({
 }));
 
 import { getMemberDetails } from "@/lib/api/member-api";
-import { getAllMessageHistory, getMessageById, getMessageRecipients, previewRecipientCounts } from "@/services/message";
+import {
+  getAllMessageHistory,
+  getMessageHistoryPage,
+  getMessageById,
+  getMessageRecipients,
+  previewRecipientCounts,
+} from "@/services/message";
 
 const mockGetMemberDetails = getMemberDetails as MockedFunction<typeof getMemberDetails>;
 
@@ -227,5 +233,113 @@ describe("previewRecipientCounts", () => {
     mockPrisma.contactGroupMember.count.mockRejectedValue(new Error("Connection lost"));
 
     await expect(previewRecipientCounts(1)).rejects.toMatchObject({ code: "INTERNAL_ERROR" });
+  });
+});
+
+describe("getMessageHistoryPage", () => {
+  const makeMessages = (count: number, startId: number = 1) =>
+    Array.from({ length: count }, (_, i) => ({
+      id: startId + i,
+      subject: `Message ${startId + i}`,
+      body: `Body ${startId + i}`,
+      sentAt: new Date(`2026-04-${String(startId + i).padStart(2, "0")}`),
+      emailCount: 5,
+      smsCount: 0,
+      failedCount: 0,
+      isBlast: false,
+      groups: [{ group: { name: "Garden Club" } }],
+    }));
+
+  it("returns first page with nextCursor and null prevCursor", async () => {
+    mockPrisma.message.findMany.mockResolvedValue(makeMessages(26) as never);
+    mockPrisma.message.count.mockResolvedValue(50);
+
+    const result = await getMessageHistoryPage({});
+
+    expect(result.items).toHaveLength(25);
+    expect(result.totalCount).toBe(50);
+    expect(result.nextCursor).toBe(25);
+    expect(result.prevCursor).toBeNull();
+  });
+
+  it("returns last page with null nextCursor", async () => {
+    mockPrisma.message.findMany.mockResolvedValue(makeMessages(10) as never);
+    mockPrisma.message.count.mockResolvedValue(35);
+
+    const result = await getMessageHistoryPage({ cursor: 25, direction: "forward" });
+
+    expect(result.items).toHaveLength(10);
+    expect(result.nextCursor).toBeNull();
+    expect(result.prevCursor).toBe(1);
+  });
+
+  it("filters by senderId", async () => {
+    mockPrisma.message.findMany.mockResolvedValue([] as never);
+    mockPrisma.message.count.mockResolvedValue(0);
+
+    await getMessageHistoryPage({ senderId: 100001 });
+
+    expect(mockPrisma.message.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ senderId: 100001 }) }),
+    );
+  });
+
+  it("filters by channel", async () => {
+    mockPrisma.message.findMany.mockResolvedValue([] as never);
+    mockPrisma.message.count.mockResolvedValue(0);
+
+    await getMessageHistoryPage({ channel: "email" });
+
+    expect(mockPrisma.message.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ recipients: { some: { channel: "email" } } }) }),
+    );
+  });
+
+  it("filters by search term", async () => {
+    mockPrisma.message.findMany.mockResolvedValue([] as never);
+    mockPrisma.message.count.mockResolvedValue(0);
+
+    await getMessageHistoryPage({ search: "hello" });
+
+    expect(mockPrisma.message.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ subject: { contains: "hello" } }) }),
+    );
+  });
+
+  it("sorts by oldest when specified", async () => {
+    mockPrisma.message.findMany.mockResolvedValue([] as never);
+    mockPrisma.message.count.mockResolvedValue(0);
+
+    await getMessageHistoryPage({ sort: "oldest" });
+
+    expect(mockPrisma.message.findMany).toHaveBeenCalledWith(expect.objectContaining({ orderBy: { sentAt: "asc" } }));
+  });
+
+  it("respects pageSize parameter", async () => {
+    mockPrisma.message.findMany.mockResolvedValue(makeMessages(11) as never);
+    mockPrisma.message.count.mockResolvedValue(20);
+
+    const result = await getMessageHistoryPage({ pageSize: 10 });
+
+    expect(result.items).toHaveLength(10);
+    expect(mockPrisma.message.findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 11 }));
+  });
+
+  it("returns empty items with totalCount 0 when no matches", async () => {
+    mockPrisma.message.findMany.mockResolvedValue([] as never);
+    mockPrisma.message.count.mockResolvedValue(0);
+
+    const result = await getMessageHistoryPage({ search: "nonexistent" });
+
+    expect(result.items).toEqual([]);
+    expect(result.totalCount).toBe(0);
+    expect(result.nextCursor).toBeNull();
+    expect(result.prevCursor).toBeNull();
+  });
+
+  it("throws on database error", async () => {
+    mockPrisma.message.findMany.mockRejectedValue(new Error("Connection lost"));
+
+    await expect(getMessageHistoryPage({})).rejects.toMatchObject({ code: "INTERNAL_ERROR" });
   });
 });

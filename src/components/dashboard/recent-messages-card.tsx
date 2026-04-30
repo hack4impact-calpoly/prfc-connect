@@ -14,7 +14,7 @@ interface RecentMessagesCardProps {
 
 export function RecentMessagesCard({ messages }: RecentMessagesCardProps) {
   return (
-    <Card className="flex flex-col">
+    <Card className="flex flex-1 flex-col">
       <CardHeader>
         <CardTitle>Recent Messages</CardTitle>
       </CardHeader>

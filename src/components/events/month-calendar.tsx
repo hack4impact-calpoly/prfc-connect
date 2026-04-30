@@ -2,9 +2,7 @@
 
 import { useMemo } from "react";
 import { DayPicker, type DayButtonProps } from "react-day-picker";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { addMonths, subMonths } from "date-fns";
-import { coopDateParts, coopFormatTimed, localDayKey } from "@/utils/time";
+import { coopDateParts, localDayKey } from "@/utils/time";
 import { cn } from "@/lib/utils";
 
 export type DayMarker = { allDayCount: number; timedCount: number };
@@ -74,31 +72,7 @@ export function MonthCalendar({ currentMonth, onMonthChange, eventsByDate, onDay
   );
 
   return (
-    <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="flex items-baseline gap-2">
-          <span className="font-angkor text-3xl text-prfc-red">{coopFormatTimed(currentMonth, "MMMM")}</span>
-          <span className="text-3xl text-prfc-brown">{coopFormatTimed(currentMonth, "yyyy")}</span>
-        </h2>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => onMonthChange(subMonths(localMonth, 1))}
-            aria-label="Previous month"
-            className="rounded-md p-2 hover:bg-paso-light-brown"
-          >
-            <ChevronLeft className="h-5 w-5 text-prfc-brown" />
-          </button>
-          <button
-            type="button"
-            onClick={() => onMonthChange(addMonths(localMonth, 1))}
-            aria-label="Next month"
-            className="rounded-md p-2 hover:bg-paso-light-brown"
-          >
-            <ChevronRight className="h-5 w-5 text-prfc-brown" />
-          </button>
-        </div>
-      </div>
+    <div className="flex min-h-0 flex-1 flex-col">
       <DayPicker
         mode="single"
         month={localMonth}
@@ -109,12 +83,18 @@ export function MonthCalendar({ currentMonth, onMonthChange, eventsByDate, onDay
         fixedWeeks
         hideNavigation
         components={components}
+        formatters={{ formatWeekdayName: (date) => date.toLocaleDateString("en-US", { weekday: "short" }) }}
         classNames={{
-          month_grid: "w-full border-collapse",
+          root: "flex min-h-0 flex-1 flex-col",
+          month_caption: "hidden",
+          months: "flex min-h-0 flex-1 flex-col",
+          month: "flex min-h-0 flex-1 flex-col",
+          month_grid: "flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border-t border-l border-border",
+          weeks: "flex min-h-0 flex-1 flex-col",
           weekdays: "grid grid-cols-7",
-          weekday: "py-2 text-center text-xs font-bold text-prfc-brown",
-          week: "grid grid-cols-7",
-          day: "h-28 text-center",
+          weekday: "border-r border-border py-2 text-center text-xs font-bold text-prfc-brown",
+          week: "grid min-h-0 flex-1 grid-cols-7",
+          day: "min-h-[112px] border-r border-b border-border text-center",
         }}
       />
     </div>

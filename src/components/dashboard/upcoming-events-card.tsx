@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, UtensilsCrossed, Handshake, HeartHandshake, Presentation, type LucideIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { coopFormatTimed } from "@/utils/time";
 import type { EventType } from "@/generated/prisma/client";
@@ -15,18 +15,18 @@ interface UpcomingEventsCardProps {
   }>;
 }
 
-const EVENT_EMOJI: Record<EventType, string> = {
-  social: "\u{1F354}",
-  networking: "\u{1F3DB}\u{FE0F}",
-  volunteer: "\u{1F308}",
-  meeting: "\u{2B50}",
+const EVENT_ICON: Record<EventType, LucideIcon> = {
+  social: UtensilsCrossed,
+  networking: Handshake,
+  volunteer: HeartHandshake,
+  meeting: Presentation,
 };
 
 const EVENT_BG: Record<EventType, string> = {
-  social: "bg-amber-100",
-  networking: "bg-blue-100",
-  volunteer: "bg-green-100",
-  meeting: "bg-yellow-100",
+  social: "bg-amber-100 text-amber-700",
+  networking: "bg-blue-100 text-blue-700",
+  volunteer: "bg-green-100 text-green-700",
+  meeting: "bg-yellow-100 text-yellow-700",
 };
 
 export function UpcomingEventsCard({ events }: UpcomingEventsCardProps) {
@@ -43,7 +43,10 @@ export function UpcomingEventsCard({ events }: UpcomingEventsCardProps) {
                 <div
                   className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${EVENT_BG[event.eventType]}`}
                 >
-                  <span className="text-lg">{EVENT_EMOJI[event.eventType]}</span>
+                  {(() => {
+                    const Icon = EVENT_ICON[event.eventType];
+                    return <Icon className="h-5 w-5" aria-hidden="true" />;
+                  })()}
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold">{event.title}</p>

@@ -9,6 +9,7 @@ vi.mock("@/services/message", () => ({
   sendGroupMessage: vi.fn(),
   sendBlastMessage: vi.fn(),
   getAllMessageHistory: vi.fn(),
+  getMessageHistoryPage: vi.fn(),
   getMessageById: vi.fn(),
   getMessageRecipients: vi.fn(),
   previewRecipientCounts: vi.fn(),
@@ -18,11 +19,23 @@ vi.mock("@/services/contact-group", () => ({
   isGroupOwner: vi.fn(),
 }));
 
-import { getAllMessageHistory, getMessageById, getMessageRecipients, previewRecipientCounts } from "@/services/message";
+import {
+  getAllMessageHistory,
+  getMessageHistoryPage,
+  getMessageById,
+  getMessageRecipients,
+  previewRecipientCounts,
+} from "@/services/message";
 import { isGroupOwner } from "@/services/contact-group";
-import { fetchMessageHistory, fetchMessageDetail, fetchRecipientPreview } from "@/actions/contact-group";
+import {
+  fetchMessageHistory,
+  fetchMessageHistoryPage,
+  fetchMessageDetail,
+  fetchRecipientPreview,
+} from "@/actions/contact-group";
 
 const mockGetAllMessageHistory = getAllMessageHistory as MockedFunction<typeof getAllMessageHistory>;
+const mockGetMessageHistoryPage = getMessageHistoryPage as MockedFunction<typeof getMessageHistoryPage>;
 const mockGetMessageById = getMessageById as MockedFunction<typeof getMessageById>;
 const mockGetMessageRecipients = getMessageRecipients as MockedFunction<typeof getMessageRecipients>;
 const mockPreviewRecipientCounts = previewRecipientCounts as MockedFunction<typeof previewRecipientCounts>;
@@ -182,5 +195,67 @@ describe("fetchRecipientPreview", () => {
     expect(result.success).toBe(false);
     expect(result.error).toContain("do not have permission");
     expect(mockPreviewRecipientCounts).not.toHaveBeenCalled();
+  });
+});
+
+describe("fetchMessageHistoryPage", () => {
+  const mockPage = {
+    items: [
+      {
+        id: 1,
+        subject: "Test",
+        body: "Body",
+        sentAt: new Date(),
+        emailCount: 5,
+        smsCount: 0,
+        failedCount: 0,
+        isBlast: false,
+        groupNames: ["Garden Club"],
+      },
+    ],
+    totalCount: 1,
+    nextCursor: null,
+    prevCursor: null,
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns paginated messages for admin without senderId filter", async () => {
+    mockVerifySession.mockResolvedValue({ ownerid: 100001, isAdmin: true });
+    mockGetMessageHistoryPage.mockResolvedValue(mockPage);
+
+    const result = await fetchMessageHistoryPage({});
+
+    expect(result).toEqual({ success: true, data: mockPage });
+    expect(mockGetMessageHistoryPage).toHaveBeenCalledWith({ senderId: undefined });
+  });
+
+  it("filters by senderId for non-admin member", async () => {
+    mockVerifySession.mockResolvedValue({ ownerid: 100003, isAdmin: false });
+    mockGetMessageHistoryPage.mockResolvedValue(mockPage);
+
+    await fetchMessageHistoryPage({});
+
+    expect(mockGetMessageHistoryPage).toHaveBeenCalledWith({ senderId: 100003 });
+  });
+
+  it("rejects invalid pageSize via Zod", async () => {
+    mockVerifySession.mockResolvedValue({ ownerid: 100001, isAdmin: true });
+
+    const result = await fetchMessageHistoryPage({ pageSize: 30 as never });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBeDefined();
+  });
+
+  it("returns error when not authenticated", async () => {
+    mockVerifySession.mockRejectedValue(new AppError("UNAUTHORIZED", "Authentication required"));
+
+    const result = await fetchMessageHistoryPage({});
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe("Authentication required");
   });
 });

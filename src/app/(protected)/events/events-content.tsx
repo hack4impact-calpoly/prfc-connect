@@ -251,30 +251,65 @@ export function EventsContent({
   const canEditCurrent = editingEvent ? isAdmin || editingEvent.ownerid === currentUserOwnerid : true;
 
   return (
-    <div>
-      <div className="mb-6 flex flex-wrap items-center gap-3">
-        {view === "week" && (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <h1 className="font-angkor text-3xl text-prfc-brown">Events</h1>
+      <div className="mt-4 mb-6 flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          onClick={goPrev}
+          aria-label={view === "week" ? "Previous week" : "Previous month"}
+          className="rounded-md p-2 hover:bg-paso-light-brown"
+        >
+          <ChevronLeft className="h-5 w-5 text-prfc-brown" />
+        </button>
+        <h2 className="flex items-baseline gap-2">
+          {view === "week" ? (
+            <>
+              <span className="font-angkor text-2xl text-prfc-red">{weekHeading.rangeLabel}</span>
+              <span className="text-2xl text-prfc-brown">{weekHeading.year}</span>
+            </>
+          ) : (
+            <>
+              <span className="font-angkor text-2xl text-prfc-red">{coopFormatTimed(currentDate, "MMMM")}</span>
+              <span className="text-2xl text-prfc-brown">{coopFormatTimed(currentDate, "yyyy")}</span>
+            </>
+          )}
+        </h2>
+        <button
+          type="button"
+          onClick={goNext}
+          aria-label={view === "week" ? "Next week" : "Next month"}
+          className="rounded-md p-2 hover:bg-paso-light-brown"
+        >
+          <ChevronRight className="h-5 w-5 text-prfc-brown" />
+        </button>
+        {view === "month" && (
           <>
-            <button
-              type="button"
-              onClick={goPrev}
-              aria-label="Previous week"
-              className="rounded-md p-2 hover:bg-paso-light-brown"
-            >
-              <ChevronLeft className="h-5 w-5 text-prfc-brown" />
-            </button>
-            <h1 className="flex items-baseline gap-2">
-              <span className="font-angkor text-3xl text-prfc-red">{weekHeading.rangeLabel}</span>
-              <span className="text-3xl text-prfc-brown">{weekHeading.year}</span>
-            </h1>
-            <button
-              type="button"
-              onClick={goNext}
-              aria-label="Next week"
-              className="rounded-md p-2 hover:bg-paso-light-brown"
-            >
-              <ChevronRight className="h-5 w-5 text-prfc-brown" />
-            </button>
+            <Select value={groupFilter} onValueChange={setGroupFilter}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Group" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Groups</SelectItem>
+                {groups.map((g) => (
+                  <SelectItem key={g.id} value={String(g.id)}>
+                    {g.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Event Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Events</SelectItem>
+                <SelectItem value="social">Social</SelectItem>
+                <SelectItem value="networking">Networking</SelectItem>
+                <SelectItem value="meeting">Meeting</SelectItem>
+                <SelectItem value="volunteer">Volunteer</SelectItem>
+              </SelectContent>
+            </Select>
           </>
         )}
         <div className="ml-auto flex items-center gap-3">
@@ -294,9 +329,14 @@ export function EventsContent({
         </div>
       </div>
 
-      <div className={cn("isolate transition-opacity", isPending && "pointer-events-none opacity-60")}>
+      <div
+        className={cn(
+          "isolate flex min-h-0 flex-1 flex-col transition-opacity",
+          isPending && "pointer-events-none opacity-60",
+        )}
+      >
         {view === "week" ? (
-          <div className="h-[700px]">
+          <div className="min-h-0 flex-1">
             <WeekCalendar
               events={weekEvents}
               selectedDate={currentDate}
@@ -305,35 +345,8 @@ export function EventsContent({
             />
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
-            <div>
-              <div className="mb-4 flex flex-wrap gap-3">
-                <Select value={groupFilter} onValueChange={setGroupFilter}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Group" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Groups</SelectItem>
-                    {groups.map((g) => (
-                      <SelectItem key={g.id} value={String(g.id)}>
-                        {g.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={typeFilter} onValueChange={setTypeFilter}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Event Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Events</SelectItem>
-                    <SelectItem value="social">Social</SelectItem>
-                    <SelectItem value="networking">Networking</SelectItem>
-                    <SelectItem value="meeting">Meeting</SelectItem>
-                    <SelectItem value="volunteer">Volunteer</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+          <div className="grid min-h-0 flex-1 grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
+            <div className="flex min-h-0 flex-col">
               <MonthCalendar
                 currentMonth={currentDate}
                 onMonthChange={(d) => setCurrentDate(coopWallClockToUtc(d.getFullYear(), d.getMonth(), 1, 12, 0))}

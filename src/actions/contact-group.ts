@@ -26,15 +26,19 @@ import {
   sendGroupMessage,
   sendBlastMessage,
   getAllMessageHistory,
+  getMessageHistoryPage,
   getMessageById,
   getMessageRecipients,
   previewRecipientCounts,
 } from "@/services/message";
+import { MessageHistoryQuerySchema } from "@/schema/message";
 import { transformError } from "@/utils/errors";
 import type { ActionResult } from "@/types/action";
+import type { MessageHistoryQueryInput } from "@/schema/message";
 import type {
   MessageResult,
   MessageHistoryItem,
+  MessageHistoryPage,
   MessageDetail,
   RecipientStatus,
   RecipientCounts,
@@ -289,6 +293,21 @@ export async function fetchMessageHistory(options: {
     const senderId = session.isAdmin ? undefined : session.ownerid;
     const messages = await getAllMessageHistory({ ...options, senderId });
     return { success: true, data: messages };
+  } catch (error) {
+    const appError = transformError(error);
+    return { success: false, error: appError.message };
+  }
+}
+
+export async function fetchMessageHistoryPage(
+  input: MessageHistoryQueryInput,
+): Promise<ActionResult<MessageHistoryPage>> {
+  try {
+    const session = await verifySession();
+    const validated = MessageHistoryQuerySchema.parse(input);
+    const senderId = session.isAdmin ? undefined : session.ownerid;
+    const page = await getMessageHistoryPage({ ...validated, senderId });
+    return { success: true, data: page };
   } catch (error) {
     const appError = transformError(error);
     return { success: false, error: appError.message };
