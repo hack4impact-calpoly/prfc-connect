@@ -2,19 +2,22 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Bell, Menu, Plus } from "lucide-react";
+import { Menu, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useTopBarAction } from "@/components/layout/top-bar-action-context";
 import { UserMenu } from "@/components/layout/user-menu";
+import { NotificationDropdown } from "@/components/layout/notification-dropdown";
 import { useSidebar } from "@/components/layout/sidebar-context";
 
 interface TopBarProps {
   userName: string;
   userRole: "Admin Manager" | "Member";
+  unseenCount?: number;
+  lastSeenAt?: string | null;
 }
 
-export function TopBar({ userName, userRole }: TopBarProps) {
+export function TopBar({ userName, userRole, unseenCount = 0, lastSeenAt = null }: TopBarProps) {
   const action = useTopBarAction();
   const { toggle } = useSidebar();
 
@@ -53,13 +56,7 @@ export function TopBar({ userName, userRole }: TopBarProps) {
             </Button>
           ) : null}
 
-          <button
-            type="button"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            aria-label="Notifications"
-          >
-            <Bell className="h-6 w-6" aria-hidden="true" />
-          </button>
+          <NotificationDropdown initialUnseenCount={unseenCount} lastSeenAt={lastSeenAt} />
 
           <UserMenu userName={userName} userRole={userRole} />
         </div>

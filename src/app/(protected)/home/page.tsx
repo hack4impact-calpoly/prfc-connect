@@ -7,14 +7,14 @@ import { coopNow } from "@/utils/time";
 import { HomeContent } from "./home-content";
 
 export default async function HomePage() {
-  await verifySession();
+  const session = await verifySession();
   const now = coopNow();
 
   const [memberList, monthEvents, upcomingEvents, recentActivity, recentMessages] = await Promise.all([
     getAllMembers(),
     getEventsForMonth(now.year, now.month0 + 1),
     getUpcomingEvents(4),
-    getRecentActivity(3),
+    getRecentActivity(session.ownerid, 3),
     getAllMessageHistory({ limit: 3 }),
   ]);
 

@@ -6,25 +6,27 @@ describe("NotificationPreferencesCard", () => {
   it("renders the Notifications heading and email toggle row", () => {
     render(<NotificationPreferencesCard emailEnabled smsEnabled={false} smsFeatureEnabled onToggle={vi.fn()} />);
     expect(screen.getByText("Notifications")).toBeInTheDocument();
-    expect(screen.getByText("Always send email notifications")).toBeInTheDocument();
+    expect(screen.getByText("Receive event announcements and group messages via email")).toBeInTheDocument();
   });
 
   it("renders the SMS toggle row when smsFeatureEnabled is true", () => {
     render(<NotificationPreferencesCard emailEnabled smsEnabled={false} smsFeatureEnabled onToggle={vi.fn()} />);
-    expect(screen.getByText("Always send text notifications")).toBeInTheDocument();
+    expect(screen.getByText("Receive event reminders and group messages via text")).toBeInTheDocument();
   });
 
   it("hides the SMS toggle row when smsFeatureEnabled is false", () => {
     render(
       <NotificationPreferencesCard emailEnabled smsEnabled={false} smsFeatureEnabled={false} onToggle={vi.fn()} />,
     );
-    expect(screen.queryByText("Always send text notifications")).not.toBeInTheDocument();
+    expect(screen.queryByText("Receive event reminders and group messages via text")).not.toBeInTheDocument();
   });
 
   it("fires onToggle with the flipped value when the email switch is clicked", () => {
     const onToggle = vi.fn();
     render(<NotificationPreferencesCard emailEnabled smsEnabled={false} smsFeatureEnabled onToggle={onToggle} />);
-    const emailSwitch = screen.getByRole("switch", { name: "Always send email notifications" });
+    const emailSwitch = screen.getByRole("switch", {
+      name: "Receive event announcements and group messages via email",
+    });
     fireEvent.click(emailSwitch);
     expect(onToggle).toHaveBeenCalledWith("notifyEmailDefault", false);
   });

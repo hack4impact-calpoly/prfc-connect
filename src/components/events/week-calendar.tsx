@@ -4,6 +4,7 @@ import "temporal-polyfill/global";
 import { useEffect } from "react";
 import { useNextCalendarApp, ScheduleXCalendar } from "@schedule-x/react";
 import { createViewWeek } from "@schedule-x/calendar";
+import { createScrollControllerPlugin } from "@schedule-x/scroll-controller";
 import "@schedule-x/theme-default/dist/index.css";
 import { COOP_TZ, DEFAULT_EVENT_DURATION_MS, coopDateParts, coopWallClockToUtc } from "@/utils/time";
 import type { EventType } from "@/generated/prisma/client";
@@ -81,6 +82,7 @@ function toCoopZonedDateTime(d: Date): Temporal.ZonedDateTime {
 
 export function WeekCalendar({ events, selectedDate, onEventClick, onTimeSlotClick }: Props) {
   const calendar = useNextCalendarApp({
+    plugins: [createScrollControllerPlugin({ initialScroll: "07:00" })],
     views: [createViewWeek()],
     firstDayOfWeek: 7,
     weekOptions: { gridHeight: 1152 },

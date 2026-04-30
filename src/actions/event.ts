@@ -160,14 +160,14 @@ export type { DashboardData } from "@/types/dashboard";
 
 export async function fetchDashboardData(): Promise<ActionResult<DashboardData>> {
   try {
-    await verifySession();
+    const session = await verifySession();
 
     const now = coopNow();
     const [memberList, monthEvents, upcomingEvents, recentActivity, recentMessages] = await Promise.all([
       getAllMembers(),
       getEventsForMonth(now.year, now.month0 + 1),
       getUpcomingEvents(4),
-      getRecentActivity(3),
+      getRecentActivity(session.ownerid, 3),
       getAllMessageHistory({ limit: 1 }),
     ]);
 

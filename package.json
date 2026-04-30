@@ -55,6 +55,7 @@
     "@react-email/render": "^2.0.0",
     "@schedule-x/calendar": "^4.4.0",
     "@schedule-x/react": "^4.1.0",
+    "@schedule-x/scroll-controller": "^4.5.0",
     "@schedule-x/theme-default": "^4.4.0",
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/react-table": "^8.21.3",

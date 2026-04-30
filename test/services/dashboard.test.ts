@@ -8,7 +8,7 @@ describe("getRecentActivity", () => {
     ] as never);
     mockPrisma.event.findMany.mockResolvedValue([{ title: "Town Hall", createdAt: new Date("2026-04-04") }] as never);
 
-    const result = await getRecentActivity(5);
+    const result = await getRecentActivity(100001, 5);
 
     expect(result).toHaveLength(2);
     expect(result[0].type).toBe("event_created");
@@ -25,7 +25,7 @@ describe("getRecentActivity", () => {
     ] as never);
     mockPrisma.event.findMany.mockResolvedValue([] as never);
 
-    const result = await getRecentActivity(2);
+    const result = await getRecentActivity(100001, 2);
 
     expect(result).toHaveLength(2);
   });
@@ -34,7 +34,7 @@ describe("getRecentActivity", () => {
     mockPrisma.message.findMany.mockResolvedValue([] as never);
     mockPrisma.event.findMany.mockResolvedValue([] as never);
 
-    const result = await getRecentActivity(5);
+    const result = await getRecentActivity(100001, 5);
 
     expect(result).toEqual([]);
   });
@@ -42,6 +42,6 @@ describe("getRecentActivity", () => {
   it("throws on database error", async () => {
     mockPrisma.message.findMany.mockRejectedValue(new Error("Connection lost"));
 
-    await expect(getRecentActivity(5)).rejects.toMatchObject({ code: "INTERNAL_ERROR" });
+    await expect(getRecentActivity(100001, 5)).rejects.toMatchObject({ code: "INTERNAL_ERROR" });
   });
 });

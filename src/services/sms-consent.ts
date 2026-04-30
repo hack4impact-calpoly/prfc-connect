@@ -1,6 +1,7 @@
 import "server-only";
 import prisma from "@/lib/db";
 import { transformError } from "@/utils/errors";
+import { encrypt, blindIndex } from "@/lib/encryption";
 
 export interface SmsConsentRecord {
   id: number;
@@ -31,6 +32,30 @@ export async function getMemberSmsConsent(memberId: number): Promise<SmsConsentR
     });
 
     return consent;
+  } catch (error) {
+    throw transformError(error);
+  }
+}
+
+export async function grantSmsConsent(memberId: number, phone: string): Promise<void> {
+  try {
+    const existing = await prisma.smsConsent.findFirst({
+      where: { memberId, revokedAt: null },
+      select: { id: true },
+    });
+    if (existing) return;
+
+    await prisma.smsConsent.create({
+      data: {
+        memberId,
+        phone: encrypt(phone),
+        phoneHash: blindIndex(phone),
+        consentMethod: "web_settings",
+        consentText:
+          "I agree to receive event reminders and group messages via text. Up to 8 msgs/month. Msg & data rates may apply. Reply STOP to cancel.",
+        consentPurpose: "group_messaging",
+      },
+    });
   } catch (error) {
     throw transformError(error);
   }

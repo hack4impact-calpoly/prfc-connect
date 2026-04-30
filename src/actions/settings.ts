@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { verifySession } from "@/lib/dal";
 import { UpdatePreferencesSchema, RevokeSmsConsentSchema } from "@/schema/settings";
-import { getMemberSmsConsent, revokeSmsConsent } from "@/services/sms-consent";
+import { getMemberSmsConsent, grantSmsConsent, revokeSmsConsent } from "@/services/sms-consent";
+import { getMemberProfile } from "@/services/profile";
 import { getUserPreferences, updateUserPreferences, uploadProfilePhoto } from "@/services/user-preference";
 import { transformError } from "@/utils/errors";
 import type { ActionResult } from "@/types/action";
@@ -53,6 +54,14 @@ export async function updateUserPreferencesAction(input: {
     const session = await verifySession();
     const validated = UpdatePreferencesSchema.parse(input);
     const updated = await updateUserPreferences(session.ownerid, validated);
+
+    if (validated.notifySmsDefault === true) {
+      const profile = await getMemberProfile(session.ownerid, session.isAdmin);
+      await grantSmsConsent(session.ownerid, profile.phone);
+    } else if (validated.notifySmsDefault === false) {
+      await revokeSmsConsent(session.ownerid, "web_settings_toggle", null);
+    }
+
     revalidatePath("/settings");
     return { success: true, data: updated };
   } catch (error) {

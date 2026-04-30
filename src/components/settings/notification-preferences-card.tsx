@@ -10,10 +10,19 @@ type Props = {
   emailEnabled: boolean;
   smsEnabled: boolean;
   smsFeatureEnabled: boolean;
+  smsConsentedAt?: Date;
+  phone?: string;
   onToggle: (key: PreferenceKey, value: boolean) => void;
 };
 
-export function NotificationPreferencesCard({ emailEnabled, smsEnabled, smsFeatureEnabled, onToggle }: Props) {
+export function NotificationPreferencesCard({
+  emailEnabled,
+  smsEnabled,
+  smsFeatureEnabled,
+  smsConsentedAt,
+  phone,
+  onToggle,
+}: Props) {
   return (
     <Card className="p-6">
       <div className="mb-4 flex items-center gap-2">
@@ -24,9 +33,11 @@ export function NotificationPreferencesCard({ emailEnabled, smsEnabled, smsFeatu
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
             <label htmlFor="email-toggle" className="block font-medium text-foreground">
-              Always send email notifications
+              Receive event announcements and group messages via email
             </label>
-            <p className="text-sm text-muted-foreground">Receive emails sample text</p>
+            <p className="text-sm text-muted-foreground">
+              You can unsubscribe from any email using the link at the bottom of the message.
+            </p>
           </div>
           <Switch
             id="email-toggle"
@@ -36,19 +47,38 @@ export function NotificationPreferencesCard({ emailEnabled, smsEnabled, smsFeatu
           />
         </div>
         {smsFeatureEnabled && (
-          <div className="flex items-start justify-between gap-4">
-            <div className="min-w-0 flex-1">
-              <label htmlFor="sms-toggle" className="block font-medium text-foreground">
-                Always send text notifications
-              </label>
-              <p className="text-sm text-muted-foreground">Receive texts sample text</p>
+          <div className="space-y-2">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0 flex-1">
+                <label htmlFor="sms-toggle" className="block font-medium text-foreground">
+                  Receive event reminders and group messages via text
+                </label>
+                <p className="text-sm text-muted-foreground">
+                  Up to 8 msgs/month. Msg & data rates may apply. Reply STOP to cancel.
+                </p>
+              </div>
+              <Switch
+                id="sms-toggle"
+                checked={smsEnabled}
+                onCheckedChange={(value) => onToggle("notifySmsDefault", value)}
+                className="data-[state=checked]:bg-prfc-red"
+              />
             </div>
-            <Switch
-              id="sms-toggle"
-              checked={smsEnabled}
-              onCheckedChange={(value) => onToggle("notifySmsDefault", value)}
-              className="data-[state=checked]:bg-prfc-red"
-            />
+            {smsEnabled && phone && (
+              <div className="rounded-md bg-paso-grey px-4 py-3 text-sm text-muted-foreground">
+                <p>SMS to {phone}</p>
+                {smsConsentedAt && (
+                  <p>
+                    Consented on{" "}
+                    {new Date(smsConsentedAt).toLocaleDateString("en-US", {
+                      month: "long",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
