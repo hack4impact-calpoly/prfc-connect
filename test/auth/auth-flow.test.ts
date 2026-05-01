@@ -97,6 +97,25 @@ describe("validateToken", () => {
   it("rejects token with empty fields", () => {
     expect(validateToken("||1234|abcd1234", SECRET)).toBeNull();
   });
+
+  it("rejects token with future timestamp", () => {
+    const futureTimestamp = Date.now() + 60000;
+    const token = createToken(100001, true, futureTimestamp);
+
+    expect(validateToken(token, SECRET)).toBeNull();
+  });
+
+  it("rejects token with zero ownerid", () => {
+    const token = createToken(0, false, Date.now());
+
+    expect(validateToken(token, SECRET)).toBeNull();
+  });
+
+  it("rejects token with negative ownerid", () => {
+    const token = createToken(-1, false, Date.now());
+
+    expect(validateToken(token, SECRET)).toBeNull();
+  });
 });
 
 describe("POST /api/auth/callback", () => {

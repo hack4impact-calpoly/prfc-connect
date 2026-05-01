@@ -1,5 +1,6 @@
 "use client";
 
+import { handleActionError } from "@/utils/auth-redirect";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -127,7 +128,7 @@ export function EventsContent({
       if (result.success && result.data) {
         setMonthEvents(parseEvents(result.data));
       } else if (!result.success) {
-        toast.error(result.error ?? "Failed to load events");
+        toast.error(handleActionError(result.error, "Failed to load events"));
       }
     });
   }, [view, currentDate, groupFilter, typeFilter]);
@@ -138,7 +139,7 @@ export function EventsContent({
       if (result.success && result.data) {
         setWeekEvents(parseEvents(result.data));
       } else if (!result.success) {
-        toast.error(result.error ?? "Failed to load events");
+        toast.error(handleActionError(result.error, "Failed to load events"));
       }
     });
   };
@@ -152,7 +153,7 @@ export function EventsContent({
       if (result.success && result.data) {
         setMonthEvents(parseEvents(result.data));
       } else if (!result.success) {
-        toast.error(result.error ?? "Failed to load events");
+        toast.error(handleActionError(result.error, "Failed to load events"));
       }
     });
   };
@@ -205,7 +206,7 @@ export function EventsContent({
         setCreateDefaultDate(undefined);
         setCreateOpen(true);
       } else if (!result.success) {
-        toast.error(result.error ?? "Failed to load event details");
+        toast.error(handleActionError(result.error, "Failed to load event details"));
       }
     });
   };

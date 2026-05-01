@@ -1,5 +1,6 @@
 "use client";
 
+import { handleActionError } from "@/utils/auth-redirect";
 import { useCallback, useState, useTransition } from "react";
 import { toast } from "sonner";
 
@@ -61,7 +62,7 @@ export function useGroupsModal(ownerId: number) {
       if (result.success && result.data) {
         setModal({ type: "detail", group: result.data });
       } else {
-        toast.error(result.error ?? "Failed to load group details");
+        toast.error(handleActionError(result.error, "Failed to load group details"));
       }
     });
   }, []);
@@ -80,7 +81,7 @@ export function useGroupsModal(ownerId: number) {
       if (result.success && result.data) {
         setModal({ type: "edit", group: result.data });
       } else {
-        toast.error(result.error ?? "Failed to load group details");
+        toast.error(handleActionError(result.error, "Failed to load group details"));
       }
     });
   }, []);
@@ -93,7 +94,7 @@ export function useGroupsModal(ownerId: number) {
       if (result.success && result.data) {
         setModal({ type: "delete", group: result.data });
       } else {
-        toast.error(result.error ?? "Failed to load group details");
+        toast.error(handleActionError(result.error, "Failed to load group details"));
       }
     });
   }, []);
@@ -109,7 +110,7 @@ export function useGroupsModal(ownerId: number) {
           toast.success("Group updated successfully");
           setModal({ type: "closed" });
         } else {
-          toast.error(result.error ?? "Failed to update group");
+          toast.error(handleActionError(result.error, "Failed to update group"));
         }
       });
     },
@@ -132,7 +133,7 @@ export function useGroupsModal(ownerId: number) {
         toast.success("Group deleted successfully");
         setModal({ type: "closed" });
       } else {
-        toast.error(result.error ?? "Failed to delete group");
+        toast.error(handleActionError(result.error, "Failed to delete group"));
       }
     });
   }, [modal]);
@@ -239,7 +240,7 @@ export function useGroupsModal(ownerId: number) {
         toast.success("Group created successfully");
         setModal({ type: "closed" });
       } else {
-        toast.error(result.error ?? "Failed to create group");
+        toast.error(handleActionError(result.error, "Failed to create group"));
       }
     });
   }, []);

@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { timingSafeEqual } from "crypto";
 
 const AUTH_COOKIE = "prfc_auth";
-const PROTECTED_PATHS = ["/referral-database", "/groups"];
+const PROTECTED_PATHS = ["/home", "/groups", "/events", "/messages", "/settings", "/profile", "/referral-database"];
 
 function isBasicAuthValid(request: NextRequest): boolean {
   const authHeader = request.headers.get("authorization");
@@ -44,7 +44,7 @@ export async function proxy(request: NextRequest) {
   if (isProtectedPath) {
     const hasSession = request.cookies.get(AUTH_COOKIE);
     if (!hasSession?.value) {
-      return NextResponse.redirect(new URL("/", request.url));
+      return NextResponse.redirect(new URL("/unauthorized", request.url));
     }
   }
 

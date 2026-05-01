@@ -1,5 +1,6 @@
 "use client";
 
+import { handleActionError } from "@/utils/auth-redirect";
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -102,7 +103,7 @@ export function GroupDetailContent({ group, allMembers, currentUserOwnerid, isAd
         setAddMembersOpen(false);
         router.refresh();
       } else {
-        toast.error(result.error ?? "Failed to add members");
+        toast.error(handleActionError(result.error, "Failed to add members"));
       }
     });
   };
@@ -117,6 +118,7 @@ export function GroupDetailContent({ group, allMembers, currentUserOwnerid, isAd
       const results = await Promise.all(Array.from(removedIds).map((memberId) => removeMember(group.id, memberId)));
       const failures = results.filter((r) => !r.success);
       if (failures.length > 0) {
+        handleActionError(failures[0].error, "");
         toast.error(`Failed to remove ${failures.length} member(s)`);
       } else {
         toast.success(`Removed ${removedIds.size} member(s)`);

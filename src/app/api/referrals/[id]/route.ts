@@ -7,11 +7,11 @@ import { AppError, apiErrorHandler } from "@/utils/errors";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    await requireAdmin();
+
     if (!validateOrigin(req)) {
       return NextResponse.json({ error: { code: "FORBIDDEN", message: "Invalid origin" } }, { status: 403 });
     }
-
-    await requireAdmin();
 
     const { id } = await params;
     if (!/^\d+$/.test(id)) {
@@ -29,9 +29,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await requireAdmin();
+
+    if (!validateOrigin(req)) {
+      return NextResponse.json({ error: { code: "FORBIDDEN", message: "Invalid origin" } }, { status: 403 });
+    }
 
     const { id } = await params;
     if (!/^\d+$/.test(id)) {

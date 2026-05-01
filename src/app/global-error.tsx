@@ -2,15 +2,17 @@
 
 export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   return (
-    <html>
-      <body className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="text-center px-4">
-          <h1 className="text-red-600 text-4xl mb-4 font-bold">Something went wrong</h1>
-          <p className="text-gray-700 mb-6">An unexpected error occurred. Please try again.</p>
-          {error.digest && <p className="text-gray-500 text-sm mb-4">Error ID: {error.digest}</p>}
+    <html lang="en">
+      <body>
+        <div className="fixed inset-0 flex flex-col items-center justify-center px-4 text-center">
+          <h1 className="text-3xl font-bold text-red-700 sm:text-4xl">Something went wrong</h1>
+          <p className="mt-4 max-w-md text-lg text-gray-600">
+            An unexpected error occurred. Try again or reload the page.
+          </p>
+          {error.digest && <p className="mt-2 text-sm text-gray-400">Error ID: {error.digest}</p>}
           <button
             onClick={reset}
-            className="bg-red-600 text-white px-6 py-3 rounded hover:bg-red-700 transition-colors"
+            className="mt-8 rounded-lg bg-red-700 px-8 py-3 text-lg font-medium text-white hover:bg-red-800"
           >
             Try again
           </button>

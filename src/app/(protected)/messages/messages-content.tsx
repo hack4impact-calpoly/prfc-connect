@@ -1,5 +1,6 @@
 "use client";
 
+import { handleActionError } from "@/utils/auth-redirect";
 import { useEffect, useEffectEvent, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { Plus, Search } from "lucide-react";
@@ -47,7 +48,7 @@ function useMessagePagination(initialPage: MessageHistoryPage) {
       if (result.success && result.data) {
         setPage(result.data);
       } else {
-        toast.error(result.error ?? "Failed to load messages");
+        toast.error(handleActionError(result.error, "Failed to load messages"));
       }
     });
   };
@@ -136,7 +137,7 @@ export function MessagesContent({ initialPage, smsFeatureEnabled }: Props) {
       if (result.success && result.data) {
         setViewModal({ message: result.data.message, recipients: result.data.recipients });
       } else {
-        toast.error(result.error ?? "Failed to load message details");
+        toast.error(handleActionError(result.error, "Failed to load message details"));
       }
     });
   };

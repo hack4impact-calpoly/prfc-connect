@@ -6,6 +6,8 @@ import { apiErrorHandler } from "@/utils/errors";
 
 export async function GET(req: NextRequest) {
   try {
+    await verifySession();
+
     if (membersRateLimiter) {
       const forwarded = req.headers.get("x-forwarded-for");
       const ip = forwarded?.split(",")[0]?.trim() ?? "127.0.0.1";
@@ -24,8 +26,6 @@ export async function GET(req: NextRequest) {
         );
       }
     }
-
-    await verifySession();
 
     const members = await getAllMembers();
 

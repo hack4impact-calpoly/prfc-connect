@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { Clock, MapPin, CalendarCheck, List, Loader2, Trash2 } from "lucide-react";
+import { handleActionError } from "@/utils/auth-redirect";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -173,7 +174,7 @@ export function CreateEventPopover({
           onSaved?.(editingEvent.id);
           onClose();
         } else {
-          const message = result.error ?? "Failed to update event";
+          const message = handleActionError(result.error, "Failed to update event");
           toast.error(message);
           setError(message);
         }
@@ -196,7 +197,7 @@ export function CreateEventPopover({
         onSaved?.(result.data!.id);
         onClose();
       } else {
-        const message = result.error ?? "Failed to create event";
+        const message = handleActionError(result.error, "Failed to create event");
         toast.error(message);
         setError(message);
       }
@@ -213,7 +214,7 @@ export function CreateEventPopover({
         setConfirmDeleteOpen(false);
         onClose();
       } else {
-        const message = result.error ?? "Failed to delete event";
+        const message = handleActionError(result.error, "Failed to delete event");
         toast.error(message);
         setError(message);
         setConfirmDeleteOpen(false);

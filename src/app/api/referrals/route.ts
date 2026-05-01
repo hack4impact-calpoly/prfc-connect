@@ -13,11 +13,11 @@ export async function POST(req: NextRequest) {
   const idempotencyKey = req.headers.get("idempotency-key");
 
   try {
+    await verifySession();
+
     if (!validateOrigin(req)) {
       return NextResponse.json({ error: { code: "FORBIDDEN", message: "Invalid origin" } }, { status: 403 });
     }
-
-    await verifySession();
 
     if (idempotencyKey) {
       const cached = await getIdempotentResponse(idempotencyKey);

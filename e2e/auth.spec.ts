@@ -1,97 +1,124 @@
 import { test, expect } from "@playwright/test";
 
-test.describe("Unauthenticated access to protected routes", () => {
-  test("/groups without auth redirects or errors", async ({ page }) => {
-    const response = await page.goto("/groups");
+const PROTECTED_PAGES = [
+  "/home",
+  "/groups",
+  "/events",
+  "/messages",
+  "/messages/compose",
+  "/settings",
+  "/profile",
+  "/referral-database",
+];
 
-    const url = page.url();
-    const status = response?.status() ?? 0;
-    const isRedirected = !url.includes("/groups");
-    const isErrorStatus = status >= 400;
-    expect(isRedirected || isErrorStatus).toBe(true);
+test.describe("Unauthenticated access to protected pages", () => {
+  for (const path of PROTECTED_PAGES) {
+    test(`${path} without cookie redirects to /unauthorized`, async ({ page }) => {
+      await page.goto(path);
+
+      expect(page.url()).toContain("/unauthorized");
+      await expect(page.getByText("Sign in required")).toBeVisible();
+    });
+  }
+});
+
+test.describe("Unauthenticated API access", () => {
+  test("GET /api/members returns 401", async ({ request }) => {
+    const response = await request.get("/api/members");
+    expect(response.status()).toBe(401);
   });
 
-  test("/settings without auth redirects or errors", async ({ page }) => {
-    const response = await page.goto("/settings");
-
-    const url = page.url();
-    const status = response?.status() ?? 0;
-    const isRedirected = !url.includes("/settings");
-    const isErrorStatus = status >= 400;
-    expect(isRedirected || isErrorStatus).toBe(true);
+  test("GET /api/members/100001 returns 401", async ({ request }) => {
+    const response = await request.get("/api/members/100001");
+    expect(response.status()).toBe(401);
   });
 
-  test("/events without auth redirects or errors", async ({ page }) => {
-    const response = await page.goto("/events");
-
-    const url = page.url();
-    const status = response?.status() ?? 0;
-    const isRedirected = !url.includes("/events");
-    const isErrorStatus = status >= 400;
-    expect(isRedirected || isErrorStatus).toBe(true);
+  test("GET /api/referrals returns 401", async ({ request }) => {
+    const response = await request.get("/api/referrals");
+    expect(response.status()).toBe(401);
   });
 
-  test("/messages without auth redirects or errors", async ({ page }) => {
-    const response = await page.goto("/messages");
+  test("PATCH /api/referrals/1 returns 401", async ({ request }) => {
+    const response = await request.patch("/api/referrals/1", { data: { redeemed: true } });
+    expect(response.status()).toBe(401);
+  });
 
-    const url = page.url();
-    const status = response?.status() ?? 0;
-    const isRedirected = !url.includes("/messages");
-    const isErrorStatus = status >= 400;
-    expect(isRedirected || isErrorStatus).toBe(true);
+  test("DELETE /api/referrals/1 returns 401", async ({ request }) => {
+    const response = await request.delete("/api/referrals/1");
+    expect(response.status()).toBe(401);
   });
 });
 
-test.describe("Auth callback edge cases", () => {
-  test("invalid token in auth callback redirects to /", async ({ page }) => {
-    // Submit an invalid token to the auth callback endpoint
-    await page.goto("/dev/mock-portal");
+test.describe("Expired or tampered cookie on protected pages", () => {
+  for (const path of PROTECTED_PAGES) {
+    test(`${path} with invalid cookie redirects to /unauthorized`, async ({ page, context }) => {
+      await context.addCookies([{ name: "prfc_auth", value: "tampered|0|0|bad", domain: "localhost", path: "/" }]);
+      await page.goto(path);
 
-    // Use page.evaluate to POST directly with an invalid token
-    const response = await page.request.post("/api/auth/callback", {
+      expect(page.url()).toContain("/unauthorized");
+      await expect(page.getByText("Sign in required")).toBeVisible();
+    });
+  }
+});
+
+test.describe("Forbidden access for non-admin members", () => {
+  test("/referral-database redirects member to /forbidden", async ({ page }) => {
+    await page.goto("/dev/mock-portal");
+    await page.getByText("Dev Tools").click();
+    await page.getByLabel("Select Member").selectOption("100003");
+    await page.getByRole("button", { name: "Login" }).click();
+    await page.waitForURL("/home");
+
+    await page.goto("/referral-database");
+
+    expect(page.url()).toContain("/forbidden");
+    await expect(page.getByText("No permission")).toBeVisible();
+  });
+});
+
+test.describe("Invalid auth token", () => {
+  test("auth callback with bad token redirects to /", async ({ request }) => {
+    const response = await request.post("/api/auth/callback", {
       form: { token: "invalid-token-value" },
       maxRedirects: 0,
     });
 
-    // Should redirect to / (302 with Location: /)
+    expect(response.status()).toBe(307);
+    expect(response.headers()["location"]).toContain("/");
+  });
+
+  test("auth callback with empty token redirects to /", async ({ request }) => {
+    const response = await request.post("/api/auth/callback", {
+      form: { token: "" },
+      maxRedirects: 0,
+    });
+
     expect(response.status()).toBe(307);
     expect(response.headers()["location"]).toContain("/");
   });
 });
 
 test.describe("Back after logout", () => {
-  test("browser back after logout does not show protected content", async ({ page }) => {
-    // Log in first via the inline flow
+  test("navigating to protected page after logout does not show protected content", async ({ page }) => {
     await page.goto("/dev/mock-portal");
     await page.getByText("Dev Tools").click();
     await page.getByLabel("Select Member").selectOption("100001");
     await page.getByRole("button", { name: "Login" }).click();
     await page.waitForURL("/home");
 
-    // Verify we're on a protected page
     await expect(page.getByLabel("User menu")).toBeVisible();
 
-    // Log out via the user menu
     await page.getByLabel("User menu").click();
-    await expect(page.getByRole("menuitem", { name: "Sign out" })).toBeVisible();
-    await page.getByRole("menuitem", { name: "Sign out" }).click();
+    await expect(page.getByRole("menuitem", { name: "Back to Portal" })).toBeVisible();
+    await page.getByRole("menuitem", { name: "Back to Portal" }).click();
     await expect(page).toHaveURL("/dev/mock-portal");
 
-    // Go back — should not show protected content
-    await page.goBack();
-
-    // Either redirected away from /home, or the page shows error/login, not protected content
+    const response = await page.goto("/home");
+    const status = response?.status() ?? 0;
     const url = page.url();
-    if (url.includes("/home")) {
-      // If the browser cache shows /home, the user menu should not be functional
-      // (server will reject the session on next navigation)
-      const response = await page.goto("/home");
-      const finalUrl = page.url();
-      const status = response?.status() ?? 0;
-      const isRedirected = !finalUrl.includes("/home");
-      const isErrorStatus = status >= 400;
-      expect(isRedirected || isErrorStatus).toBe(true);
-    }
-    // If URL is not /home, the redirect already worked
+
+    const isRedirected = !url.includes("/home");
+    const isErrorStatus = status >= 400;
+    expect(isRedirected || isErrorStatus).toBe(true);
   });
 });

@@ -48,10 +48,10 @@ export function validateToken(token: string, secret: string): Session | null {
   if (!verifyHmac(payload, signature, secret)) return null;
 
   const tokenTime = parseInt(timestamp, 10);
-  if (isNaN(tokenTime) || Date.now() - tokenTime > TOKEN_EXPIRY_MS) return null;
+  if (isNaN(tokenTime) || tokenTime > Date.now() || Date.now() - tokenTime > TOKEN_EXPIRY_MS) return null;
 
   const parsedOwnerId = parseInt(ownerid, 10);
-  if (isNaN(parsedOwnerId)) return null;
+  if (isNaN(parsedOwnerId) || parsedOwnerId <= 0) return null;
 
   return {
     ownerid: parsedOwnerId,

@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { verifySession } from "@/lib/dal";
 import { getGroupById, enrichGroupMembers, isGroupOwner } from "@/services/contact-group";
 import { getAllMembers, getMemberById } from "@/lib/api/member-api";
@@ -21,7 +21,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
   if (isNaN(groupId) || groupId <= 0) notFound();
 
   const session = await verifySession();
-  if (!session.isAdmin && !(await isGroupOwner(groupId, session.ownerid))) notFound();
+  if (!session.isAdmin && !(await isGroupOwner(groupId, session.ownerid))) redirect("/forbidden");
 
   const [enriched, allMembers] = await Promise.all([loadGroup(groupId), getAllMembers()]);
   const owner = await getMemberById(enriched.ownerid);

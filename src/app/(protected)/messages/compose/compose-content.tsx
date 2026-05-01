@@ -1,5 +1,6 @@
 "use client";
 
+import { handleActionError } from "@/utils/auth-redirect";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -49,7 +50,7 @@ export function ComposeContent({ groups, currentUser, isAdmin }: Props) {
             channels: { email: data.sendEmail, sms: data.sendSms },
           });
         } else {
-          toast.error(result.error ?? "Failed to send message");
+          toast.error(handleActionError(result.error, "Failed to send message"));
         }
       } else {
         if (data.groupIds.length === 0) {
@@ -69,7 +70,7 @@ export function ComposeContent({ groups, currentUser, isAdmin }: Props) {
             channels: { email: data.sendEmail, sms: data.sendSms },
           });
         } else {
-          toast.error(result.error ?? "Failed to send message");
+          toast.error(handleActionError(result.error, "Failed to send message"));
         }
       }
     });

@@ -1,5 +1,6 @@
 "use client";
 
+import { handleActionError } from "@/utils/auth-redirect";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ProfilePhotoUpload } from "@/components/profile/profile-photo-upload";
@@ -28,7 +29,7 @@ export function ProfileContent({ profile, photoUrl, userName, isAdmin }: Props) 
       setCurrentPhotoUrl(result.data.url);
       toast.success("Photo updated");
     } else {
-      toast.error(result.error ?? "Failed to upload photo");
+      toast.error(handleActionError(result.error, "Failed to upload photo"));
     }
   };
 

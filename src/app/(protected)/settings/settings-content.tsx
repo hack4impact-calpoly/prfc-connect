@@ -1,5 +1,6 @@
 "use client";
 
+import { handleActionError } from "@/utils/auth-redirect";
 import { useState } from "react";
 import { toast } from "sonner";
 import { NotificationPreferencesCard } from "@/components/settings/notification-preferences-card";
@@ -28,7 +29,7 @@ export function SettingsContent({ preferences, smsConsent, phone, smsFeatureEnab
     } else {
       if (key === "notifyEmailDefault") setEmailEnabled(!value);
       else setSmsEnabled(!value);
-      toast.error(result.error ?? "Failed to update preferences");
+      toast.error(handleActionError(result.error, "Failed to update preferences"));
     }
   };
 
