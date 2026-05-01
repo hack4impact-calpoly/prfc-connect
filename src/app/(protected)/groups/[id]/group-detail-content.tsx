@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { GroupMemberTable } from "@/components/groups/group-member-table";
 import { AddMembersModal, type MemberRow } from "@/components/groups/add-members-modal";
 import { Switch } from "@/components/ui/switch";
-import { addMembers, removeMember, updateNotifications } from "@/actions/contact-group";
+import { addMembers, removeMember, leaveGroup, updateNotifications } from "@/actions/contact-group";
 import { useFuzzySearch } from "@/hooks/use-fuzzy-search";
 import { useSidebar } from "@/components/layout/sidebar-context";
 import type { MemberSummary } from "@/types/member";
@@ -63,6 +63,20 @@ export function GroupDetailContent({ group, allMembers, currentUserOwnerid, isAd
       }
     });
   };
+
+  const handleLeaveGroup = () => {
+    startTransition(async () => {
+      const result = await leaveGroup(group.id);
+      if (result.success) {
+        toast.success("Left group");
+        router.push("/groups");
+      } else {
+        toast.error(handleActionError(result.error, "Failed to leave group"));
+      }
+    });
+  };
+
+  const isOwner = currentUserOwnerid === group.ownerid;
 
   const filteredMembers = useFuzzySearch(group.members, { keys: ["ownername", "owneremail"] }, searchQuery);
 
@@ -168,17 +182,30 @@ export function GroupDetailContent({ group, allMembers, currentUserOwnerid, isAd
       {isAdmin && group.ownerName && <p className="mt-1 text-sm text-muted-foreground">Created by {group.ownerName}</p>}
 
       {currentMember && (
-        <div className="mt-4 flex items-center gap-3">
-          <Switch
-            id="group-email-toggle"
-            checked={emailEnabled}
-            onCheckedChange={handleEmailToggle}
-            className="data-[state=checked]:bg-prfc-red"
-            disabled={isPending}
-          />
-          <label htmlFor="group-email-toggle" className="text-sm text-muted-foreground">
-            Receive emails from this group
-          </label>
+        <div className="mt-4 flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <Switch
+              id="group-email-toggle"
+              checked={emailEnabled}
+              onCheckedChange={handleEmailToggle}
+              className="data-[state=checked]:bg-prfc-red"
+              disabled={isPending}
+            />
+            <label htmlFor="group-email-toggle" className="text-sm text-muted-foreground">
+              Receive emails from this group
+            </label>
+          </div>
+          {!isOwner && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleLeaveGroup}
+              disabled={isPending}
+              className="text-destructive border-destructive hover:bg-destructive/10"
+            >
+              Leave Group
+            </Button>
+          )}
         </div>
       )}
 

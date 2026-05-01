@@ -187,6 +187,20 @@ export async function removeMember(groupId: number, memberId: number): Promise<A
   }
 }
 
+export async function leaveGroup(groupId: number): Promise<ActionResult> {
+  try {
+    const session = await verifySession();
+    await removeMemberFromGroup(groupId, session.ownerid);
+
+    revalidatePath(`/groups/${groupId}`);
+    revalidatePath("/groups");
+    return { success: true };
+  } catch (error) {
+    const appError = transformError(error);
+    return { success: false, error: appError.message };
+  }
+}
+
 export async function removeMembers(groupId: number, memberIds: number[]): Promise<ActionResult<{ count: number }>> {
   try {
     const session = await verifySession();

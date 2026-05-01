@@ -18,7 +18,6 @@ import {
   isEventOwner,
   rsvpToEvent,
   getEventRsvps,
-  getUpcomingEvents,
   getEventsForMonth,
   getEventsForWeek,
   getEventInviteeMemberIds,
@@ -27,14 +26,9 @@ import {
   setEventInvitees,
 } from "@/services/event";
 import type { EventType } from "@/generated/prisma/client";
-import { getRecentActivity } from "@/services/dashboard";
-import { getAllMessageHistory } from "@/services/message";
-import { getAllMembers } from "@/lib/api/member-api";
-import { coopNow } from "@/utils/time";
 import { transformError } from "@/utils/errors";
 import type { ActionResult } from "@/types/action";
 import type { EventWithRsvpCount, RsvpDetail, EventSummary } from "@/types/event";
-import type { DashboardData } from "@/types/dashboard";
 
 export async function createEventAction(input: {
   title: string;
@@ -150,37 +144,6 @@ export async function fetchEventDetail(eventId: number): Promise<
     const rsvps = await getEventRsvps(validatedId);
     const inviteeMemberIds = await getEventInviteeMemberIds(validatedId);
     return { success: true, data: { event, rsvps, inviteeMemberIds } };
-  } catch (error) {
-    const appError = transformError(error);
-    return { success: false, error: appError.message };
-  }
-}
-
-export type { DashboardData } from "@/types/dashboard";
-
-export async function fetchDashboardData(): Promise<ActionResult<DashboardData>> {
-  try {
-    const session = await verifySession();
-
-    const now = coopNow();
-    const [memberList, monthEvents, upcomingEvents, recentActivity, recentMessages] = await Promise.all([
-      getAllMembers(),
-      getEventsForMonth(now.year, now.month0 + 1),
-      getUpcomingEvents(4),
-      getRecentActivity(session.ownerid, 3),
-      getAllMessageHistory({ limit: 1 }),
-    ]);
-
-    return {
-      success: true,
-      data: {
-        totalMembers: memberList.length,
-        eventsThisMonth: monthEvents.length,
-        upcomingEvents,
-        recentActivity,
-        recentMessages,
-      },
-    };
   } catch (error) {
     const appError = transformError(error);
     return { success: false, error: appError.message };

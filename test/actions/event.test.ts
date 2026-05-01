@@ -2,7 +2,7 @@ import "../mocks/next-cache";
 import "../mocks/dal";
 import "../mocks/event-service";
 
-import { vi, type MockedFunction } from "vitest";
+import { vi } from "vitest";
 import { AppError } from "@/utils/errors";
 import { mockVerifySession, mockRevalidatePath, eventTownHall } from "../mocks";
 import {
@@ -13,7 +13,6 @@ import {
   mockIsEventOwner,
   mockRsvpToEvent,
   mockGetEventRsvps,
-  mockGetUpcomingEvents,
   mockGetEventsForMonth,
   mockGetEventsForWeek,
   mockGetEventInviteeMemberIds,
@@ -22,37 +21,15 @@ import {
   mockSetEventInvitees,
 } from "../mocks/event-service";
 
-vi.mock("@/services/dashboard", () => ({
-  getRecentActivity: vi.fn(),
-}));
-
-vi.mock("@/services/message", () => ({
-  getAllMessageHistory: vi.fn(),
-  sendGroupMessage: vi.fn(),
-  sendBlastMessage: vi.fn(),
-}));
-
-vi.mock("@/lib/api/member-api", () => ({
-  getAllMembers: vi.fn(),
-}));
-
-import { getRecentActivity } from "@/services/dashboard";
-import { getAllMessageHistory } from "@/services/message";
-import { getAllMembers } from "@/lib/api/member-api";
 import {
   createEventAction,
   updateEventAction,
   deleteEventAction,
   rsvpAction,
   fetchEventDetail,
-  fetchDashboardData,
   fetchEventsForWeek,
   fetchEventsForMonth,
 } from "@/actions/event";
-
-const mockGetRecentActivity = getRecentActivity as MockedFunction<typeof getRecentActivity>;
-const mockGetAllMessageHistory = getAllMessageHistory as MockedFunction<typeof getAllMessageHistory>;
-const mockGetAllMembers = getAllMembers as MockedFunction<typeof getAllMembers>;
 
 const sampleEvent = eventTownHall;
 
@@ -245,56 +222,6 @@ describe("fetchEventDetail", () => {
       success: true,
       data: { event: sampleEvent, rsvps: [], inviteeMemberIds: [100001, 100002] },
     });
-  });
-});
-
-describe("fetchDashboardData", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockVerifySession.mockResolvedValue({ ownerid: 100001, isAdmin: true });
-  });
-
-  it("returns all dashboard sections", async () => {
-    mockGetAllMembers.mockResolvedValue([
-      { ownerid: 1, ownername: "A" },
-      { ownerid: 2, ownername: "B" },
-    ]);
-    mockGetEventsForMonth.mockResolvedValue([]);
-    mockGetUpcomingEvents.mockResolvedValue([]);
-    mockGetRecentActivity.mockResolvedValue([]);
-    mockGetAllMessageHistory.mockResolvedValue([]);
-
-    const result = await fetchDashboardData();
-
-    expect(result.success).toBe(true);
-    expect(result.data).toEqual({
-      totalMembers: 2,
-      eventsThisMonth: 0,
-      upcomingEvents: [],
-      recentActivity: [],
-      recentMessages: [],
-    });
-  });
-
-  it("returns eventsThisMonth equal to the length of getEventsForMonth result", async () => {
-    mockGetAllMembers.mockResolvedValue([{ ownerid: 1, ownername: "A" }]);
-    mockGetEventsForMonth.mockResolvedValue([{ id: 1 } as never, { id: 2 } as never, { id: 3 } as never]);
-    mockGetUpcomingEvents.mockResolvedValue([]);
-    mockGetRecentActivity.mockResolvedValue([]);
-    mockGetAllMessageHistory.mockResolvedValue([]);
-
-    const result = await fetchDashboardData();
-
-    expect(result.data?.eventsThisMonth).toBe(3);
-  });
-
-  it("returns error when not authenticated", async () => {
-    mockVerifySession.mockRejectedValue(new AppError("UNAUTHORIZED", "Authentication required"));
-
-    const result = await fetchDashboardData();
-
-    expect(result.success).toBe(false);
-    expect(result.error).toBe("Authentication required");
   });
 });
 

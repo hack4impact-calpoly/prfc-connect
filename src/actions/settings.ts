@@ -2,49 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { verifySession } from "@/lib/dal";
-import { UpdatePreferencesSchema, RevokeSmsConsentSchema } from "@/schema/settings";
-import { getMemberSmsConsent, grantSmsConsent, revokeSmsConsent } from "@/services/sms-consent";
+import { UpdatePreferencesSchema } from "@/schema/settings";
+import { grantSmsConsent, revokeSmsConsent } from "@/services/sms-consent";
 import { getMemberProfile } from "@/services/profile";
-import { getUserPreferences, updateUserPreferences, uploadProfilePhoto } from "@/services/user-preference";
+import { updateUserPreferences, uploadProfilePhoto } from "@/services/user-preference";
 import { transformError } from "@/utils/errors";
 import type { ActionResult } from "@/types/action";
-import type { SmsConsentRecord } from "@/services/sms-consent";
 import type { UserPreferenceData } from "@/services/user-preference";
-
-export async function fetchSmsConsent(): Promise<ActionResult<SmsConsentRecord | null>> {
-  try {
-    const session = await verifySession();
-    const consent = await getMemberSmsConsent(session.ownerid);
-    return { success: true, data: consent };
-  } catch (error) {
-    const appError = transformError(error);
-    return { success: false, error: appError.message };
-  }
-}
-
-export async function revokeSmsConsentAction(input: { method: string; message: string | null }): Promise<ActionResult> {
-  try {
-    const session = await verifySession();
-    const validated = RevokeSmsConsentSchema.parse(input);
-    await revokeSmsConsent(session.ownerid, validated.method, validated.message);
-    revalidatePath("/settings");
-    return { success: true };
-  } catch (error) {
-    const appError = transformError(error);
-    return { success: false, error: appError.message };
-  }
-}
-
-export async function fetchUserPreferences(): Promise<ActionResult<UserPreferenceData>> {
-  try {
-    const session = await verifySession();
-    const prefs = await getUserPreferences(session.ownerid);
-    return { success: true, data: prefs };
-  } catch (error) {
-    const appError = transformError(error);
-    return { success: false, error: appError.message };
-  }
-}
 
 export async function updateUserPreferencesAction(input: {
   notifyEmailDefault?: boolean;
