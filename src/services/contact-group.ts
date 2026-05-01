@@ -271,7 +271,20 @@ export async function getGroupRecipients(groupId: number, channel: "email" | "sm
       },
       select: { memberId: true },
     });
-    return members.map((m) => m.memberId);
+
+    const memberIds = members.map((m) => m.memberId);
+    if (memberIds.length === 0) return [];
+
+    if (channel === "email") {
+      const optedOut = await prisma.userPreference.findMany({
+        where: { memberId: { in: memberIds }, notifyEmailDefault: false },
+        select: { memberId: true },
+      });
+      const optedOutIds = new Set(optedOut.map((p) => p.memberId));
+      return memberIds.filter((id) => !optedOutIds.has(id));
+    }
+
+    return memberIds;
   } catch (error) {
     throw transformError(error);
   }

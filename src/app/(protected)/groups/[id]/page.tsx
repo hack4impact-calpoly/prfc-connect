@@ -38,6 +38,7 @@ export default async function GroupDetailPage({ params }: { params: Promise<{ id
           memberId: m.memberId,
           ownername: m.ownername,
           owneremail: m.owneremail,
+          notifyEmail: m.notifyEmail,
         })),
       }}
       allMembers={allMembers}

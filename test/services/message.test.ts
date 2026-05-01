@@ -262,6 +262,7 @@ describe("sendBlastMessage", () => {
     mockEnv.EMAIL_ENABLED = true;
     mockEnv.SMS_ENABLED = false;
     mockInteractiveTransaction();
+    mockPrisma.userPreference.findMany.mockResolvedValue([]);
   });
 
   it("creates Message with isBlast=true and no groupId", async () => {

@@ -78,6 +78,7 @@ export async function uploadPhotoAction(formData: FormData): Promise<ActionResul
       return { success: false, error: "No file provided" };
     }
     const url = await uploadProfilePhoto(session.ownerid, file);
+    revalidatePath("/profile");
     revalidatePath("/settings");
     return { success: true, data: { url } };
   } catch (error) {

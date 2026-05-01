@@ -233,27 +233,30 @@ describe("getGroupMembers", () => {
 });
 
 describe("getGroupRecipients", () => {
-  it("filters by email channel", async () => {
+  it("filters by email channel and excludes globally opted-out members", async () => {
     mockPrisma.contactGroupMember.findMany.mockResolvedValue([{ memberId: 10 }, { memberId: 20 }] as never);
+    mockPrisma.userPreference.findMany.mockResolvedValue([{ memberId: 20 }] as never);
 
     const result = await getGroupRecipients(1, "email");
 
-    expect(mockPrisma.contactGroupMember.findMany).toHaveBeenCalledWith({
-      where: { groupId: 1, notifyEmail: true },
-      select: { memberId: true },
-    });
+    expect(result).toEqual([10]);
+  });
+
+  it("returns all email recipients when none are globally opted out", async () => {
+    mockPrisma.contactGroupMember.findMany.mockResolvedValue([{ memberId: 10 }, { memberId: 20 }] as never);
+    mockPrisma.userPreference.findMany.mockResolvedValue([] as never);
+
+    const result = await getGroupRecipients(1, "email");
+
     expect(result).toEqual([10, 20]);
   });
 
-  it("filters by sms channel", async () => {
+  it("does not check global preference for sms channel", async () => {
     mockPrisma.contactGroupMember.findMany.mockResolvedValue([{ memberId: 20 }] as never);
 
     const result = await getGroupRecipients(1, "sms");
 
-    expect(mockPrisma.contactGroupMember.findMany).toHaveBeenCalledWith({
-      where: { groupId: 1, notifySms: true },
-      select: { memberId: true },
-    });
     expect(result).toEqual([20]);
+    expect(mockPrisma.userPreference.findMany).not.toHaveBeenCalled();
   });
 });

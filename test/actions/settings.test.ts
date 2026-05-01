@@ -198,4 +198,14 @@ describe("uploadPhotoAction", () => {
     expect(result.error).toBe("Authentication required");
     expect(mockUploadProfilePhoto).not.toHaveBeenCalled();
   });
+
+  it("returns error when FormData file key is a string", async () => {
+    const formData = new FormData();
+    formData.set("file", "not-a-file");
+
+    const result = await uploadPhotoAction(formData);
+
+    expect(result).toEqual({ success: false, error: "No file provided" });
+    expect(mockUploadProfilePhoto).not.toHaveBeenCalled();
+  });
 });

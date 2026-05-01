@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { GroupMemberTable } from "@/components/groups/group-member-table";
 import { AddMembersModal, type MemberRow } from "@/components/groups/add-members-modal";
-import { addMembers, removeMember } from "@/actions/contact-group";
+import { Switch } from "@/components/ui/switch";
+import { addMembers, removeMember, updateNotifications } from "@/actions/contact-group";
 import { useFuzzySearch } from "@/hooks/use-fuzzy-search";
 import { useSidebar } from "@/components/layout/sidebar-context";
 import type { MemberSummary } from "@/types/member";
@@ -26,6 +27,7 @@ type Props = {
       memberId: number;
       ownername: string;
       owneremail: string;
+      notifyEmail: boolean;
     }>;
   };
   allMembers: MemberSummary[];
@@ -41,6 +43,26 @@ export function GroupDetailContent({ group, allMembers, currentUserOwnerid, isAd
   const [addMembersOpen, setAddMembersOpen] = useState(false);
   const [removedIds, setRemovedIds] = useState<Set<number>>(new Set());
   const [isPending, startTransition] = useTransition();
+
+  const currentMember = group.members.find((m) => m.memberId === currentUserOwnerid);
+  const [emailEnabled, setEmailEnabled] = useState(currentMember?.notifyEmail ?? true);
+
+  const handleEmailToggle = (checked: boolean) => {
+    setEmailEnabled(checked);
+    startTransition(async () => {
+      const result = await updateNotifications({
+        groupId: group.id,
+        memberId: currentUserOwnerid,
+        notifyEmail: checked,
+      });
+      if (result.success) {
+        toast.success(checked ? "Email notifications enabled" : "Email notifications disabled");
+      } else {
+        setEmailEnabled(!checked);
+        toast.error(handleActionError(result.error, "Failed to update notification preference"));
+      }
+    });
+  };
 
   const filteredMembers = useFuzzySearch(group.members, { keys: ["ownername", "owneremail"] }, searchQuery);
 
@@ -144,6 +166,21 @@ export function GroupDetailContent({ group, allMembers, currentUserOwnerid, isAd
       <h1 className="font-angkor text-3xl text-prfc-brown">{group.name}</h1>
       {group.description && <p className="mt-2 text-muted-foreground">{group.description}</p>}
       {isAdmin && group.ownerName && <p className="mt-1 text-sm text-muted-foreground">Created by {group.ownerName}</p>}
+
+      {currentMember && (
+        <div className="mt-4 flex items-center gap-3">
+          <Switch
+            id="group-email-toggle"
+            checked={emailEnabled}
+            onCheckedChange={handleEmailToggle}
+            className="data-[state=checked]:bg-prfc-red"
+            disabled={isPending}
+          />
+          <label htmlFor="group-email-toggle" className="text-sm text-muted-foreground">
+            Receive emails from this group
+          </label>
+        </div>
+      )}
 
       <div className="mt-6 flex items-center gap-3">
         <div className="relative flex-1 max-w-md">

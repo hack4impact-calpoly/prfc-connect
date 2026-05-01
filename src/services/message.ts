@@ -278,7 +278,15 @@ export async function sendBlastMessage(input: BlastMessage, senderId: number): P
 
     const members = await getMemberDetails(recipientIds);
 
-    const emailRecipientIds = sendEmail ? recipientIds : [];
+    let emailRecipientIds: number[] = [];
+    if (sendEmail) {
+      const optedOut = await prisma.userPreference.findMany({
+        where: { memberId: { in: recipientIds }, notifyEmailDefault: false },
+        select: { memberId: true },
+      });
+      const optedOutIds = new Set(optedOut.map((p) => p.memberId));
+      emailRecipientIds = recipientIds.filter((id) => !optedOutIds.has(id));
+    }
     const smsRecipientIds = sendSms ? recipientIds : [];
 
     const result = await prisma.$transaction(async (tx) => {
