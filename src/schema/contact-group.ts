@@ -47,12 +47,13 @@ export const BaseMessageSchema = z
   .object({
     subject: z.string().min(1).max(200),
     body: z.string().min(1).max(5000),
+    smsBody: z.string().min(1).max(160).optional(),
     sendEmail: z.boolean().default(true),
     sendSms: z.boolean().default(false),
   })
-  .refine((data) => !data.sendSms || data.body.length <= 160, {
-    message: "SMS messages must be 160 characters or fewer",
-    path: ["body"],
+  .refine((data) => !data.sendSms || !!data.smsBody, {
+    message: "SMS body is required when sending text messages",
+    path: ["smsBody"],
   });
 
 export const ComposeMessageSchema = BaseMessageSchema.extend({

@@ -1,7 +1,7 @@
 import "server-only";
 import prisma from "@/lib/db";
 import { transformError } from "@/utils/errors";
-import { encrypt, blindIndex } from "@/lib/encryption";
+import { encrypt, decrypt, blindIndex } from "@/lib/encryption";
 
 export interface SmsConsentRecord {
   id: number;
@@ -84,6 +84,28 @@ export async function revokeSmsConsent(memberId: number, method: string, message
         revokeMessage: message,
       },
     });
+  } catch (error) {
+    throw transformError(error);
+  }
+}
+
+export async function getConsentedPhones(memberIds: number[]): Promise<Map<number, string>> {
+  try {
+    const consents = await prisma.smsConsent.findMany({
+      where: { memberId: { in: memberIds }, revokedAt: null },
+      select: { memberId: true, phone: true },
+      orderBy: { consentedAt: "desc" },
+    });
+
+    const seen = new Set<number>();
+    const result = new Map<number, string>();
+    for (const c of consents) {
+      if (!seen.has(c.memberId)) {
+        seen.add(c.memberId);
+        result.set(c.memberId, decrypt(c.phone));
+      }
+    }
+    return result;
   } catch (error) {
     throw transformError(error);
   }

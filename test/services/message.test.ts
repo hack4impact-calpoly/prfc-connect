@@ -169,7 +169,7 @@ describe("sendGroupMessage", () => {
   it("creates Message record with correct data", async () => {
     vi.mocked(getGroupRecipients).mockResolvedValue([100002, 100003, 100004]);
     vi.mocked(getMemberDetails).mockResolvedValue(testRecipients);
-    vi.mocked(sendGroupEmails).mockResolvedValue({ sent: 3, failed: 0, suppressed: 0 });
+    vi.mocked(sendGroupEmails).mockResolvedValue({ sent: 3, failed: 0, suppressed: 0, results: [] });
     mockPrisma.message.create.mockResolvedValue({ ...testMessage, id: 1 });
     mockPrisma.messageRecipient.createMany.mockResolvedValue({ count: 3 });
     mockPrisma.messageRecipient.updateMany.mockResolvedValue({ count: 3 });
@@ -194,7 +194,7 @@ describe("sendGroupMessage", () => {
   it("creates MessageRecipient records for email recipients", async () => {
     vi.mocked(getGroupRecipients).mockResolvedValue([100002, 100003, 100004]);
     vi.mocked(getMemberDetails).mockResolvedValue(testRecipients);
-    vi.mocked(sendGroupEmails).mockResolvedValue({ sent: 3, failed: 0, suppressed: 0 });
+    vi.mocked(sendGroupEmails).mockResolvedValue({ sent: 3, failed: 0, suppressed: 0, results: [] });
     mockPrisma.message.create.mockResolvedValue({ ...testMessage, id: 1 });
     mockPrisma.messageRecipient.createMany.mockResolvedValue({ count: 3 });
     mockPrisma.messageRecipient.updateMany.mockResolvedValue({ count: 3 });
@@ -230,7 +230,7 @@ describe("sendGroupMessage", () => {
   it("updates failedCount when emails fail", async () => {
     vi.mocked(getGroupRecipients).mockResolvedValue([100002, 100003, 100004]);
     vi.mocked(getMemberDetails).mockResolvedValue(testRecipients);
-    vi.mocked(sendGroupEmails).mockResolvedValue({ sent: 1, failed: 2, suppressed: 0 });
+    vi.mocked(sendGroupEmails).mockResolvedValue({ sent: 1, failed: 2, suppressed: 0, results: [] });
     mockPrisma.message.create.mockResolvedValue({ ...testMessage, id: 1 });
     mockPrisma.messageRecipient.createMany.mockResolvedValue({ count: 3 });
     mockPrisma.messageRecipient.updateMany.mockResolvedValue({ count: 2 });
@@ -267,7 +267,7 @@ describe("sendBlastMessage", () => {
   it("creates Message with isBlast=true and no groupId", async () => {
     vi.mocked(getAllActiveMemberIds).mockResolvedValue(allMemberIds);
     vi.mocked(getMemberDetails).mockResolvedValue([...mockMembers]);
-    vi.mocked(sendGroupEmails).mockResolvedValue({ sent: 389, failed: 0, suppressed: 0 });
+    vi.mocked(sendGroupEmails).mockResolvedValue({ sent: 389, failed: 0, suppressed: 0, results: [] });
     mockPrisma.message.create.mockResolvedValue({ ...testBlastMessage, id: 2 });
     mockPrisma.messageRecipient.createMany.mockResolvedValue({ count: 389 });
     mockPrisma.messageRecipient.updateMany.mockResolvedValue({ count: 389 });
@@ -288,7 +288,7 @@ describe("sendBlastMessage", () => {
   it("sends to all active members", async () => {
     vi.mocked(getAllActiveMemberIds).mockResolvedValue(allMemberIds);
     vi.mocked(getMemberDetails).mockResolvedValue([...mockMembers]);
-    vi.mocked(sendGroupEmails).mockResolvedValue({ sent: 389, failed: 0, suppressed: 0 });
+    vi.mocked(sendGroupEmails).mockResolvedValue({ sent: 389, failed: 0, suppressed: 0, results: [] });
     mockPrisma.message.create.mockResolvedValue({ ...testBlastMessage, id: 2 });
     mockPrisma.messageRecipient.createMany.mockResolvedValue({ count: 389 });
     mockPrisma.messageRecipient.updateMany.mockResolvedValue({ count: 389 });
@@ -303,7 +303,7 @@ describe("sendBlastMessage", () => {
   it("updates failedCount when emails fail", async () => {
     vi.mocked(getAllActiveMemberIds).mockResolvedValue(allMemberIds);
     vi.mocked(getMemberDetails).mockResolvedValue([...mockMembers]);
-    vi.mocked(sendGroupEmails).mockResolvedValue({ sent: 350, failed: 39, suppressed: 0 });
+    vi.mocked(sendGroupEmails).mockResolvedValue({ sent: 350, failed: 39, suppressed: 0, results: [] });
     mockPrisma.message.create.mockResolvedValue({ ...testBlastMessage, id: 2 });
     mockPrisma.messageRecipient.createMany.mockResolvedValue({ count: 389 });
     mockPrisma.messageRecipient.updateMany.mockResolvedValue({ count: 39 });

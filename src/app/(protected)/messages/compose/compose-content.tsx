@@ -40,6 +40,7 @@ export function ComposeContent({ groups, currentUser, isAdmin }: Props) {
         const result = await sendBlast({
           subject: data.subject,
           body: data.body,
+          smsBody: data.smsBody,
           sendEmail: data.sendEmail,
           sendSms: data.sendSms,
           confirmationText: "SEND TO ALL",
@@ -61,6 +62,7 @@ export function ComposeContent({ groups, currentUser, isAdmin }: Props) {
           groupIds: data.groupIds,
           subject: data.subject,
           body: data.body,
+          smsBody: data.smsBody,
           sendEmail: data.sendEmail,
           sendSms: data.sendSms,
         });

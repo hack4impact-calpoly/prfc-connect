@@ -77,6 +77,22 @@ describe("POST /api/unsubscribe", () => {
     });
   });
 
+  it("returns 204 on double unsubscribe (idempotent)", async () => {
+    vi.mocked(verifyUnsubscribeToken).mockReturnValue({
+      valid: true,
+      memberId: 123,
+      groupId: 456,
+    });
+    mockPrisma.contactGroupMember.updateMany.mockResolvedValue({ count: 0 });
+
+    const req = new NextRequest("http://localhost/api/unsubscribe?token=valid-token", {
+      method: "POST",
+    });
+    const res = await POST(req);
+
+    expect(res.status).toBe(204);
+  });
+
   it("returns 500 on database error", async () => {
     vi.mocked(verifyUnsubscribeToken).mockReturnValue({
       valid: true,

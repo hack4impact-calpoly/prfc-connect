@@ -4,8 +4,9 @@ import { env } from "@/env";
 import { AppError, transformError } from "@/utils/errors";
 import { getGroupRecipients } from "@/services/contact-group";
 import { sendGroupEmails, validateEmailAllowed } from "@/services/email";
+import { sendGroupSms, validateSmsAllowed } from "@/services/sms";
+import { getConsentedPhones } from "@/services/sms-consent";
 import { getMemberDetails, getAllActiveMemberIds } from "@/lib/api/member-api";
-import { coopHourOfDay } from "@/utils/time";
 import type { ComposeMessage, BlastMessage } from "@/schema/contact-group";
 import type { MockMember } from "@/lib/mock-members";
 import type {
@@ -62,23 +63,7 @@ export async function getGroupMessageHistory(
   }
 }
 
-export function isQuietHours(): boolean {
-  // TCPA compliance: no SMS before 8 AM or after 8 PM Pacific
-  const hour = coopHourOfDay(new Date());
-  return hour < 8 || hour >= 20;
-}
-
-export function validateSmsAllowed(): void {
-  if (!env.SMS_ENABLED) {
-    throw new AppError("FORBIDDEN", "SMS functionality is currently disabled", { reason: "SMS_DISABLED" });
-  }
-
-  if (isQuietHours()) {
-    throw new AppError("FORBIDDEN", "SMS messages cannot be sent during quiet hours (8 PM - 8 AM Pacific)", {
-      reason: "QUIET_HOURS",
-    });
-  }
-}
+export { isQuietHours, validateSmsAllowed } from "@/services/sms";
 
 async function sendEmailsForMessage(
   messageId: number,
@@ -101,31 +86,20 @@ async function sendEmailsForMessage(
       groupId: groupIds?.[0] ?? 0,
     });
 
-    if (emailResult.failed === 0) {
-      await prisma.messageRecipient.updateMany({
-        where: {
-          messageId,
-          channel: "email",
-          memberId: { in: recipients.map((r) => r.ownerid) },
-        },
-        data: {
-          status: "sent",
-          sentAt: new Date(),
-        },
-      });
-    } else {
-      await prisma.messageRecipient.updateMany({
-        where: {
-          messageId,
-          channel: "email",
-          memberId: { in: recipients.map((r) => r.ownerid) },
-        },
-        data: {
-          status: "failed",
-          sentAt: new Date(),
-        },
-      });
-    }
+    const now = new Date();
+    await Promise.all(
+      emailResult.results.map((r) =>
+        prisma.messageRecipient.updateMany({
+          where: { messageId, channel: "email", memberId: r.memberId },
+          data: {
+            status: r.status,
+            sentAt: now,
+            externalId: r.externalId ?? null,
+            error: r.error ?? null,
+          },
+        }),
+      ),
+    );
 
     return { sent: emailResult.sent, failed: emailResult.failed };
   } catch (error) {
@@ -134,9 +108,48 @@ async function sendEmailsForMessage(
   }
 }
 
+async function sendSmsForMessage(
+  messageId: number,
+  smsRecipientIds: number[],
+  smsBody: string,
+): Promise<{ sent: number; failed: number }> {
+  try {
+    const phoneMap = await getConsentedPhones(smsRecipientIds);
+    const recipients = smsRecipientIds
+      .filter((id) => phoneMap.has(id))
+      .map((id) => ({ memberId: id, phone: phoneMap.get(id)! }));
+
+    if (recipients.length === 0) {
+      return { sent: 0, failed: 0 };
+    }
+
+    const smsResult = await sendGroupSms({ recipients, body: smsBody });
+
+    const now = new Date();
+    await Promise.all(
+      smsResult.results.map((r) =>
+        prisma.messageRecipient.updateMany({
+          where: { messageId, channel: "sms", memberId: r.memberId },
+          data: {
+            status: r.status,
+            sentAt: now,
+            externalId: r.externalId ?? null,
+            error: r.error ?? null,
+          },
+        }),
+      ),
+    );
+
+    return { sent: smsResult.sent, failed: smsResult.failed };
+  } catch (error) {
+    console.error("[sendSmsForMessage] Failed:", error);
+    return { sent: 0, failed: smsRecipientIds.length };
+  }
+}
+
 export async function sendGroupMessage(input: ComposeMessage, senderId: number): Promise<MessageResult> {
   try {
-    const { groupIds, subject, body, sendEmail, sendSms } = input;
+    const { groupIds, subject, body, smsBody, sendEmail, sendSms } = input;
 
     if (!sendEmail && !sendSms) {
       throw new AppError("VALIDATION_ERROR", "At least one delivery method (email or SMS) must be selected");
@@ -191,7 +204,7 @@ export async function sendGroupMessage(input: ComposeMessage, senderId: number):
         });
       }
 
-      if (sendSms && smsRecipientIds.length > 0 && env.SMS_ENABLED) {
+      if (sendSms && smsRecipientIds.length > 0) {
         await tx.messageRecipient.createMany({
           data: smsRecipientIds.map((memberId) => ({
             messageId: message.id,
@@ -207,6 +220,8 @@ export async function sendGroupMessage(input: ComposeMessage, senderId: number):
 
     let emailsSent = 0;
     let emailsFailed = 0;
+    let smsSent = 0;
+    let smsFailed = 0;
 
     if (sendEmail && emailRecipientIds.length > 0) {
       const emailRecipients = members.filter((m) => emailRecipientIds.includes(m.ownerid));
@@ -215,12 +230,16 @@ export async function sendGroupMessage(input: ComposeMessage, senderId: number):
       emailsFailed = emailResult.failed;
     }
 
-    const smsSent = 0;
+    if (sendSms && smsRecipientIds.length > 0 && smsBody) {
+      const smsResult = await sendSmsForMessage(result.id, smsRecipientIds, smsBody);
+      smsSent = smsResult.sent;
+      smsFailed = smsResult.failed;
+    }
 
     await prisma.message.update({
       where: { id: result.id },
       data: {
-        failedCount: emailsFailed,
+        failedCount: emailsFailed + smsFailed,
       },
     });
 
@@ -228,7 +247,7 @@ export async function sendGroupMessage(input: ComposeMessage, senderId: number):
       messageId: result.id,
       emailCount: emailsSent,
       smsCount: smsSent,
-      failedCount: emailsFailed,
+      failedCount: emailsFailed + smsFailed,
     };
   } catch (error) {
     throw transformError(error);
@@ -237,7 +256,7 @@ export async function sendGroupMessage(input: ComposeMessage, senderId: number):
 
 export async function sendBlastMessage(input: BlastMessage, senderId: number): Promise<MessageResult> {
   try {
-    const { subject, body, sendEmail, sendSms } = input;
+    const { subject, body, smsBody, sendEmail, sendSms } = input;
 
     if (!sendEmail && !sendSms) {
       throw new AppError("VALIDATION_ERROR", "At least one delivery method (email or SMS) must be selected");
@@ -286,7 +305,7 @@ export async function sendBlastMessage(input: BlastMessage, senderId: number): P
         });
       }
 
-      if (sendSms && smsRecipientIds.length > 0 && env.SMS_ENABLED) {
+      if (sendSms && smsRecipientIds.length > 0) {
         await tx.messageRecipient.createMany({
           data: smsRecipientIds.map((memberId) => ({
             messageId: message.id,
@@ -302,6 +321,8 @@ export async function sendBlastMessage(input: BlastMessage, senderId: number): P
 
     let emailsSent = 0;
     let emailsFailed = 0;
+    let smsSent = 0;
+    let smsFailed = 0;
 
     if (sendEmail && emailRecipientIds.length > 0) {
       const emailResult = await sendEmailsForMessage(result.id, members, subject, body, null);
@@ -309,12 +330,16 @@ export async function sendBlastMessage(input: BlastMessage, senderId: number): P
       emailsFailed = emailResult.failed;
     }
 
-    const smsSent = 0;
+    if (sendSms && smsRecipientIds.length > 0 && smsBody) {
+      const smsResult = await sendSmsForMessage(result.id, smsRecipientIds, smsBody);
+      smsSent = smsResult.sent;
+      smsFailed = smsResult.failed;
+    }
 
     await prisma.message.update({
       where: { id: result.id },
       data: {
-        failedCount: emailsFailed,
+        failedCount: emailsFailed + smsFailed,
       },
     });
 
@@ -322,7 +347,7 @@ export async function sendBlastMessage(input: BlastMessage, senderId: number): P
       messageId: result.id,
       emailCount: emailsSent,
       smsCount: smsSent,
-      failedCount: emailsFailed,
+      failedCount: emailsFailed + smsFailed,
     };
   } catch (error) {
     throw transformError(error);

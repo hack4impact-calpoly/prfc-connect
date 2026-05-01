@@ -24,6 +24,10 @@ const envSchema = z.object({
     .default("false")
     .transform((v) => v === "true"),
 
+  TWILIO_ACCOUNT_SID: z.string().min(1).optional(),
+  TWILIO_AUTH_TOKEN: z.string().min(1).optional(),
+  TWILIO_FROM_NUMBER: z.string().min(1).optional(),
+
   STAGING: z
     .string()
     .default("false")

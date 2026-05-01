@@ -47,6 +47,20 @@ export interface RecipientCounts {
   smsIneligible: number;
 }
 
+export interface RecipientSendResult {
+  memberId: number;
+  status: "sent" | "failed";
+  externalId?: string;
+  error?: string;
+}
+
+export interface GroupEmailResult {
+  sent: number;
+  failed: number;
+  suppressed: number;
+  results: RecipientSendResult[];
+}
+
 export interface MessageHistoryPage {
   items: MessageHistoryItem[];
   totalCount: number;

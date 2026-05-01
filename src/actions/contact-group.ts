@@ -236,20 +236,21 @@ export async function sendMessage(input: {
   groupIds: number[];
   subject: string;
   body: string;
+  smsBody?: string;
   sendEmail?: boolean;
   sendSms?: boolean;
 }): Promise<ActionResult<MessageResult>> {
   try {
     const session = await verifySession();
+    const validated = ComposeMessageSchema.parse(input);
 
     if (!session.isAdmin) {
-      const ownerChecks = await Promise.all(input.groupIds.map((gid) => isGroupOwner(gid, session.ownerid)));
+      const ownerChecks = await Promise.all(validated.groupIds.map((gid) => isGroupOwner(gid, session.ownerid)));
       if (ownerChecks.some((isOwner) => !isOwner)) {
         return { success: false, error: "You do not have permission to send messages to one or more selected groups" };
       }
     }
 
-    const validated = ComposeMessageSchema.parse(input);
     const result = await sendGroupMessage(validated, session.ownerid);
 
     return { success: true, data: result };
@@ -262,18 +263,19 @@ export async function sendMessage(input: {
 export async function sendBlast(input: {
   subject: string;
   body: string;
+  smsBody?: string;
   sendEmail?: boolean;
   sendSms?: boolean;
   confirmationText: "SEND TO ALL";
 }): Promise<ActionResult<MessageResult>> {
   try {
     const session = await verifySession();
+    const validated = BlastMessageSchema.parse(input);
 
     if (!session.isAdmin) {
       return { success: false, error: "You do not have permission to send blast messages" };
     }
 
-    const validated = BlastMessageSchema.parse(input);
     const result = await sendBlastMessage(validated, session.ownerid);
 
     return { success: true, data: result };

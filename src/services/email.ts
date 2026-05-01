@@ -4,6 +4,7 @@ import path from "path";
 import { Resend } from "resend";
 import type { Prospect } from "@/schema/referral";
 import { AppError } from "@/utils/errors";
+import type { RecipientSendResult } from "@/types/message";
 import { env } from "@/env";
 import { generateUnsubscribeToken } from "@/lib/unsubscribe-tokens";
 import { filterSuppressedEmails } from "./email-suppression";
@@ -27,6 +28,9 @@ function getReferralImage(): string {
 export function validateEmailAllowed(): void {
   if (!env.EMAIL_ENABLED) {
     throw new AppError("FORBIDDEN", "Email functionality is currently disabled", { reason: "EMAIL_DISABLED" });
+  }
+  if (!env.RESEND_API_KEY) {
+    throw new AppError("INTERNAL_ERROR", "Email provider API key is not configured");
   }
 }
 
@@ -120,7 +124,7 @@ interface GroupEmailParams {
 
 export async function sendGroupEmails(
   params: GroupEmailParams,
-): Promise<{ sent: number; failed: number; suppressed: number }> {
+): Promise<{ sent: number; failed: number; suppressed: number; results: RecipientSendResult[] }> {
   const { recipients, subject, body, senderName, replyTo, groupId } = params;
 
   const emails = recipients.map((r) => r.email);
@@ -129,6 +133,7 @@ export async function sendGroupEmails(
 
   let sent = 0;
   let failed = 0;
+  const recipientResults: RecipientSendResult[] = [];
 
   for (let i = 0; i < validRecipients.length; i += BATCH_SIZE) {
     const batch = validRecipients.slice(i, i + BATCH_SIZE);
@@ -150,7 +155,7 @@ export async function sendGroupEmails(
 
         const { to, subject: redirectedSubject } = applyRedirect(recipient.email, subject);
 
-        const { error } = await getClient().emails.send({
+        const { data, error } = await getClient().emails.send({
           from: `${senderName} <${env.FROM_EMAIL ?? ""}>`,
           to,
           replyTo,
@@ -163,15 +168,21 @@ export async function sendGroupEmails(
         });
 
         if (error) throw new Error(error.message);
+        return { memberId: recipient.memberId, externalId: data?.id };
       }),
     );
 
-    for (const result of results) {
+    for (let j = 0; j < results.length; j++) {
+      const result = results[j];
+      const recipient = batch[j];
       if (result.status === "fulfilled") {
         sent++;
+        recipientResults.push({ memberId: recipient.memberId, status: "sent", externalId: result.value.externalId });
       } else {
         failed++;
+        const errorMsg = result.reason instanceof Error ? result.reason.message : "Unknown error";
         console.error("[EMAIL_SEND_ERROR]", result.reason);
+        recipientResults.push({ memberId: recipient.memberId, status: "failed", error: errorMsg });
       }
     }
 
@@ -180,5 +191,5 @@ export async function sendGroupEmails(
     }
   }
 
-  return { sent, failed, suppressed: suppressed.length };
+  return { sent, failed, suppressed: suppressed.length, results: recipientResults };
 }

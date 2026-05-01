@@ -1,7 +1,7 @@
 import { BaseMessageSchema } from "@/schema/contact-group";
 import { MessageHistoryQuerySchema } from "@/schema/message";
 
-describe("BaseMessageSchema SMS body length", () => {
+describe("BaseMessageSchema SMS body", () => {
   it("allows long body when sendSms is false", () => {
     const result = BaseMessageSchema.safeParse({
       subject: "Test",
@@ -13,21 +13,10 @@ describe("BaseMessageSchema SMS body length", () => {
     expect(result.success).toBe(true);
   });
 
-  it("allows 160 character body when sendSms is true", () => {
+  it("requires smsBody when sendSms is true", () => {
     const result = BaseMessageSchema.safeParse({
       subject: "Test",
-      body: "a".repeat(160),
-      sendEmail: false,
-      sendSms: true,
-    });
-
-    expect(result.success).toBe(true);
-  });
-
-  it("rejects body over 160 characters when sendSms is true", () => {
-    const result = BaseMessageSchema.safeParse({
-      subject: "Test",
-      body: "a".repeat(161),
+      body: "a".repeat(500),
       sendEmail: false,
       sendSms: true,
     });
@@ -35,12 +24,37 @@ describe("BaseMessageSchema SMS body length", () => {
     expect(result.success).toBe(false);
   });
 
-  it("allows long body when both channels enabled but sendSms is false", () => {
+  it("accepts smsBody at 160 characters when sendSms is true", () => {
     const result = BaseMessageSchema.safeParse({
       subject: "Test",
-      body: "a".repeat(500),
+      body: "Email body",
+      smsBody: "a".repeat(160),
+      sendEmail: false,
+      sendSms: true,
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects smsBody over 160 characters", () => {
+    const result = BaseMessageSchema.safeParse({
+      subject: "Test",
+      body: "Email body",
+      smsBody: "a".repeat(161),
+      sendEmail: false,
+      sendSms: true,
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("allows long email body with separate short smsBody", () => {
+    const result = BaseMessageSchema.safeParse({
+      subject: "Test",
+      body: "a".repeat(5000),
+      smsBody: "Short SMS",
       sendEmail: true,
-      sendSms: false,
+      sendSms: true,
     });
 
     expect(result.success).toBe(true);
