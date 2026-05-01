@@ -40,6 +40,8 @@ export async function sendGroupSms(params: {
       return { sent: 0, failed: 0, results: [] };
     }
 
+    const bodyWithFooter = `${body}\n\nReply STOP to opt out. Msg & data rates may apply.`;
+
     let sent = 0;
     let failed = 0;
     const results: RecipientSendResult[] = [];
@@ -47,7 +49,7 @@ export async function sendGroupSms(params: {
     for (let i = 0; i < recipients.length; i += SMS_BATCH_SIZE) {
       const batch = recipients.slice(i, i + SMS_BATCH_SIZE);
 
-      const batchResults = await Promise.allSettled(batch.map((r) => sendSms(r.phone, body)));
+      const batchResults = await Promise.allSettled(batch.map((r) => sendSms(r.phone, bodyWithFooter)));
 
       for (let j = 0; j < batchResults.length; j++) {
         const result = batchResults[j];

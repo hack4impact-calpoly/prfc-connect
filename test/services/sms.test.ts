@@ -83,4 +83,18 @@ describe("sendGroupSms", () => {
 
     expect(result.results[0].externalId).toBe("SM_test_sid_123");
   });
+
+  it("appends STOP opt-out footer to every SMS", async () => {
+    mockTwilioSend.mockResolvedValueOnce({ sid: "SM001" });
+
+    await sendGroupSms({
+      recipients: [{ memberId: 100001, phone: "+15551111111" }],
+      body: "Event tomorrow at 3 PM",
+    });
+
+    const sentBody = mockTwilioSend.mock.calls[0][0].body;
+    expect(sentBody).toContain("Event tomorrow at 3 PM");
+    expect(sentBody).toContain("Reply STOP to opt out");
+    expect(sentBody).toContain("Msg & data rates may apply");
+  });
 });

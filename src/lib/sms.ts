@@ -1,5 +1,5 @@
 import "server-only";
-import twilio from "twilio";
+import twilio, { validateRequest } from "twilio";
 import { env } from "@/env";
 import { AppError } from "@/utils/errors";
 
@@ -12,6 +12,11 @@ function getClient(): ReturnType<typeof twilio> {
   }
   _client = twilio(env.TWILIO_ACCOUNT_SID, env.TWILIO_AUTH_TOKEN);
   return _client;
+}
+
+export function verifyTwilioSignature(signature: string, url: string, params: Record<string, string>): boolean {
+  if (!env.TWILIO_AUTH_TOKEN) return false;
+  return validateRequest(env.TWILIO_AUTH_TOKEN, signature, url, params);
 }
 
 export async function sendSms(to: string, body: string): Promise<{ sid: string }> {

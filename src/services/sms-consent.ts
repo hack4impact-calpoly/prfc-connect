@@ -89,6 +89,22 @@ export async function revokeSmsConsent(memberId: number, method: string, message
   }
 }
 
+export async function revokeConsentByPhone(phone: string, method: string, message: string | null): Promise<void> {
+  try {
+    const hash = blindIndex(phone);
+    await prisma.smsConsent.updateMany({
+      where: { phoneHash: hash, revokedAt: null },
+      data: {
+        revokedAt: new Date(),
+        revokeMethod: method,
+        revokeMessage: message,
+      },
+    });
+  } catch (error) {
+    throw transformError(error);
+  }
+}
+
 export async function getConsentedPhones(memberIds: number[]): Promise<Map<number, string>> {
   try {
     const consents = await prisma.smsConsent.findMany({

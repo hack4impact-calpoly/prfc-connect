@@ -99,6 +99,7 @@ function generateEmailHtml(prospectName: string, memberName: string, referralCod
       <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
         <p style="margin: 5px 0;">📧 <a href="mailto:info@pasofoodcooperative.com" style="color: #333; text-decoration: none;">info@pasofoodcooperative.com</a></p>
         <p style="margin: 5px 0;">🌐 <a href="www.pasofoodcooperative.com" style="color: #333; text-decoration: none;">www.pasofoodcooperative.com</a></p>
+        <p style="margin: 5px 0; font-size: 12px; color: #666;">Paso Robles Food Cooperative, Inc. P.O. Box 922, Paso Robles, CA 93447</p>
       </div>
     </div>
   </div>`;

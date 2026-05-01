@@ -5,6 +5,7 @@ import {
   getMemberSmsConsent,
   hasActiveConsent,
   revokeSmsConsent,
+  revokeConsentByPhone,
   getConsentedPhones,
   grantSmsConsent,
 } from "@/services/sms-consent";
@@ -190,5 +191,36 @@ describe("grantSmsConsent", () => {
     mockPrisma.smsConsent.findFirst.mockRejectedValue(new Error("Connection lost"));
 
     await expect(grantSmsConsent(100001, "+15551234567")).rejects.toMatchObject({ code: "INTERNAL_ERROR" });
+  });
+});
+
+describe("revokeConsentByPhone", () => {
+  it("revokes active consent by phone hash", async () => {
+    mockPrisma.smsConsent.updateMany.mockResolvedValue({ count: 1 });
+
+    await revokeConsentByPhone("+15551234567", "sms_reply_stop", "STOP");
+
+    expect(mockPrisma.smsConsent.updateMany).toHaveBeenCalledWith({
+      where: { phoneHash: "hash:+15551234567", revokedAt: null },
+      data: {
+        revokedAt: expect.any(Date),
+        revokeMethod: "sms_reply_stop",
+        revokeMessage: "STOP",
+      },
+    });
+  });
+
+  it("handles zero matching records without error", async () => {
+    mockPrisma.smsConsent.updateMany.mockResolvedValue({ count: 0 });
+
+    await expect(revokeConsentByPhone("+15559999999", "sms_reply_stop", "STOP")).resolves.toBeUndefined();
+  });
+
+  it("throws on database error", async () => {
+    mockPrisma.smsConsent.updateMany.mockRejectedValue(new Error("Connection lost"));
+
+    await expect(revokeConsentByPhone("+15551234567", "sms_reply_stop", "STOP")).rejects.toMatchObject({
+      code: "INTERNAL_ERROR",
+    });
   });
 });
