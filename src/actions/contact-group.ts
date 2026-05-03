@@ -27,6 +27,7 @@ import {
   sendBlastMessage,
   getMessageHistoryPage,
   getMessageById,
+  isMessageRecipient,
   getMessageRecipients,
   previewRecipientCounts,
 } from "@/services/message";
@@ -324,7 +325,9 @@ export async function fetchMessageDetail(messageId: number): Promise<
     const session = await verifySession();
     const message = await getMessageById(messageId);
 
-    if (!session.isAdmin && message.senderId !== session.ownerid) {
+    const isSender = message.senderId === session.ownerid;
+    const isRecipient = await isMessageRecipient(messageId, session.ownerid);
+    if (!session.isAdmin && !isSender && !isRecipient) {
       return { success: false, error: "You do not have permission to view this message" };
     }
 

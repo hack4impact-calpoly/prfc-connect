@@ -17,12 +17,5 @@ function TargetIcon() {
 type Props = { count: number };
 
 export function TotalMembersCard({ count }: Props) {
-  return (
-    <StatCard
-      label="Total Members"
-      value={`${count}/${MEMBER_CAPACITY}`}
-      icon={<TargetIcon />}
-      viewAllHref="/referral-database"
-    />
-  );
+  return <StatCard label="Total Members" value={`${count}/${MEMBER_CAPACITY}`} icon={<TargetIcon />} />;
 }

@@ -12,10 +12,11 @@ type Props = {
   name: string;
   photoUrl: string | null;
   onUpload: (file: File) => void;
+  onDelete?: () => void;
   isUploading?: boolean;
 };
 
-export function ProfilePhotoUpload({ name, photoUrl, onUpload, isUploading = false }: Props) {
+export function ProfilePhotoUpload({ name, photoUrl, onUpload, onDelete, isUploading = false }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -63,16 +64,29 @@ export function ProfilePhotoUpload({ name, photoUrl, onUpload, isUploading = fal
         className="hidden"
         aria-label="Upload profile photo"
       />
-      <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
-        {isUploading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <>
-            <Upload className="mr-2 h-4 w-4" />
-            Upload
-          </>
+      <div className="flex gap-2">
+        <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
+          {isUploading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <>
+              <Upload className="mr-2 h-4 w-4" />
+              Upload
+            </>
+          )}
+        </Button>
+        {photoUrl && onDelete && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onDelete}
+            disabled={isUploading}
+            className="text-destructive"
+          >
+            Remove
+          </Button>
         )}
-      </Button>
+      </div>
     </div>
   );
 }

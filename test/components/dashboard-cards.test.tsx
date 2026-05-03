@@ -7,7 +7,7 @@ describe("TotalMembersCard", () => {
     render(<TotalMembersCard count={376} />);
     expect(screen.getByText("376/500")).toBeInTheDocument();
     expect(screen.getByText("Total Members")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /View all/ })).toHaveAttribute("href", "/referral-database");
+    expect(screen.queryByRole("link", { name: /View all/ })).not.toBeInTheDocument();
   });
 
   it("renders the empty state as 0/500", () => {

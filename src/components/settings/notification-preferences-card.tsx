@@ -36,7 +36,8 @@ export function NotificationPreferencesCard({
               Receive event announcements and group messages via email
             </label>
             <p className="text-sm text-muted-foreground">
-              You can unsubscribe from any email using the link at the bottom of the message.
+              Turning this off stops all group emails. You can also unsubscribe from individual groups on their detail
+              page.
             </p>
           </div>
           <Switch

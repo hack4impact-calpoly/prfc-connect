@@ -542,6 +542,18 @@ export async function getMessageById(messageId: number): Promise<MessageDetail> 
   }
 }
 
+export async function isMessageRecipient(messageId: number, memberId: number): Promise<boolean> {
+  try {
+    const record = await prisma.messageRecipient.findFirst({
+      where: { messageId, memberId },
+      select: { id: true },
+    });
+    return record !== null;
+  } catch (error) {
+    throw transformError(error);
+  }
+}
+
 export async function getMessageRecipients(messageId: number): Promise<RecipientStatus[]> {
   try {
     const recipients = await prisma.messageRecipient.findMany({

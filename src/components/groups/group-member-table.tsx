@@ -18,6 +18,10 @@ interface GroupMemberTableProps {
 }
 
 export function GroupMemberTable({ members, mode, removedIds, onRemove, onRestore }: GroupMemberTableProps) {
+  if (members.length === 0) {
+    return <p className="py-8 text-center text-muted-foreground">No members in this group.</p>;
+  }
+
   return (
     <Table>
       <TableHeader>

@@ -5,7 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { ProfilePhotoUpload } from "@/components/profile/profile-photo-upload";
 import { PersonalInformationCard } from "@/components/profile/personal-information-card";
-import { uploadPhotoAction } from "@/actions/settings";
+import { uploadPhotoAction, deletePhotoAction } from "@/actions/settings";
 import type { MemberProfile } from "@/services/profile";
 
 type Props = {
@@ -43,6 +43,17 @@ export function ProfileContent({ profile, photoUrl, userName, isAdmin }: Props) 
           name={userName}
           photoUrl={currentPhotoUrl}
           onUpload={handleUpload}
+          onDelete={async () => {
+            setIsUploading(true);
+            const result = await deletePhotoAction();
+            setIsUploading(false);
+            if (result.success) {
+              setCurrentPhotoUrl(null);
+              toast.success("Photo removed");
+            } else {
+              toast.error(handleActionError(result.error, "Failed to remove photo"));
+            }
+          }}
           isUploading={isUploading}
         />
       </div>

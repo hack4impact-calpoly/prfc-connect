@@ -7,7 +7,7 @@ type StatCardProps = {
   label: string;
   value: string;
   icon: React.ReactNode;
-  viewAllHref: string;
+  viewAllHref?: string;
   className?: string;
 };
 
@@ -21,13 +21,17 @@ export function StatCard({ label, value, icon, viewAllHref, className }: StatCar
         </div>
         <div className="ml-4 shrink-0">{icon}</div>
       </div>
-      <div className="border-t border-prfc-border/20" />
-      <Link
-        href={viewAllHref}
-        className="flex items-center gap-1 px-6 py-3 text-sm text-muted-foreground hover:text-prfc-brown"
-      >
-        View all <ChevronRight className="h-4 w-4" />
-      </Link>
+      {viewAllHref && (
+        <>
+          <div className="border-t border-prfc-border/20" />
+          <Link
+            href={viewAllHref}
+            className="flex items-center gap-1 px-6 py-3 text-sm text-muted-foreground hover:text-prfc-brown"
+          >
+            View all <ChevronRight className="h-4 w-4" />
+          </Link>
+        </>
+      )}
     </Card>
   );
 }

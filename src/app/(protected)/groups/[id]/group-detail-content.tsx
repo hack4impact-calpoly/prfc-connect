@@ -8,6 +8,17 @@ import { ChevronLeft, Search, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { GroupMemberTable } from "@/components/groups/group-member-table";
 import { AddMembersModal, type MemberRow } from "@/components/groups/add-members-modal";
 import { Switch } from "@/components/ui/switch";
@@ -196,15 +207,37 @@ export function GroupDetailContent({ group, allMembers, currentUserOwnerid, isAd
             </label>
           </div>
           {!isOwner && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleLeaveGroup}
-              disabled={isPending}
-              className="text-destructive border-destructive hover:bg-destructive/10"
-            >
-              Leave Group
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={isPending}
+                  className="text-destructive border-destructive hover:bg-destructive/10"
+                >
+                  Leave Group
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Leave {group.name}?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    You will be removed from this group and stop receiving its messages. An admin can add you back if
+                    needed.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleLeaveGroup}
+                    disabled={isPending}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Leave Group
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           )}
         </div>
       )}

@@ -10,6 +10,7 @@ vi.mock("@/services/message", () => ({
   sendBlastMessage: vi.fn(),
   getMessageHistoryPage: vi.fn(),
   getMessageById: vi.fn(),
+  isMessageRecipient: vi.fn(),
   getMessageRecipients: vi.fn(),
   previewRecipientCounts: vi.fn(),
 }));
@@ -21,6 +22,7 @@ vi.mock("@/services/contact-group", () => ({
 import {
   getMessageHistoryPage,
   getMessageById,
+  isMessageRecipient,
   getMessageRecipients,
   previewRecipientCounts,
 } from "@/services/message";
@@ -29,6 +31,7 @@ import { fetchMessageHistoryPage, fetchMessageDetail, fetchRecipientPreview } fr
 
 const mockGetMessageHistoryPage = getMessageHistoryPage as MockedFunction<typeof getMessageHistoryPage>;
 const mockGetMessageById = getMessageById as MockedFunction<typeof getMessageById>;
+const mockIsMessageRecipient = isMessageRecipient as MockedFunction<typeof isMessageRecipient>;
 const mockGetMessageRecipients = getMessageRecipients as MockedFunction<typeof getMessageRecipients>;
 const mockPreviewRecipientCounts = previewRecipientCounts as MockedFunction<typeof previewRecipientCounts>;
 const mockIsGroupOwner = isGroupOwner as MockedFunction<typeof isGroupOwner>;
@@ -36,6 +39,7 @@ const mockIsGroupOwner = isGroupOwner as MockedFunction<typeof isGroupOwner>;
 describe("fetchMessageDetail", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockIsMessageRecipient.mockResolvedValue(false);
   });
 
   const messageDetail = {
@@ -75,7 +79,18 @@ describe("fetchMessageDetail", () => {
     expect(result.success).toBe(true);
   });
 
-  it("rejects non-sender non-admin access", async () => {
+  it("returns message detail for recipient who is not the sender", async () => {
+    mockVerifySession.mockResolvedValue({ ownerid: 100003, isAdmin: false });
+    mockGetMessageById.mockResolvedValue(messageDetail);
+    mockIsMessageRecipient.mockResolvedValue(true);
+    mockGetMessageRecipients.mockResolvedValue(recipients);
+
+    const result = await fetchMessageDetail(1);
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects non-sender non-recipient non-admin access", async () => {
     mockVerifySession.mockResolvedValue({ ownerid: 100003, isAdmin: false });
     mockGetMessageById.mockResolvedValue(messageDetail);
 
