@@ -41,8 +41,8 @@ export type ModalState =
   | { type: "delete"; group: EnrichedGroupData }
   | { type: "addMembers"; group: EnrichedGroupData; memberRows: MemberRow[] };
 
-export function useGroupsModal(ownerId: number) {
-  const [modal, setModal] = useState<ModalState>({ type: "closed" });
+export function useGroupsModal(ownerId: number, initialCreate: boolean = false) {
+  const [modal, setModal] = useState<ModalState>(initialCreate ? { type: "create" } : { type: "closed" });
   const [isPending, startTransition] = useTransition();
   const [loadingGroupId, setLoadingGroupId] = useState<number | null>(null);
 

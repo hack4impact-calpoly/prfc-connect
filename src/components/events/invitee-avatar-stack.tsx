@@ -39,7 +39,7 @@ export function InviteeAvatarStack({ invitees, max = 6 }: Props) {
       ))}
       {overflow > 0 && (
         <span
-          className="ml-[-8px] flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-paso-light-brown text-xs font-semibold text-prfc-brown"
+          className="ml-[-8px] flex h-8 min-w-8 items-center justify-center rounded-full border-2 border-white bg-paso-light-brown px-2 text-xs font-semibold text-prfc-brown"
           style={{ zIndex: 0 }}
         >
           +{overflow}

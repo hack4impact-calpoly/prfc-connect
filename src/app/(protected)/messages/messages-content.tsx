@@ -205,53 +205,55 @@ export function MessagesContent({ initialPage, smsFeatureEnabled }: Props) {
         <MessageHistoryTable messages={page.items} onView={handleView} />
       </div>
 
-      <div className="mt-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Rows per page</span>
-          <Select
-            value={String(pageSize)}
-            onValueChange={(v) => {
-              const size = Number(v) as 10 | 25 | 50;
-              setPageSize(size);
-              fetchFirstPage({ pageSize: size });
-            }}
-          >
-            <SelectTrigger className="w-20">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="10">10</SelectItem>
-              <SelectItem value="25">25</SelectItem>
-              <SelectItem value="50">50</SelectItem>
-            </SelectContent>
-          </Select>
+      {page.totalCount > 0 && (
+        <div className="mt-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Rows per page</span>
+            <Select
+              value={String(pageSize)}
+              onValueChange={(v) => {
+                const size = Number(v) as 10 | 25 | 50;
+                setPageSize(size);
+                fetchFirstPage({ pageSize: size });
+              }}
+            >
+              <SelectTrigger className="w-20">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="25">25</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <span className="text-sm text-muted-foreground">
+            {page.totalCount === 0 ? "No messages" : `Showing ${startIndex}-${endIndex} of ${page.totalCount}`}
+          </span>
+
+          <nav className="flex items-center gap-2" aria-label="Pagination">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePrevPage}
+              disabled={!page.prevCursor || isPending}
+              aria-disabled={!page.prevCursor || isPending}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleNextPage}
+              disabled={!page.nextCursor || isPending}
+              aria-disabled={!page.nextCursor || isPending}
+            >
+              Next
+            </Button>
+          </nav>
         </div>
-
-        <span className="text-sm text-muted-foreground">
-          {page.totalCount === 0 ? "No messages" : `Showing ${startIndex}-${endIndex} of ${page.totalCount}`}
-        </span>
-
-        <nav className="flex items-center gap-2" aria-label="Pagination">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handlePrevPage}
-            disabled={!page.prevCursor || isPending}
-            aria-disabled={!page.prevCursor || isPending}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleNextPage}
-            disabled={!page.nextCursor || isPending}
-            aria-disabled={!page.nextCursor || isPending}
-          >
-            Next
-          </Button>
-        </nav>
-      </div>
+      )}
 
       {viewModal && (
         <ViewMessageModal

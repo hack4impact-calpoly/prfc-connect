@@ -21,7 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { DateTimePicker } from "@/components/events/date-time-picker";
 import { DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { InviteeCombobox, type GroupOption, type MemberOption } from "@/components/events/invitee-combobox";
-import { createEventAction, deleteEventAction, updateEventAction } from "@/actions/event";
+import { createEventAction, deleteEventAction, updateEventAction, rsvpAction } from "@/actions/event";
 import {
   DEFAULT_EVENT_DURATION_MS,
   DEFAULT_EVENT_START_HOUR,
@@ -44,6 +44,10 @@ type Props = {
   initialMemberIds?: number[];
   canEdit?: boolean;
   onDeleted?: (eventId: number) => void;
+  currentUserOwnerid?: number;
+  currentUserRsvpStatus?: string | null;
+  inviteeMemberIds?: number[];
+  rsvps?: Array<{ memberId: number; memberName: string; status: string }>;
 };
 
 const EVENT_TYPES: { value: EventType; label: string; dot: string }[] = [
@@ -74,6 +78,10 @@ export function CreateEventPopover({
   initialMemberIds,
   canEdit = true,
   onDeleted,
+  currentUserOwnerid,
+  currentUserRsvpStatus,
+  inviteeMemberIds = [],
+  rsvps = [],
 }: Props) {
   const isEditMode = editingEvent !== undefined;
   const readOnly = isEditMode && !canEdit;
@@ -111,6 +119,19 @@ export function CreateEventPopover({
   const [error, setError] = useState("");
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [rsvpStatus, setRsvpStatus] = useState<string | null>(currentUserRsvpStatus ?? null);
+
+  const handleRsvp = (status: "going" | "maybe" | "declined") => {
+    if (!editingEvent) return;
+    setRsvpStatus(status);
+    startTransition(async () => {
+      const result = await rsvpAction({ eventId: editingEvent.id, status });
+      if (!result.success) {
+        setRsvpStatus(currentUserRsvpStatus ?? null);
+        toast.error(handleActionError(result.error, "Failed to update RSVP"));
+      }
+    });
+  };
 
   useEffect(() => {
     if (!readOnly) titleRef.current?.focus();
@@ -244,7 +265,7 @@ export function CreateEventPopover({
           placeholder="New Event Title"
           maxLength={200}
           disabled={readOnly}
-          className="w-full border-none bg-transparent font-angkor text-3xl text-prfc-red outline-none placeholder:text-foreground disabled:cursor-default disabled:opacity-100"
+          className="w-full border-none bg-transparent font-angkor text-3xl text-prfc-red outline-none placeholder:text-muted-foreground disabled:cursor-default disabled:opacity-100"
           aria-label="Event title"
         />
 
@@ -358,6 +379,29 @@ export function CreateEventPopover({
         </div>
 
         {error && <p className="text-sm text-destructive">{error}</p>}
+
+        {isEditMode &&
+          rsvps.length > 0 &&
+          (canEdit || (currentUserOwnerid && inviteeMemberIds.includes(currentUserOwnerid))) && (
+            <div className="mt-4 border-t border-prfc-border/20 pt-4">
+              <p className="mb-2 text-sm font-semibold text-foreground">Responses ({rsvps.length})</p>
+              <div className="space-y-2">
+                {["going", "maybe", "declined"].map((status) => {
+                  const group = rsvps.filter((r) => r.status === status);
+                  if (group.length === 0) return null;
+                  const label = status === "going" ? "Going" : status === "maybe" ? "Maybe" : "No";
+                  return (
+                    <div key={status}>
+                      <p className="text-xs font-medium text-muted-foreground">
+                        {label} ({group.length})
+                      </p>
+                      <p className="text-sm">{group.map((r) => r.memberName).join(", ")}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
       </div>
 
       <div className="flex items-center justify-end gap-2 border-t border-prfc-border/30 bg-white px-6 py-4">
@@ -373,9 +417,50 @@ export function CreateEventPopover({
             Delete
           </Button>
         )}
-        <Button type="button" variant="outline" onClick={onClose} disabled={isPending}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onClose}
+          disabled={isPending}
+          className={readOnly ? "mr-auto" : ""}
+        >
           {readOnly ? "Close" : "Cancel"}
         </Button>
+        {readOnly && editingEvent && currentUserOwnerid && inviteeMemberIds.includes(currentUserOwnerid) && (
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-muted-foreground">RSVP</span>
+            <Button
+              type="button"
+              variant={rsvpStatus === "going" ? "default" : "outline"}
+              size="sm"
+              onClick={() => handleRsvp("going")}
+              disabled={isPending}
+              className={rsvpStatus === "going" ? "bg-green-700 text-white hover:bg-green-800" : ""}
+            >
+              Going
+            </Button>
+            <Button
+              type="button"
+              variant={rsvpStatus === "maybe" ? "default" : "outline"}
+              size="sm"
+              onClick={() => handleRsvp("maybe")}
+              disabled={isPending}
+              className={rsvpStatus === "maybe" ? "bg-amber-600 text-white hover:bg-amber-700" : ""}
+            >
+              Maybe
+            </Button>
+            <Button
+              type="button"
+              variant={rsvpStatus === "declined" ? "default" : "outline"}
+              size="sm"
+              onClick={() => handleRsvp("declined")}
+              disabled={isPending}
+              className={rsvpStatus === "declined" ? "bg-red-700 text-white hover:bg-red-800" : ""}
+            >
+              No
+            </Button>
+          </div>
+        )}
         {!readOnly && (
           <Button
             type="button"

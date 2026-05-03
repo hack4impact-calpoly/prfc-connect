@@ -91,7 +91,7 @@ export async function getUpcomingEvents(limit: number = 5): Promise<EventSummary
 export async function getEventsForMonth(
   year: number,
   month: number,
-  filters?: { eventType?: EventType; groupId?: number },
+  filters?: { eventType?: EventType; groupId?: number; inviteeMemberId?: number },
 ): Promise<EventSummary[]> {
   try {
     const coopStart = coopStartOfMonth(year, month);
@@ -109,6 +109,16 @@ export async function getEventsForMonth(
         },
         ...(filters?.eventType ? [{ eventType: filters.eventType }] : []),
         ...(filters?.groupId ? [{ groupId: filters.groupId }] : []),
+        ...(filters?.inviteeMemberId
+          ? [
+              {
+                OR: [
+                  { invitees: { some: { memberId: filters.inviteeMemberId } } },
+                  { ownerid: filters.inviteeMemberId },
+                ],
+              },
+            ]
+          : []),
       ],
     });
   } catch (error) {
@@ -116,7 +126,10 @@ export async function getEventsForMonth(
   }
 }
 
-export async function getEventsForWeek(weekStart: Date): Promise<EventSummary[]> {
+export async function getEventsForWeek(
+  weekStart: Date,
+  filters?: { inviteeMemberId?: number },
+): Promise<EventSummary[]> {
   try {
     const coopStart = coopStartOfWeek(weekStart);
     const coopEnd = coopEndOfWeek(weekStart);
@@ -124,9 +137,23 @@ export async function getEventsForWeek(weekStart: Date): Promise<EventSummary[]>
     const floatingEnd = utcEndOfWeek(weekStart);
 
     return await queryEventSummaries({
-      OR: [
-        { isAllDay: false, startDate: { gte: coopStart, lte: coopEnd } },
-        { isAllDay: true, startDate: { gte: floatingStart, lte: floatingEnd } },
+      AND: [
+        {
+          OR: [
+            { isAllDay: false, startDate: { gte: coopStart, lte: coopEnd } },
+            { isAllDay: true, startDate: { gte: floatingStart, lte: floatingEnd } },
+          ],
+        },
+        ...(filters?.inviteeMemberId
+          ? [
+              {
+                OR: [
+                  { invitees: { some: { memberId: filters.inviteeMemberId } } },
+                  { ownerid: filters.inviteeMemberId },
+                ],
+              },
+            ]
+          : []),
       ],
     });
   } catch (error) {

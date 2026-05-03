@@ -172,21 +172,33 @@ describe("getEventsForMonth", () => {
 });
 
 describe("getEventsForWeek", () => {
-  it("queries timed events in coop-zone week and all-day events in UTC week via OR clause", async () => {
+  it("queries timed events in coop-zone week and all-day events in UTC week", async () => {
     mockPrisma.event.findMany.mockResolvedValue([] as never);
 
     await getEventsForWeek(new Date("2026-04-15T21:00:00.000Z"));
 
     const call = mockPrisma.event.findMany.mock.calls[0][0] as {
-      where: { OR: Array<{ isAllDay: boolean; startDate: { gte: Date; lte: Date } }> };
+      where: { AND: Array<{ OR?: Array<{ isAllDay: boolean; startDate: { gte: Date; lte: Date } }> }> };
     };
-    expect(call.where.OR).toHaveLength(2);
-    const timed = call.where.OR.find((c) => c.isAllDay === false);
-    const allDay = call.where.OR.find((c) => c.isAllDay === true);
+    const dateFilter = call.where.AND[0].OR!;
+    expect(dateFilter).toHaveLength(2);
+    const timed = dateFilter.find((c) => c.isAllDay === false);
+    const allDay = dateFilter.find((c) => c.isAllDay === true);
     expect(timed?.startDate.gte.toISOString()).toBe("2026-04-12T07:00:00.000Z");
     expect(timed?.startDate.lte.toISOString()).toBe("2026-04-19T06:59:59.999Z");
     expect(allDay?.startDate.gte.toISOString()).toBe("2026-04-12T00:00:00.000Z");
     expect(allDay?.startDate.lte.toISOString()).toBe("2026-04-18T23:59:59.999Z");
+  });
+
+  it("filters by inviteeMemberId when provided", async () => {
+    mockPrisma.event.findMany.mockResolvedValue([] as never);
+
+    await getEventsForWeek(new Date("2026-04-15T21:00:00.000Z"), { inviteeMemberId: 100003 });
+
+    const call = mockPrisma.event.findMany.mock.calls[0][0] as {
+      where: { AND: unknown[] };
+    };
+    expect(call.where.AND).toHaveLength(2);
   });
 });
 

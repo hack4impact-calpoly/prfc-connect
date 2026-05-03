@@ -32,6 +32,7 @@ export const FetchEventsForMonthSchema = z.object({
     .object({
       eventType: z.enum(["social", "networking", "volunteer", "meeting"]).optional(),
       groupId: z.number().int().positive().optional(),
+      inviteeMemberId: z.number().int().positive().optional(),
     })
     .optional(),
 });

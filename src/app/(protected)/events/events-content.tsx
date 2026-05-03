@@ -2,6 +2,7 @@
 
 import { handleActionError } from "@/utils/auth-redirect";
 import { useEffect, useMemo, useState, useTransition } from "react";
+import { useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -76,13 +77,22 @@ export function EventsContent({
   const [currentDate, setCurrentDate] = useState<Date>(() => new Date(initialDateIso));
   const [weekEvents, setWeekEvents] = useState<EventSummary[]>(() => parseEvents(initialWeekEvents));
   const [monthEvents, setMonthEvents] = useState<EventSummary[]>([]);
+  const [eventScope, setEventScope] = useState<"my" | "all">(isAdmin ? "all" : "my");
   const [groupFilter, setGroupFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [selectedDay, setSelectedDay] = useState<Date>(initialSelected);
-  const [createOpen, setCreateOpen] = useState(false);
-  const [createDefaultDate, setCreateDefaultDate] = useState<Date | undefined>();
+  const searchParams = useSearchParams();
+  const shouldAutoCreate = searchParams.get("create") === "true";
+  const [createOpen, setCreateOpen] = useState(shouldAutoCreate);
+  const [createDefaultDate, setCreateDefaultDate] = useState<Date | undefined>(() => {
+    if (!shouldAutoCreate) return undefined;
+    const now = coopNow();
+    return coopWallClockToUtc(now.year, now.month0, now.day, DEFAULT_EVENT_START_HOUR, 0);
+  });
   const [editingEvent, setEditingEvent] = useState<EventWithRsvpCount | null>(null);
   const [editingInviteeIds, setEditingInviteeIds] = useState<number[]>([]);
+  const [editingRsvps, setEditingRsvps] = useState<Array<{ memberId: number; memberName: string; status: string }>>([]);
+  const [currentUserRsvpStatus, setCurrentUserRsvpStatus] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const groupOptions: GroupOption[] = useMemo(
@@ -118,24 +128,30 @@ export function EventsContent({
   );
   const weekHeading = useMemo(() => buildWeekHeading(currentDate), [currentDate]);
 
+  const inviteeFilter = eventScope === "my" ? currentUserOwnerid : undefined;
+
   useEffect(() => {
     if (view !== "month") return;
     const groupId = groupFilter === "all" ? undefined : Number(groupFilter);
     const eventType = typeFilter === "all" ? undefined : (typeFilter as EventType);
     const { year, month0 } = coopDateParts(currentDate);
     startTransition(async () => {
-      const result = await fetchEventsForMonth(year, month0 + 1, { eventType, groupId });
+      const result = await fetchEventsForMonth(year, month0 + 1, {
+        eventType,
+        groupId,
+        inviteeMemberId: inviteeFilter,
+      });
       if (result.success && result.data) {
         setMonthEvents(parseEvents(result.data));
       } else if (!result.success) {
         toast.error(handleActionError(result.error, "Failed to load events"));
       }
     });
-  }, [view, currentDate, groupFilter, typeFilter]);
+  }, [view, currentDate, groupFilter, typeFilter, inviteeFilter]);
 
   const refetchWeek = (anchor: Date) => {
     startTransition(async () => {
-      const result = await fetchEventsForWeek(coopStartOfWeek(anchor));
+      const result = await fetchEventsForWeek(coopStartOfWeek(anchor), { inviteeMemberId: inviteeFilter });
       if (result.success && result.data) {
         setWeekEvents(parseEvents(result.data));
       } else if (!result.success) {
@@ -149,13 +165,30 @@ export function EventsContent({
     const eventType = typeFilter === "all" ? undefined : (typeFilter as EventType);
     const { year, month0 } = coopDateParts(anchor);
     startTransition(async () => {
-      const result = await fetchEventsForMonth(year, month0 + 1, { eventType, groupId });
+      const result = await fetchEventsForMonth(year, month0 + 1, {
+        eventType,
+        groupId,
+        inviteeMemberId: inviteeFilter,
+      });
       if (result.success && result.data) {
         setMonthEvents(parseEvents(result.data));
       } else if (!result.success) {
         toast.error(handleActionError(result.error, "Failed to load events"));
       }
     });
+  };
+
+  const handleScopeChange = (scope: "my" | "all") => {
+    setEventScope(scope);
+    if (view === "week") {
+      const newFilter = scope === "my" ? currentUserOwnerid : undefined;
+      startTransition(async () => {
+        const result = await fetchEventsForWeek(coopStartOfWeek(currentDate), { inviteeMemberId: newFilter });
+        if (result.success && result.data) {
+          setWeekEvents(parseEvents(result.data));
+        }
+      });
+    }
   };
 
   const advanceMonth = (delta: number): Date => {
@@ -203,6 +236,15 @@ export function EventsContent({
         const parsed = EventWithRsvpCountSchema.parse(result.data.event) as EventWithRsvpCount;
         setEditingEvent(parsed);
         setEditingInviteeIds(result.data.inviteeMemberIds);
+        setEditingRsvps(
+          (result.data.rsvps ?? []).map((r) => ({
+            memberId: r.memberId,
+            memberName: r.memberName,
+            status: r.status,
+          })),
+        );
+        const myRsvp = result.data.rsvps?.find((r) => r.memberId === currentUserOwnerid);
+        setCurrentUserRsvpStatus(myRsvp?.status ?? null);
         setCreateDefaultDate(undefined);
         setCreateOpen(true);
       } else if (!result.success) {
@@ -284,6 +326,28 @@ export function EventsContent({
         >
           <ChevronRight className="h-5 w-5 text-prfc-brown" />
         </button>
+        <div className="flex rounded-lg border border-border">
+          <button
+            type="button"
+            onClick={() => handleScopeChange("my")}
+            className={cn(
+              "rounded-l-lg px-4 py-2 text-sm font-medium transition-colors",
+              eventScope === "my" ? "bg-prfc-brown text-white" : "text-muted-foreground hover:bg-muted",
+            )}
+          >
+            My Events
+          </button>
+          <button
+            type="button"
+            onClick={() => handleScopeChange("all")}
+            className={cn(
+              "rounded-r-lg px-4 py-2 text-sm font-medium transition-colors",
+              eventScope === "all" ? "bg-prfc-brown text-white" : "text-muted-foreground hover:bg-muted",
+            )}
+          >
+            All Events
+          </button>
+        </div>
         {view === "month" && (
           <>
             <Select value={groupFilter} onValueChange={setGroupFilter}>
@@ -400,6 +464,10 @@ export function EventsContent({
             initialMemberIds={editingInviteeIds}
             canEdit={canEditCurrent}
             onDeleted={handleDeleted}
+            currentUserOwnerid={currentUserOwnerid}
+            currentUserRsvpStatus={currentUserRsvpStatus}
+            inviteeMemberIds={editingInviteeIds}
+            rsvps={editingRsvps}
           />
         </DialogContent>
       </Dialog>

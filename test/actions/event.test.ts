@@ -239,7 +239,7 @@ describe("fetchEventsForWeek", () => {
     const result = await fetchEventsForWeek(weekStart);
 
     expect(result).toEqual({ success: true, data: events });
-    expect(mockGetEventsForWeek).toHaveBeenCalledWith(weekStart);
+    expect(mockGetEventsForWeek).toHaveBeenCalledWith(weekStart, undefined);
   });
 
   it("returns error when service throws", async () => {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +29,7 @@ export function GroupsContent({ myGroups, allGroups, isAdmin, ownerId, members }
   const [view, setView] = useState<"my" | "all">("my");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("all");
+  const searchParams = useSearchParams();
   const {
     modal,
     isPending,
@@ -41,7 +42,7 @@ export function GroupsContent({ myGroups, allGroups, isAdmin, ownerId, members }
     handleConfirmDelete,
     handleCreateSubmit,
     handleDeleteCancel,
-  } = useGroupsModal(ownerId);
+  } = useGroupsModal(ownerId, searchParams.get("create") === "true");
 
   const ownerNameMap = useMemo(() => new Map(members.map((m) => [m.ownerid, m.ownername])), [members]);
   const groups = view === "all" ? allGroups : myGroups;

@@ -150,11 +150,14 @@ export async function fetchEventDetail(eventId: number): Promise<
   }
 }
 
-export async function fetchEventsForWeek(weekStart: Date): Promise<ActionResult<EventSummary[]>> {
+export async function fetchEventsForWeek(
+  weekStart: Date,
+  filters?: { inviteeMemberId?: number },
+): Promise<ActionResult<EventSummary[]>> {
   try {
     await verifySession();
     const validatedWeekStart = WeekStartSchema.parse(weekStart);
-    const events = await getEventsForWeek(validatedWeekStart);
+    const events = await getEventsForWeek(validatedWeekStart, filters);
     return { success: true, data: events };
   } catch (error) {
     const appError = transformError(error);
@@ -165,7 +168,7 @@ export async function fetchEventsForWeek(weekStart: Date): Promise<ActionResult<
 export async function fetchEventsForMonth(
   year: number,
   month: number,
-  filters?: { eventType?: EventType; groupId?: number },
+  filters?: { eventType?: EventType; groupId?: number; inviteeMemberId?: number },
 ): Promise<ActionResult<EventSummary[]>> {
   try {
     await verifySession();

@@ -36,8 +36,8 @@ export function HomeContent({
         <TotalMembersCard count={totalMembers} />
         <EventsThisMonthCard count={eventsThisMonth} />
         <QuickActionsCard
-          onCreateEvent={() => router.push("/events")}
-          onCreateGroup={() => router.push("/groups")}
+          onCreateEvent={() => router.push("/events?create=true")}
+          onCreateGroup={() => router.push("/groups?create=true")}
           onSendMessage={() => router.push("/messages/compose")}
         />
       </div>

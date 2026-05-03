@@ -1,4 +1,3 @@
-import { ChevronRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface RecentActivityCardProps {
@@ -28,13 +27,6 @@ export function RecentActivityCard({ activities }: RecentActivityCardProps) {
             ))
           )}
         </div>
-        <hr className="mt-3 border-prfc-border/30" />
-        <button
-          type="button"
-          className="mt-3 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-        >
-          View all <ChevronRight className="h-4 w-4" />
-        </button>
       </CardContent>
     </Card>
   );

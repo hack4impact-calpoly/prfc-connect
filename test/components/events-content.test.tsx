@@ -1,6 +1,10 @@
 import { render, screen } from "@testing-library/react";
 import { vi } from "vitest";
 
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => new URLSearchParams(),
+}));
+
 vi.mock("@/actions/event", () => ({
   fetchEventsForWeek: vi.fn().mockResolvedValue({ success: true, data: [] }),
   fetchEventsForMonth: vi.fn().mockResolvedValue({ success: true, data: [] }),
