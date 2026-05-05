@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSessionWithName } from "@/lib/dal";
 import { getUnseenNotificationCount, getLastNotificationSeenAt } from "@/services/dashboard";
+import { getProfilePhotoUrl } from "@/services/user-preference";
 import { AppError } from "@/utils/errors";
 import { TopBarActionProvider } from "@/components/layout/top-bar-action-context";
 import { TopBarSearchProvider } from "@/components/layout/top-bar-search-context";
@@ -20,9 +21,10 @@ export default async function ProtectedLayout({ children }: { children: React.Re
     throw error;
   }
   const userRole = session.isAdmin ? "Admin Manager" : "Member";
-  const [unseenCount, lastSeenAt] = await Promise.all([
+  const [unseenCount, lastSeenAt, photoUrl] = await Promise.all([
     getUnseenNotificationCount(session.ownerid),
     getLastNotificationSeenAt(session.ownerid),
+    getProfilePhotoUrl(session.ownerid),
   ]);
 
   return (
@@ -35,6 +37,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
             userRole={userRole}
             unseenCount={unseenCount}
             lastSeenAt={lastSeenAt?.toISOString() ?? null}
+            photoUrl={photoUrl}
           />
           <LayoutContent>{children}</LayoutContent>
         </TopBarSearchProvider>

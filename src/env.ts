@@ -28,13 +28,6 @@ const envSchema = z.object({
   TWILIO_AUTH_TOKEN: z.string().min(1).optional(),
   TWILIO_FROM_NUMBER: z.string().min(1).optional(),
 
-  STAGING: z
-    .string()
-    .default("false")
-    .transform((v) => v === "true"),
-  STAGING_USERNAME: z.string().min(1).optional(),
-  STAGING_PASSWORD: z.string().min(1).optional(),
-
   // Member Portal API integration toggle
   USE_MOCK_MEMBER_API: z
     .string()

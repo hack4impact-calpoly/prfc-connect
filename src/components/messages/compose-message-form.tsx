@@ -28,6 +28,7 @@ interface ComposeMessageFormProps {
     sendSms: boolean;
   }) => void;
   isSending?: boolean;
+  smsFeatureEnabled?: boolean;
 }
 
 export function ComposeMessageForm({
@@ -36,12 +37,13 @@ export function ComposeMessageForm({
   smsConsent,
   onSend,
   isSending = false,
+  smsFeatureEnabled = false,
 }: ComposeMessageFormProps) {
   const [isBlast, setIsBlast] = useState(false);
   const [selectedGroupIds, setSelectedGroupIds] = useState<Set<number>>(new Set());
   const [groupPickerOpen, setGroupPickerOpen] = useState(false);
   const [sendSms, setSendSms] = useState(false);
-  const [sendEmail, setSendEmail] = useState(false);
+  const [sendEmail, setSendEmail] = useState(!smsFeatureEnabled);
   const [smsBody, setSmsBody] = useState("");
   const [emailSubject, setEmailSubject] = useState("");
   const [emailBody, setEmailBody] = useState("");
@@ -180,21 +182,23 @@ export function ComposeMessageForm({
         </Popover>
       </div>
 
-      <div>
-        <p className="mb-2 text-sm font-semibold">Select a Channel</p>
-        <div className="space-y-2">
-          <label className="flex cursor-pointer items-center gap-3">
-            <Checkbox checked={sendSms} onCheckedChange={(checked) => setSendSms(checked === true)} />
-            <MessageCircle className="h-5 w-5 text-muted-foreground" />
-            <span className="text-sm">Text Message</span>
-          </label>
-          <label className="flex cursor-pointer items-center gap-3">
-            <Checkbox checked={sendEmail} onCheckedChange={(checked) => setSendEmail(checked === true)} />
-            <Mail className="h-5 w-5 text-muted-foreground" />
-            <span className="text-sm">Email</span>
-          </label>
+      {smsFeatureEnabled && (
+        <div>
+          <p className="mb-2 text-sm font-semibold">Select a Channel</p>
+          <div className="space-y-2">
+            <label className="flex cursor-pointer items-center gap-3">
+              <Checkbox checked={sendSms} onCheckedChange={(checked) => setSendSms(checked === true)} />
+              <MessageCircle className="h-5 w-5 text-muted-foreground" />
+              <span className="text-sm">Text Message</span>
+            </label>
+            <label className="flex cursor-pointer items-center gap-3">
+              <Checkbox checked={sendEmail} onCheckedChange={(checked) => setSendEmail(checked === true)} />
+              <Mail className="h-5 w-5 text-muted-foreground" />
+              <span className="text-sm">Email</span>
+            </label>
+          </div>
         </div>
-      </div>
+      )}
 
       {sendSms && (
         <div>

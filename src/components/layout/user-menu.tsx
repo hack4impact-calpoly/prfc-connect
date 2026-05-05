@@ -4,7 +4,7 @@ import { useTransition } from "react";
 import Link from "next/link";
 import { ChevronDown, ExternalLink, Settings, UserRound } from "lucide-react";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,9 +19,10 @@ import { logout } from "@/actions/auth";
 interface UserMenuProps {
   userName: string;
   userRole: "Admin Manager" | "Member";
+  photoUrl?: string | null;
 }
 
-export function UserMenu({ userName, userRole }: UserMenuProps) {
+export function UserMenu({ userName, userRole, photoUrl }: UserMenuProps) {
   const [isPending, startTransition] = useTransition();
   const initials = getInitials(userName);
   const avatarColor = getAvatarColor(userName);
@@ -40,6 +41,7 @@ export function UserMenu({ userName, userRole }: UserMenuProps) {
             <p className="truncate text-sm text-muted-foreground">{userRole}</p>
           </div>
           <Avatar className="h-10 w-10">
+            {photoUrl && <AvatarImage src={photoUrl} alt={userName} />}
             <AvatarFallback className={cn("text-sm font-semibold text-white")} style={{ backgroundColor: avatarColor }}>
               {initials}
             </AvatarFallback>

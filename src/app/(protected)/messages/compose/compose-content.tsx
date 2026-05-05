@@ -12,9 +12,10 @@ type Props = {
   groups: Array<{ id: number; name: string }>;
   currentUser: { name: string; photoUrl?: string | null };
   isAdmin: boolean;
+  smsFeatureEnabled: boolean;
 };
 
-export function ComposeContent({ groups, currentUser, isAdmin }: Props) {
+export function ComposeContent({ groups, currentUser, isAdmin, smsFeatureEnabled }: Props) {
   const router = useRouter();
   const [sentResult, setSentResult] = useState<{
     recipientCount: number;
@@ -89,5 +90,13 @@ export function ComposeContent({ groups, currentUser, isAdmin }: Props) {
     );
   }
 
-  return <ComposeMessageForm groups={groups} currentUser={currentUser} onSend={handleSend} isSending={isPending} />;
+  return (
+    <ComposeMessageForm
+      groups={groups}
+      currentUser={currentUser}
+      onSend={handleSend}
+      isSending={isPending}
+      smsFeatureEnabled={smsFeatureEnabled}
+    />
+  );
 }

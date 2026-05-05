@@ -15,9 +15,10 @@ interface TopBarProps {
   userRole: "Admin Manager" | "Member";
   unseenCount?: number;
   lastSeenAt?: string | null;
+  photoUrl?: string | null;
 }
 
-export function TopBar({ userName, userRole, unseenCount = 0, lastSeenAt = null }: TopBarProps) {
+export function TopBar({ userName, userRole, unseenCount = 0, lastSeenAt = null, photoUrl = null }: TopBarProps) {
   const action = useTopBarAction();
   const { toggle } = useSidebar();
 
@@ -58,7 +59,7 @@ export function TopBar({ userName, userRole, unseenCount = 0, lastSeenAt = null 
 
           <NotificationDropdown initialUnseenCount={unseenCount} lastSeenAt={lastSeenAt} />
 
-          <UserMenu userName={userName} userRole={userRole} />
+          <UserMenu userName={userName} userRole={userRole} photoUrl={photoUrl} />
         </div>
       </div>
     </header>

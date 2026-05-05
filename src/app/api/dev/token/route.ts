@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateToken } from "@/lib/dal";
 
 export async function POST(req: NextRequest) {
-  if (process.env.NODE_ENV === "production" && process.env.STAGING !== "true") {
+  if (process.env.NODE_ENV === "production") {
     return NextResponse.json({ error: "Not available" }, { status: 404 });
   }
 

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getSessionWithName } from "@/lib/dal";
 import { getAllGroups } from "@/services/contact-group";
+import { env } from "@/env";
 import { ComposeContent } from "./compose-content";
 
 export const metadata: Metadata = {
@@ -16,6 +17,7 @@ export default async function ComposeMessagePage() {
       groups={groups.map((g) => ({ id: g.id, name: g.name }))}
       currentUser={{ name: session.ownername }}
       isAdmin={session.isAdmin}
+      smsFeatureEnabled={env.SMS_ENABLED}
     />
   );
 }
