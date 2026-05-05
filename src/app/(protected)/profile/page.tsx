@@ -12,7 +12,7 @@ export default async function ProfilePage() {
   const session = await getSessionWithName();
   const [profile, photoUrl] = await Promise.all([
     getMemberProfile(session.ownerid, session.isAdmin),
-    getProfilePhotoUrl(session.ownerid),
+    getProfilePhotoUrl(session.ownerid).catch(() => null),
   ]);
 
   return (
