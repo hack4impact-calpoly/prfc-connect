@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { AlertCircle, Check, ChevronDown, Loader2, Mail, MessageCircle, X } from "lucide-react";
+import Link from "next/link";
+import { AlertCircle, ArrowLeft, Check, ChevronDown, Loader2, Mail, MessageCircle, X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -108,6 +109,13 @@ export function ComposeMessageForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <Link
+        href="/messages"
+        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to Messages
+      </Link>
       <h1 className="font-angkor text-3xl text-prfc-red">New Message</h1>
 
       <div>

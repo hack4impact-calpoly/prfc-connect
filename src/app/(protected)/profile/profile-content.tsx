@@ -1,7 +1,7 @@
 "use client";
 
 import { handleActionError } from "@/utils/auth-redirect";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ProfilePhotoUpload } from "@/components/profile/profile-photo-upload";
 import { PersonalInformationCard } from "@/components/profile/personal-information-card";
@@ -18,6 +18,10 @@ type Props = {
 export function ProfileContent({ profile, photoUrl, userName, isAdmin }: Props) {
   const [currentPhotoUrl, setCurrentPhotoUrl] = useState(photoUrl);
   const [isUploading, setIsUploading] = useState(false);
+
+  useEffect(() => {
+    setCurrentPhotoUrl(photoUrl);
+  }, [photoUrl]);
 
   const handleUpload = async (file: File) => {
     setIsUploading(true);
