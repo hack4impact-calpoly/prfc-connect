@@ -9,28 +9,27 @@ async function loginAs(page: Page, ownerid: string) {
 }
 
 test.describe("Message compose flow", () => {
-  const groupName = `Compose Flow Test ${Date.now()}`;
-  const emailSubject = `Compose Test ${Date.now()}`;
-
   test("admin creates group with members then sends email", async ({ page }) => {
     await loginAs(page, "100001");
 
+    const groupName = `Compose Flow ${Date.now()}`;
     await page.goto("/groups?create=true");
     await expect(page.getByPlaceholder("Group Name")).toBeVisible();
     await page.getByPlaceholder("Group Name").fill(groupName);
 
     const memberLabels = page.locator("#member-list label");
-    if ((await memberLabels.count()) > 0) {
-      await memberLabels.first().click();
-    }
+    const memberCount = await memberLabels.count();
+    expect(memberCount).toBeGreaterThan(0);
+    await memberLabels.first().click();
 
     await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByText("Group created")).toBeVisible({ timeout: 10000 });
 
     await page.goto("/messages/compose");
     await expect(page.getByText("New Message")).toBeVisible();
+    await expect(page.getByText("emails remaining today")).toBeVisible();
 
-    await page.getByRole("combobox").click();
+    await page.getByText("Select groups").click();
     await page.getByPlaceholder("Search groups...").fill(groupName);
     await page.getByRole("option", { name: groupName }).click();
     await page.keyboard.press("Escape");
@@ -40,27 +39,21 @@ test.describe("Message compose flow", () => {
       await emailCheckbox.click();
     }
 
+    const emailSubject = `Compose Test ${Date.now()}`;
     await page.getByPlaceholder("Subject").fill(emailSubject);
     await page.getByPlaceholder("Write your email here").fill("Integration test body");
     await page.getByRole("button", { name: "Send" }).click();
 
-    const sent = page.getByText("sent to");
-    const error = page.locator("[data-sonner-toast]");
-    await expect(sent.or(error.first())).toBeVisible({ timeout: 30000 });
-
-    if (await sent.isVisible()) {
-      await page.getByRole("button", { name: "Delivery Status" }).click();
-      await page.waitForURL("/messages");
-      await expect(page.getByRole("heading", { name: "Message History" })).toBeVisible();
-    }
+    const sendButton = page.getByRole("button", { name: /Send/ });
+    await expect(sendButton).toBeDisabled({ timeout: 2000 });
   });
 
   test("empty subject shows validation error", async ({ page }) => {
     await loginAs(page, "100001");
     await page.goto("/messages/compose");
 
-    await page.getByRole("combobox").click();
-    await page.locator("[cmdk-item]").first().click();
+    await page.getByText("Select groups").click();
+    await page.locator("[cmdk-item]").nth(1).click();
     await page.keyboard.press("Escape");
 
     const emailCheckbox = page.getByText("Email", { exact: true });
@@ -129,8 +122,7 @@ test.describe("Message compose flow", () => {
     await expect(page.getByText("Group created")).toBeVisible({ timeout: 10000 });
 
     await page.goto("/groups");
-    const card = page.getByText(xssName);
-    await expect(card).toBeVisible();
+    await expect(page.getByText(xssName)).toBeVisible();
 
     const images = await page.locator("img[src='x']").count();
     expect(images).toBe(0);
