@@ -77,7 +77,6 @@ export function EventsContent({
   const [currentDate, setCurrentDate] = useState<Date>(() => new Date(initialDateIso));
   const [weekEvents, setWeekEvents] = useState<EventSummary[]>(() => parseEvents(initialWeekEvents));
   const [monthEvents, setMonthEvents] = useState<EventSummary[]>([]);
-  const [eventScope, setEventScope] = useState<"my" | "all">(isAdmin ? "all" : "my");
   const [groupFilter, setGroupFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [selectedDay, setSelectedDay] = useState<Date>(initialSelected);
@@ -128,30 +127,24 @@ export function EventsContent({
   );
   const weekHeading = useMemo(() => buildWeekHeading(currentDate), [currentDate]);
 
-  const inviteeFilter = eventScope === "my" ? currentUserOwnerid : undefined;
-
   useEffect(() => {
     if (view !== "month") return;
     const groupId = groupFilter === "all" ? undefined : Number(groupFilter);
     const eventType = typeFilter === "all" ? undefined : (typeFilter as EventType);
     const { year, month0 } = coopDateParts(currentDate);
     startTransition(async () => {
-      const result = await fetchEventsForMonth(year, month0 + 1, {
-        eventType,
-        groupId,
-        inviteeMemberId: inviteeFilter,
-      });
+      const result = await fetchEventsForMonth(year, month0 + 1, { eventType, groupId });
       if (result.success && result.data) {
         setMonthEvents(parseEvents(result.data));
       } else if (!result.success) {
         toast.error(handleActionError(result.error, "Failed to load events"));
       }
     });
-  }, [view, currentDate, groupFilter, typeFilter, inviteeFilter]);
+  }, [view, currentDate, groupFilter, typeFilter]);
 
   const refetchWeek = (anchor: Date) => {
     startTransition(async () => {
-      const result = await fetchEventsForWeek(coopStartOfWeek(anchor), { inviteeMemberId: inviteeFilter });
+      const result = await fetchEventsForWeek(coopStartOfWeek(anchor));
       if (result.success && result.data) {
         setWeekEvents(parseEvents(result.data));
       } else if (!result.success) {
@@ -165,30 +158,13 @@ export function EventsContent({
     const eventType = typeFilter === "all" ? undefined : (typeFilter as EventType);
     const { year, month0 } = coopDateParts(anchor);
     startTransition(async () => {
-      const result = await fetchEventsForMonth(year, month0 + 1, {
-        eventType,
-        groupId,
-        inviteeMemberId: inviteeFilter,
-      });
+      const result = await fetchEventsForMonth(year, month0 + 1, { eventType, groupId });
       if (result.success && result.data) {
         setMonthEvents(parseEvents(result.data));
       } else if (!result.success) {
         toast.error(handleActionError(result.error, "Failed to load events"));
       }
     });
-  };
-
-  const handleScopeChange = (scope: "my" | "all") => {
-    setEventScope(scope);
-    if (view === "week") {
-      const newFilter = scope === "my" ? currentUserOwnerid : undefined;
-      startTransition(async () => {
-        const result = await fetchEventsForWeek(coopStartOfWeek(currentDate), { inviteeMemberId: newFilter });
-        if (result.success && result.data) {
-          setWeekEvents(parseEvents(result.data));
-        }
-      });
-    }
   };
 
   const advanceMonth = (delta: number): Date => {
@@ -326,28 +302,6 @@ export function EventsContent({
         >
           <ChevronRight className="h-5 w-5 text-prfc-brown" />
         </button>
-        <div className="flex rounded-lg border border-border">
-          <button
-            type="button"
-            onClick={() => handleScopeChange("my")}
-            className={cn(
-              "rounded-l-lg px-4 py-2 text-sm font-medium transition-colors",
-              eventScope === "my" ? "bg-prfc-brown text-white" : "text-muted-foreground hover:bg-muted",
-            )}
-          >
-            My Events
-          </button>
-          <button
-            type="button"
-            onClick={() => handleScopeChange("all")}
-            className={cn(
-              "rounded-r-lg px-4 py-2 text-sm font-medium transition-colors",
-              eventScope === "all" ? "bg-prfc-brown text-white" : "text-muted-foreground hover:bg-muted",
-            )}
-          >
-            All Events
-          </button>
-        </div>
         {view === "month" && (
           <>
             <Select value={groupFilter} onValueChange={setGroupFilter}>

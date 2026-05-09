@@ -241,7 +241,7 @@ describe("fetchEventsForWeek", () => {
     const result = await fetchEventsForWeek(weekStart);
 
     expect(result).toEqual({ success: true, data: events });
-    expect(mockGetEventsForWeek).toHaveBeenCalledWith(weekStart, { inviteeMemberId: 100001 });
+    expect(mockGetEventsForWeek).toHaveBeenCalledWith(weekStart, undefined);
   });
 
   it("returns error when service throws", async () => {
@@ -284,7 +284,7 @@ describe("fetchEventsForMonth", () => {
     const result = await fetchEventsForMonth(2026, 4);
 
     expect(result).toEqual({ success: true, data: events });
-    expect(mockGetEventsForMonth).toHaveBeenCalledWith(2026, 4, { inviteeMemberId: 100001 });
+    expect(mockGetEventsForMonth).toHaveBeenCalledWith(2026, 4, undefined);
   });
 
   it("forwards filters to the service", async () => {
@@ -295,7 +295,6 @@ describe("fetchEventsForMonth", () => {
     expect(mockGetEventsForMonth).toHaveBeenCalledWith(2026, 4, {
       eventType: "meeting",
       groupId: 7,
-      inviteeMemberId: 100001,
     });
   });
 

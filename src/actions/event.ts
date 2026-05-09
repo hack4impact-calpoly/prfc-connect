@@ -167,10 +167,9 @@ export async function fetchEventsForWeek(
   filters?: { inviteeMemberId?: number },
 ): Promise<ActionResult<EventSummary[]>> {
   try {
-    const session = await verifySession();
+    await verifySession();
     const validatedWeekStart = WeekStartSchema.parse(weekStart);
-    const scopedFilters = session.isAdmin ? filters : { ...filters, inviteeMemberId: session.ownerid };
-    const events = await getEventsForWeek(validatedWeekStart, scopedFilters);
+    const events = await getEventsForWeek(validatedWeekStart, filters);
     return { success: true, data: events };
   } catch (error) {
     const appError = transformError(error);
@@ -184,12 +183,9 @@ export async function fetchEventsForMonth(
   filters?: { eventType?: EventType; groupId?: number; inviteeMemberId?: number },
 ): Promise<ActionResult<EventSummary[]>> {
   try {
-    const session = await verifySession();
+    await verifySession();
     const validated = FetchEventsForMonthSchema.parse({ year, month, filters });
-    const scopedFilters = session.isAdmin
-      ? validated.filters
-      : { ...validated.filters, inviteeMemberId: session.ownerid };
-    const events = await getEventsForMonth(validated.year, validated.month, scopedFilters);
+    const events = await getEventsForMonth(validated.year, validated.month, validated.filters);
     return { success: true, data: events };
   } catch (error) {
     const appError = transformError(error);
