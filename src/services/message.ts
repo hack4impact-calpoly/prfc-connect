@@ -3,7 +3,7 @@ import prisma from "@/lib/db";
 import { env } from "@/env";
 import { AppError, transformError } from "@/utils/errors";
 import { getGroupRecipients } from "@/services/contact-group";
-import { sendGroupEmails, validateEmailAllowed } from "@/services/email";
+import { sendGroupEmails, validateEmailAllowed, getRemainingEmailQuota } from "@/services/email";
 import { sendGroupSms, validateSmsAllowed } from "@/services/sms";
 import { getConsentedPhones } from "@/services/sms-consent";
 import { getMemberDetails, getAllActiveMemberIds } from "@/lib/api/member-api";
@@ -220,14 +220,29 @@ export async function sendGroupMessage(input: ComposeMessage, senderId: number):
 
     let emailsSent = 0;
     let emailsFailed = 0;
+    let emailsQueued = 0;
     let smsSent = 0;
     let smsFailed = 0;
 
     if (sendEmail && emailRecipientIds.length > 0) {
-      const emailRecipients = members.filter((m) => emailRecipientIds.includes(m.ownerid));
-      const emailResult = await sendEmailsForMessage(result.id, emailRecipients, subject, body, groupIds);
-      emailsSent = emailResult.sent;
-      emailsFailed = emailResult.failed;
+      const remaining = await getRemainingEmailQuota();
+      const sendNowIds = emailRecipientIds.slice(0, remaining);
+      const queueIds = emailRecipientIds.slice(remaining);
+
+      if (sendNowIds.length > 0) {
+        const sendNowRecipients = members.filter((m) => sendNowIds.includes(m.ownerid));
+        const emailResult = await sendEmailsForMessage(result.id, sendNowRecipients, subject, body, groupIds);
+        emailsSent = emailResult.sent;
+        emailsFailed = emailResult.failed;
+      }
+
+      if (queueIds.length > 0) {
+        await prisma.messageRecipient.updateMany({
+          where: { messageId: result.id, channel: "email", memberId: { in: queueIds } },
+          data: { status: "queued" },
+        });
+        emailsQueued = queueIds.length;
+      }
     }
 
     if (sendSms && smsRecipientIds.length > 0 && smsBody) {
@@ -248,6 +263,7 @@ export async function sendGroupMessage(input: ComposeMessage, senderId: number):
       emailCount: emailsSent,
       smsCount: smsSent,
       failedCount: emailsFailed + smsFailed,
+      queuedCount: emailsQueued,
     };
   } catch (error) {
     throw transformError(error);
@@ -329,13 +345,29 @@ export async function sendBlastMessage(input: BlastMessage, senderId: number): P
 
     let emailsSent = 0;
     let emailsFailed = 0;
+    let emailsQueued = 0;
     let smsSent = 0;
     let smsFailed = 0;
 
     if (sendEmail && emailRecipientIds.length > 0) {
-      const emailResult = await sendEmailsForMessage(result.id, members, subject, body, null);
-      emailsSent = emailResult.sent;
-      emailsFailed = emailResult.failed;
+      const remaining = await getRemainingEmailQuota();
+      const sendNowIds = emailRecipientIds.slice(0, remaining);
+      const queueIds = emailRecipientIds.slice(remaining);
+
+      if (sendNowIds.length > 0) {
+        const sendNowMembers = members.filter((m) => sendNowIds.includes(m.ownerid));
+        const emailResult = await sendEmailsForMessage(result.id, sendNowMembers, subject, body, null);
+        emailsSent = emailResult.sent;
+        emailsFailed = emailResult.failed;
+      }
+
+      if (queueIds.length > 0) {
+        await prisma.messageRecipient.updateMany({
+          where: { messageId: result.id, channel: "email", memberId: { in: queueIds } },
+          data: { status: "queued" },
+        });
+        emailsQueued = queueIds.length;
+      }
     }
 
     if (sendSms && smsRecipientIds.length > 0 && smsBody) {
@@ -356,7 +388,72 @@ export async function sendBlastMessage(input: BlastMessage, senderId: number): P
       emailCount: emailsSent,
       smsCount: smsSent,
       failedCount: emailsFailed + smsFailed,
+      queuedCount: emailsQueued,
     };
+  } catch (error) {
+    throw transformError(error);
+  }
+}
+
+export async function processEmailQueue(): Promise<{ sent: number; failed: number; remaining: number }> {
+  try {
+    const queued = await prisma.messageRecipient.findMany({
+      where: { status: "queued", channel: "email" },
+      select: { id: true, messageId: true, memberId: true },
+      orderBy: [{ messageId: "asc" }, { id: "asc" }],
+    });
+
+    if (queued.length === 0) {
+      return { sent: 0, failed: 0, remaining: 0 };
+    }
+
+    const remaining = await getRemainingEmailQuota();
+    if (remaining === 0) {
+      return { sent: 0, failed: 0, remaining: queued.length };
+    }
+
+    const toProcess = queued.slice(0, remaining);
+    const messageGroups = new Map<number, Array<{ id: number; messageId: number; memberId: number }>>();
+    for (const r of toProcess) {
+      const existing = messageGroups.get(r.messageId) ?? [];
+      existing.push(r);
+      messageGroups.set(r.messageId, existing);
+    }
+
+    let totalSent = 0;
+    let totalFailed = 0;
+
+    for (const messageId of Array.from(messageGroups.keys())) {
+      const recipients = messageGroups.get(messageId)!;
+      const message = await prisma.message.findUnique({
+        where: { id: messageId },
+        select: { subject: true, body: true, groups: { select: { groupId: true } } },
+      });
+      if (!message) continue;
+
+      const memberIds = recipients.map((r: { memberId: number }) => r.memberId);
+      const memberDetails = await getMemberDetails(memberIds);
+      const groupIds = message.groups.map((g) => g.groupId);
+
+      const emailResult = await sendEmailsForMessage(
+        messageId,
+        memberDetails,
+        message.subject,
+        message.body,
+        groupIds.length > 0 ? groupIds : null,
+      );
+      totalSent += emailResult.sent;
+      totalFailed += emailResult.failed;
+
+      if (emailResult.failed > 0) {
+        await prisma.message.update({
+          where: { id: messageId },
+          data: { failedCount: { increment: emailResult.failed } },
+        });
+      }
+    }
+
+    return { sent: totalSent, failed: totalFailed, remaining: queued.length - toProcess.length };
   } catch (error) {
     throw transformError(error);
   }

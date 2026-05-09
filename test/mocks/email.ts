@@ -1,17 +1,13 @@
 import { vi, type Mock } from "vitest";
 
-const mockSend = vi.fn().mockResolvedValue({ data: { id: "mock-msg-7f3a9b2c" }, error: null });
+const mockSendBrevo = vi.fn().mockResolvedValue("mock-msg-7f3a9b2c");
 
-vi.mock("resend", () => {
-  return {
-    Resend: class {
-      emails = { send: mockSend };
-    },
-  };
-});
+vi.mock("@/lib/brevo", () => ({
+  sendBrevoEmail: mockSendBrevo,
+}));
 
 beforeEach(() => {
   vi.clearAllMocks();
 });
 
-export const mockResendSend: Mock = mockSend;
+export const mockBrevoSend: Mock = mockSendBrevo;

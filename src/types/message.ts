@@ -3,6 +3,7 @@ export interface MessageResult {
   emailCount: number;
   smsCount: number;
   failedCount: number;
+  queuedCount: number;
 }
 
 export interface MessageSummary {

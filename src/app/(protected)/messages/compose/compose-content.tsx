@@ -13,12 +13,14 @@ type Props = {
   currentUser: { name: string; photoUrl?: string | null };
   isAdmin: boolean;
   smsFeatureEnabled: boolean;
+  dailyEmailsRemaining: number;
 };
 
-export function ComposeContent({ groups, currentUser, isAdmin, smsFeatureEnabled }: Props) {
+export function ComposeContent({ groups, currentUser, isAdmin, smsFeatureEnabled, dailyEmailsRemaining }: Props) {
   const router = useRouter();
   const [sentResult, setSentResult] = useState<{
     recipientCount: number;
+    queuedCount: number;
     channels: { email: boolean; sms: boolean };
   } | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -49,6 +51,7 @@ export function ComposeContent({ groups, currentUser, isAdmin, smsFeatureEnabled
         if (result.success && result.data) {
           setSentResult({
             recipientCount: result.data.emailCount + result.data.smsCount,
+            queuedCount: result.data.queuedCount,
             channels: { email: data.sendEmail, sms: data.sendSms },
           });
         } else {
@@ -70,6 +73,7 @@ export function ComposeContent({ groups, currentUser, isAdmin, smsFeatureEnabled
         if (result.success && result.data) {
           setSentResult({
             recipientCount: result.data.emailCount + result.data.smsCount,
+            queuedCount: result.data.queuedCount,
             channels: { email: data.sendEmail, sms: data.sendSms },
           });
         } else {
@@ -83,6 +87,7 @@ export function ComposeContent({ groups, currentUser, isAdmin, smsFeatureEnabled
     return (
       <MessageSentConfirmation
         recipientCount={sentResult.recipientCount}
+        queuedCount={sentResult.queuedCount}
         channels={sentResult.channels}
         onTrackRsvps={() => router.push("/events")}
         onDeliveryStatus={() => router.push("/messages")}
@@ -98,6 +103,7 @@ export function ComposeContent({ groups, currentUser, isAdmin, smsFeatureEnabled
       isAdmin={isAdmin}
       isSending={isPending}
       smsFeatureEnabled={smsFeatureEnabled}
+      dailyEmailsRemaining={dailyEmailsRemaining}
     />
   );
 }

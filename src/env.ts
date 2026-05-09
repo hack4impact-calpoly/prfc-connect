@@ -3,8 +3,9 @@ import { z } from "zod";
 const envSchema = z.object({
   DATABASE_URL: z.url(),
 
-  RESEND_API_KEY: z.string().min(1).optional(),
+  BREVO_API_KEY: z.string().min(1).optional(),
   FROM_EMAIL: z.email().optional(),
+  DAILY_EMAIL_LIMIT: z.coerce.number().int().positive().default(300),
 
   UPSTASH_REDIS_REST_URL: z.url().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
@@ -48,6 +49,8 @@ const envSchema = z.object({
 
   // Application base URL for generating unsubscribe links
   APP_URL: z.url().default("http://localhost:3000"),
+
+  CRON_SECRET: z.string().min(1).optional(),
 
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
 });

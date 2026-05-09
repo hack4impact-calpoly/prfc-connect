@@ -1,35 +1,18 @@
 import "server-only";
-import fs from "fs";
-import path from "path";
-import { Resend } from "resend";
+import prisma from "@/lib/db";
 import type { Prospect } from "@/schema/referral";
 import { AppError } from "@/utils/errors";
 import type { RecipientSendResult } from "@/types/message";
 import { env } from "@/env";
+import { sendBrevoEmail } from "@/lib/brevo";
 import { generateUnsubscribeToken } from "@/lib/unsubscribe-tokens";
 import { filterSuppressedEmails } from "./email-suppression";
-
-let _client: Resend | null = null;
-let _referralImage: string | null = null;
-
-function getClient(): Resend {
-  if (_client) return _client;
-  _client = new Resend(env.RESEND_API_KEY);
-  return _client;
-}
-
-function getReferralImage(): string {
-  if (_referralImage) return _referralImage;
-  const imgPath = path.join(process.cwd(), "public", "assets", "paso-coop.jpeg");
-  _referralImage = fs.readFileSync(imgPath).toString("base64");
-  return _referralImage;
-}
 
 export function validateEmailAllowed(): void {
   if (!env.EMAIL_ENABLED) {
     throw new AppError("FORBIDDEN", "Email functionality is currently disabled", { reason: "EMAIL_DISABLED" });
   }
-  if (!env.RESEND_API_KEY) {
+  if (!env.BREVO_API_KEY) {
     throw new AppError("INTERNAL_ERROR", "Email provider API key is not configured");
   }
 }
@@ -39,6 +22,23 @@ function applyRedirect(to: string, subject: string): { to: string; subject: stri
     return { to: env.EMAIL_REDIRECT_TO, subject: `[TEST to: ${to}] ${subject}` };
   }
   return { to, subject };
+}
+
+export async function getDailyEmailCount(): Promise<number> {
+  const todayStart = new Date();
+  todayStart.setUTCHours(0, 0, 0, 0);
+  return prisma.messageRecipient.count({
+    where: {
+      channel: "email",
+      status: "sent",
+      sentAt: { gte: todayStart },
+    },
+  });
+}
+
+export async function getRemainingEmailQuota(): Promise<number> {
+  const sentToday = await getDailyEmailCount();
+  return Math.max(0, env.DAILY_EMAIL_LIMIT - sentToday);
 }
 
 interface SendReferralEmailParams {
@@ -57,15 +57,12 @@ export async function sendReferralEmails({
       const originalSubject = "You've Been Invited!";
       const { to, subject } = applyRedirect(prospect.prospectEmail, originalSubject);
 
-      const { error } = await getClient().emails.send({
-        from: env.FROM_EMAIL ?? "noreply@example.com",
-        to,
+      await sendBrevoEmail({
+        sender: { name: "Paso Robles Food Co-op", email: env.FROM_EMAIL ?? "noreply@example.com" },
+        to: [{ email: to }],
         subject,
-        html: generateEmailHtml(prospect.prospectName, memberName, referralCode),
-        attachments: [{ filename: "paso-coop.jpeg", content: getReferralImage(), contentId: "pasoLogo" }],
+        htmlContent: generateEmailHtml(prospect.prospectName, memberName, referralCode),
       });
-
-      if (error) throw new Error(error.message);
     }
   } catch (error) {
     throw new AppError("EMAIL_ERROR", "Failed to send referral emails", {
@@ -75,30 +72,31 @@ export async function sendReferralEmails({
 }
 
 function generateEmailHtml(prospectName: string, memberName: string, referralCode: string): string {
+  const logoUrl = `${env.APP_URL}/assets/paso-coop.jpeg`;
   return `<div style="width: 100%; max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
     <div style="text-align: center;">
-      <img src="cid:pasoLogo" alt="THE PASO FOOD CO-OP" style="max-width: 100%;">
+      <img src="${logoUrl}" alt="THE PASO FOOD CO-OP" style="max-width: 100%;">
     </div>
     <div style="padding: 20px;">
       <p>Hello ${prospectName},</p>
       <p>We're excited to let you know that <strong>${memberName}</strong>, thinks you'd love being a part of the Paso Robles Food Co-op!</p>
       <p>At the Co-op, we're all about building a stronger community by connecting members to fresh, healthy, and locally-sourced food. As a member owner, you'll enjoy:</p>
       <ul style="padding-left: 10px;">
-        <li style="margin-bottom: 8px;">Supporting local farmers and food producers 🌱</li>
-        <li style="margin-bottom: 8px;">A say in how the Co-op operates (yes, you're an owner!) 🗳️</li>
-        <li style="margin-bottom: 8px;">Exclusive discounts and special events 🎉</li>
+        <li style="margin-bottom: 8px;">Supporting local farmers and food producers</li>
+        <li style="margin-bottom: 8px;">A say in how the Co-op operates (yes, you're an owner!)</li>
+        <li style="margin-bottom: 8px;">Exclusive discounts and special events</li>
       </ul>
       <p>It's easy to join the Co-op and start making an impact in our community! Just click the link below to complete your membership registration:</p>
       <p>
-        <span style="font-weight: bold;">👉 <a href="https://www.pasofoodcooperative.com/join-now1.html?enterReferral=${referralCode}" style="color: black; text-decoration: none;">Join Now</a></span>
+        <span style="font-weight: bold;"><a href="https://www.pasofoodcooperative.com/join-now1.html?enterReferral=${referralCode}" style="color: black; text-decoration: none;">Join Now</a></span>
       </p>
-      <p>Your referral code is <strong>${referralCode}</strong>—be sure to confirm/enter it during registration.</p>
-      <p>Feel free to reach out if you have any questions or want to learn more about what makes the Paso Robles Food Co-op special. Our monthly meeting is every 4<sup>th</sup> Wednesday at 6pm. All details and info at our website: <a href="www.pasofoodcooperative.com" style="color: #333; text-decoration: underline;">www.pasofoodcooperative.com</a></p>
+      <p>Your referral code is <strong>${referralCode}</strong> - be sure to confirm/enter it during registration.</p>
+      <p>Feel free to reach out if you have any questions or want to learn more about what makes the Paso Robles Food Co-op special. Our monthly meeting is every 4<sup>th</sup> Wednesday at 6pm. All details and info at our website: <a href="https://www.pasofoodcooperative.com" style="color: #333; text-decoration: underline;">www.pasofoodcooperative.com</a></p>
       <p>Looking forward to welcoming you into our growing Co-op family!</p>
       <p>Warm regards,<br>${memberName} and The Paso Robles Food Co-op Member Owners</p>
       <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
-        <p style="margin: 5px 0;">📧 <a href="mailto:info@pasofoodcooperative.com" style="color: #333; text-decoration: none;">info@pasofoodcooperative.com</a></p>
-        <p style="margin: 5px 0;">🌐 <a href="www.pasofoodcooperative.com" style="color: #333; text-decoration: none;">www.pasofoodcooperative.com</a></p>
+        <p style="margin: 5px 0;"><a href="mailto:info@pasofoodcooperative.com" style="color: #333; text-decoration: none;">info@pasofoodcooperative.com</a></p>
+        <p style="margin: 5px 0;"><a href="https://www.pasofoodcooperative.com" style="color: #333; text-decoration: none;">www.pasofoodcooperative.com</a></p>
         <p style="margin: 5px 0; font-size: 12px; color: #666;">Paso Robles Food Cooperative, Inc. P.O. Box 922, Paso Robles, CA 93447</p>
       </div>
     </div>
@@ -156,20 +154,19 @@ export async function sendGroupEmails(
 
         const { to, subject: redirectedSubject } = applyRedirect(recipient.email, subject);
 
-        const { data, error } = await getClient().emails.send({
-          from: `${senderName} <${env.FROM_EMAIL ?? ""}>`,
-          to,
-          replyTo,
+        const messageId = await sendBrevoEmail({
+          sender: { name: senderName, email: env.FROM_EMAIL ?? "" },
+          to: [{ email: to }],
+          replyTo: { email: replyTo },
           subject: redirectedSubject,
-          html: htmlWithFooter,
+          htmlContent: htmlWithFooter,
           headers: {
             "List-Unsubscribe": `<${unsubscribeUrl}>`,
             "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
           },
         });
 
-        if (error) throw new Error(error.message);
-        return { memberId: recipient.memberId, externalId: data?.id };
+        return { memberId: recipient.memberId, externalId: messageId };
       }),
     );
 

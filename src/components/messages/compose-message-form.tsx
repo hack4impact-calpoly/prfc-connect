@@ -31,6 +31,7 @@ interface ComposeMessageFormProps {
   isSending?: boolean;
   smsFeatureEnabled?: boolean;
   isAdmin?: boolean;
+  dailyEmailsRemaining?: number;
 }
 
 export function ComposeMessageForm({
@@ -41,6 +42,7 @@ export function ComposeMessageForm({
   isSending = false,
   smsFeatureEnabled = false,
   isAdmin = false,
+  dailyEmailsRemaining,
 }: ComposeMessageFormProps) {
   const [isBlast, setIsBlast] = useState(false);
   const [selectedGroupIds, setSelectedGroupIds] = useState<Set<number>>(new Set());
@@ -290,10 +292,32 @@ export function ComposeMessageForm({
 
       {error && <p className="text-sm text-prfc-red">{error}</p>}
 
-      <Button type="submit" disabled={isSending} className="bg-prfc-brown text-white hover:bg-prfc-dark-brown">
-        {isSending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-        {isSending ? "Sending..." : "Send"}
-      </Button>
+      <div className="flex items-center gap-4">
+        <Button
+          type="submit"
+          disabled={isSending || dailyEmailsRemaining === 0}
+          className="bg-prfc-brown text-white hover:bg-prfc-dark-brown"
+        >
+          {isSending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          {isSending ? "Sending..." : "Send"}
+        </Button>
+        {dailyEmailsRemaining !== undefined && (
+          <p
+            className={cn(
+              "text-sm",
+              dailyEmailsRemaining === 0
+                ? "font-semibold text-prfc-red"
+                : dailyEmailsRemaining < 50
+                  ? "text-amber-600"
+                  : "text-muted-foreground",
+            )}
+          >
+            {dailyEmailsRemaining === 0
+              ? "Daily email limit reached"
+              : `${dailyEmailsRemaining} emails remaining today`}
+          </p>
+        )}
+      </div>
     </form>
   );
 }

@@ -43,6 +43,7 @@ vi.mock("@/services/contact-group", () => ({
 
 vi.mock("@/services/email", () => ({
   sendGroupEmails: vi.fn(),
+  getRemainingEmailQuota: vi.fn().mockResolvedValue(300),
   validateEmailAllowed: vi.fn(() => {
     if (!mockEnv.EMAIL_ENABLED) {
       throw new AppError("FORBIDDEN", "Email functionality is currently disabled", { reason: "EMAIL_DISABLED" });
@@ -60,7 +61,7 @@ vi.mock("@/env", () => ({
 }));
 
 import { getGroupRecipients } from "@/services/contact-group";
-import { sendGroupEmails } from "@/services/email";
+import { sendGroupEmails, getRemainingEmailQuota } from "@/services/email";
 import { getMemberDetails, getAllActiveMemberIds } from "@/lib/api/member-api";
 
 describe("isQuietHours", () => {
@@ -318,5 +319,103 @@ describe("sendBlastMessage", () => {
     });
     expect(result.failedCount).toBe(39);
     expect(result.emailCount).toBe(350);
+  });
+});
+
+describe("daily quota split-send", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockEnv.EMAIL_ENABLED = true;
+    mockEnv.SMS_ENABLED = false;
+    mockInteractiveTransaction();
+  });
+
+  it("queues excess recipients when over daily quota", async () => {
+    vi.mocked(getGroupRecipients).mockResolvedValue([100001, 100002, 100003]);
+    vi.mocked(getMemberDetails).mockResolvedValue([...mockMembers.slice(0, 3)]);
+    vi.mocked(sendGroupEmails).mockResolvedValue({ sent: 1, failed: 0, suppressed: 0, results: [] });
+    vi.mocked(getRemainingEmailQuota).mockResolvedValue(1);
+    mockPrisma.message.create.mockResolvedValue({ ...testMessage, id: 1 });
+    mockPrisma.messageRecipient.createMany.mockResolvedValue({ count: 3 });
+    mockPrisma.messageRecipient.updateMany.mockResolvedValue({ count: 2 });
+    mockPrisma.message.update.mockResolvedValue(testMessage);
+
+    const result = await sendGroupMessage(
+      { groupIds: [1], subject: "Test", body: "Body", sendEmail: true, sendSms: false },
+      100001,
+    );
+
+    expect(result.queuedCount).toBe(2);
+    expect(result.emailCount).toBe(1);
+    expect(mockPrisma.messageRecipient.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { status: "queued" } }),
+    );
+  });
+
+  it("sends all when under daily quota with queuedCount 0", async () => {
+    vi.mocked(getGroupRecipients).mockResolvedValue([100001, 100002, 100003]);
+    vi.mocked(getMemberDetails).mockResolvedValue([...mockMembers.slice(0, 3)]);
+    vi.mocked(sendGroupEmails).mockResolvedValue({ sent: 3, failed: 0, suppressed: 0, results: [] });
+    vi.mocked(getRemainingEmailQuota).mockResolvedValue(300);
+    mockPrisma.message.create.mockResolvedValue({ ...testMessage, id: 1 });
+    mockPrisma.messageRecipient.createMany.mockResolvedValue({ count: 3 });
+    mockPrisma.message.update.mockResolvedValue(testMessage);
+
+    const result = await sendGroupMessage(
+      { groupIds: [1], subject: "Test", body: "Body", sendEmail: true, sendSms: false },
+      100001,
+    );
+
+    expect(result.queuedCount).toBe(0);
+    expect(result.emailCount).toBe(3);
+  });
+});
+
+describe("processEmailQueue", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockEnv.EMAIL_ENABLED = true;
+  });
+
+  it("returns zeros when no queued recipients", async () => {
+    mockPrisma.messageRecipient.findMany.mockResolvedValue([]);
+
+    const { processEmailQueue } = await import("@/services/message");
+    const result = await processEmailQueue();
+
+    expect(result).toEqual({ sent: 0, failed: 0, remaining: 0 });
+  });
+
+  it("returns remaining count when quota is zero", async () => {
+    mockPrisma.messageRecipient.findMany.mockResolvedValue([
+      {
+        id: 1,
+        messageId: 1,
+        memberId: 100001,
+        channel: "email",
+        status: "queued",
+        sentAt: null,
+        externalId: null,
+        deliveredAt: null,
+        error: null,
+      },
+      {
+        id: 2,
+        messageId: 1,
+        memberId: 100002,
+        channel: "email",
+        status: "queued",
+        sentAt: null,
+        externalId: null,
+        deliveredAt: null,
+        error: null,
+      },
+    ]);
+    vi.mocked(getRemainingEmailQuota).mockResolvedValue(0);
+
+    const { processEmailQueue } = await import("@/services/message");
+    const result = await processEmailQueue();
+
+    expect(result).toEqual({ sent: 0, failed: 0, remaining: 2 });
   });
 });

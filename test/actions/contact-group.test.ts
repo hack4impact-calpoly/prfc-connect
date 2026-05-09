@@ -333,7 +333,7 @@ describe("sendMessage", () => {
     vi.clearAllMocks();
   });
 
-  const messageResult = { messageId: 22, emailCount: 3, smsCount: 0, failedCount: 0 };
+  const messageResult = { messageId: 22, emailCount: 3, smsCount: 0, failedCount: 0, queuedCount: 0 };
 
   it("allows owner to send group message", async () => {
     mockVerifySession.mockResolvedValue({ ownerid: 10, isAdmin: false });
@@ -435,7 +435,7 @@ describe("sendBlast", () => {
     vi.clearAllMocks();
   });
 
-  const messageResult = { messageId: 33, emailCount: 10, smsCount: 0, failedCount: 0 };
+  const messageResult = { messageId: 33, emailCount: 10, smsCount: 0, failedCount: 0, queuedCount: 0 };
 
   it("allows admin to send blast message", async () => {
     mockVerifySession.mockResolvedValue({ ownerid: 99, isAdmin: true });

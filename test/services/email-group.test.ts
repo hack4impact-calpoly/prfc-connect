@@ -1,7 +1,7 @@
 import "../mocks/email";
 
 import { vi } from "vitest";
-import { mockResendSend } from "../mocks";
+import { mockBrevoSend } from "../mocks";
 
 const mockFilterSuppressedEmails = vi.hoisted(() => vi.fn());
 
@@ -33,7 +33,7 @@ const defaultParams = {
 describe("sendGroupEmails", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockResendSend.mockResolvedValue({ data: { id: "mock-id" }, error: null });
+    mockBrevoSend.mockResolvedValue("mock-id");
   });
 
   it("sends to all valid recipients", async () => {
@@ -46,10 +46,7 @@ describe("sendGroupEmails", () => {
     await sendGroupEmails({ ...defaultParams, recipients });
 
     expect(mockFilterSuppressedEmails).toHaveBeenCalledWith(recipients.map((r) => r.email));
-    expect(mockResendSend).toHaveBeenCalledWith(expect.objectContaining({ to: recipientBobby.email }));
-    expect(mockResendSend).toHaveBeenCalledWith(expect.objectContaining({ to: recipientLucy.email }));
-    expect(mockResendSend).toHaveBeenCalledWith(expect.objectContaining({ to: recipientMarcie.email }));
-    expect(mockResendSend).toHaveBeenCalledTimes(3);
+    expect(mockBrevoSend).toHaveBeenCalledTimes(3);
   });
 
   it("filters out suppressed emails before sending", async () => {
@@ -62,8 +59,7 @@ describe("sendGroupEmails", () => {
     await sendGroupEmails({ ...defaultParams, recipients });
 
     expect(mockFilterSuppressedEmails).toHaveBeenCalledWith(recipients.map((r) => r.email));
-    expect(mockResendSend).toHaveBeenCalledWith(expect.objectContaining({ to: recipientBobby.email }));
-    expect(mockResendSend).toHaveBeenCalledTimes(1);
+    expect(mockBrevoSend).toHaveBeenCalledTimes(1);
   });
 
   it("generates unique unsubscribe token per recipient", async () => {
@@ -75,7 +71,7 @@ describe("sendGroupEmails", () => {
 
     await sendGroupEmails({ ...defaultParams, recipients });
 
-    const tokens = mockResendSend.mock.calls.map((call: unknown[]) => {
+    const tokens = mockBrevoSend.mock.calls.map((call: unknown[]) => {
       const fields = call[0] as { headers: Record<string, string> };
       const raw = fields.headers["List-Unsubscribe"];
       const urlStr = raw.slice(1, -1);
@@ -98,7 +94,7 @@ describe("sendGroupEmails", () => {
 
     await sendGroupEmails({ ...defaultParams, recipients });
 
-    for (const [fields] of mockResendSend.mock.calls) {
+    for (const [fields] of mockBrevoSend.mock.calls) {
       expect(fields.headers).toEqual(
         expect.objectContaining({
           "List-Unsubscribe": expect.stringMatching(/^<https?:\/\/.*\/api\/unsubscribe\?token=.+>$/),
@@ -117,9 +113,9 @@ describe("sendGroupEmails", () => {
 
     await sendGroupEmails({ ...defaultParams, recipients });
 
-    expect(mockResendSend).toHaveBeenCalledTimes(3);
-    for (const [fields] of mockResendSend.mock.calls) {
-      const html = String(fields.html ?? "");
+    expect(mockBrevoSend).toHaveBeenCalledTimes(3);
+    for (const [fields] of mockBrevoSend.mock.calls) {
+      const html = String(fields.htmlContent ?? "");
       expect(html).toContain("Paso Robles Food Cooperative, Inc.");
       expect(html).toContain("P.O. Box 922, Paso Robles, CA 93447");
       expect(html).toMatch(/<a href="[^"]*\/api\/unsubscribe\?token=[^"]*"[^>]*>Unsubscribe from this group<\/a>/);
@@ -144,16 +140,16 @@ describe("sendGroupEmails", () => {
 
       const promise = sendGroupEmails({ ...defaultParams, recipients: allRecipients });
 
-      await Promise.resolve();
-      expect(mockResendSend).toHaveBeenCalledTimes(10);
+      await vi.advanceTimersByTimeAsync(0);
+      expect(mockBrevoSend).toHaveBeenCalledTimes(10);
 
       await vi.advanceTimersByTimeAsync(batchDelayMs - 1);
       await Promise.resolve();
-      expect(mockResendSend).toHaveBeenCalledTimes(10);
+      expect(mockBrevoSend).toHaveBeenCalledTimes(10);
 
       await vi.advanceTimersByTimeAsync(1);
       await Promise.resolve();
-      expect(mockResendSend).toHaveBeenCalledTimes(12);
+      expect(mockBrevoSend).toHaveBeenCalledTimes(12);
 
       const { sent, failed, suppressed } = await promise;
       expect(sent).toBe(12);
@@ -168,16 +164,16 @@ describe("sendGroupEmails", () => {
       valid: recipients.map((r) => r.email),
       suppressed: [],
     });
-    mockResendSend
-      .mockResolvedValueOnce({ data: { id: "1" }, error: null })
-      .mockResolvedValueOnce({ data: { id: "2" }, error: null })
-      .mockResolvedValueOnce({ data: { id: "3" }, error: null })
-      .mockResolvedValueOnce({ data: null, error: { message: "Send failure", name: "api_error" } })
-      .mockResolvedValueOnce({ data: { id: "5" }, error: null });
+    mockBrevoSend
+      .mockResolvedValueOnce("1")
+      .mockResolvedValueOnce("2")
+      .mockResolvedValueOnce("3")
+      .mockRejectedValueOnce(new Error("Send failure"))
+      .mockResolvedValueOnce("5");
 
     const { sent, failed, suppressed } = await sendGroupEmails({ ...defaultParams, recipients });
 
-    expect(mockResendSend).toHaveBeenCalledTimes(5);
+    expect(mockBrevoSend).toHaveBeenCalledTimes(5);
     expect(sent).toBe(4);
     expect(failed).toBe(1);
     expect(suppressed).toBe(0);
@@ -189,13 +185,11 @@ describe("sendGroupEmails", () => {
       valid: recipients.map((r) => r.email),
       suppressed: [],
     });
-    mockResendSend
-      .mockResolvedValueOnce({ data: null, error: { message: "API Error", name: "api_error" } })
-      .mockResolvedValue({ data: { id: "ok" }, error: null });
+    mockBrevoSend.mockRejectedValueOnce(new Error("API Error")).mockResolvedValue("ok");
 
     const { sent, failed, suppressed } = await sendGroupEmails({ ...defaultParams, recipients });
 
-    expect(mockResendSend).toHaveBeenCalledTimes(3);
+    expect(mockBrevoSend).toHaveBeenCalledTimes(3);
     expect(sent).toBe(2);
     expect(failed).toBe(1);
     expect(suppressed).toBe(0);

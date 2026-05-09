@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 
 interface MessageSentConfirmationProps {
   recipientCount: number;
+  queuedCount?: number;
   channels: { email: boolean; sms: boolean };
   onTrackRsvps: () => void;
   onDeliveryStatus: () => void;
@@ -16,6 +17,7 @@ function channelLabel(channels: { email: boolean; sms: boolean }): string {
 
 export function MessageSentConfirmation({
   recipientCount,
+  queuedCount = 0,
   channels,
   onTrackRsvps,
   onDeliveryStatus,
@@ -29,6 +31,9 @@ export function MessageSentConfirmation({
       <p className="text-sm text-muted-foreground">
         {channelLabel(channels)} sent to {recipientCount} members
       </p>
+      {queuedCount > 0 && (
+        <p className="text-sm text-amber-600">{queuedCount} additional recipients queued for tomorrow</p>
+      )}
       <div className="flex flex-col gap-2">
         <Button onClick={onTrackRsvps} className="bg-prfc-brown text-white hover:bg-prfc-dark-brown">
           Track RSVPs

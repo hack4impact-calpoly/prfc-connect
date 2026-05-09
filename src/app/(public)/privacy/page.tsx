@@ -35,7 +35,7 @@ export default function PrivacyPolicyPage() {
         <p>
           The Co-op does not sell, rent, or share member phone numbers, email addresses, or personal information with
           third parties for marketing purposes. Contact data is shared only with the service providers that deliver
-          messages on the Co-op's behalf (Resend for email, Twilio for SMS). These providers process data solely to
+          messages on the Co-op's behalf (Brevo for email, Twilio for SMS). These providers process data solely to
           deliver messages and are bound by their own privacy policies.
         </p>
 
