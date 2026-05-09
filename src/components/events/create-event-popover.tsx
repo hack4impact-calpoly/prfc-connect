@@ -103,6 +103,9 @@ export function CreateEventPopover({
   const [manualRsvpDeadline, setManualRsvpDeadline] = useState<Date | null>(editingEvent?.rsvpDeadline ?? null);
   const [rsvpDeadlineTouched, setRsvpDeadlineTouched] = useState<boolean>(() => editingEvent !== undefined);
   const rsvpDeadline = rsvpDeadlineTouched ? manualRsvpDeadline : computeDefaultRsvpDeadline(range.start);
+  const [rsvpDeadlinePassed] = useState(
+    () => !!editingEvent?.rsvpDeadline && new Date(editingEvent.rsvpDeadline).getTime() < Date.now(),
+  );
   const [selectedMemberIds, setSelectedMemberIds] = useState<Set<number>>(() => new Set(initialMemberIds ?? []));
 
   const selectedGroupIds = useMemo(() => {
@@ -429,36 +432,42 @@ export function CreateEventPopover({
         {readOnly && editingEvent && currentUserOwnerid && inviteeMemberIds.includes(currentUserOwnerid) && (
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-muted-foreground">RSVP</span>
-            <Button
-              type="button"
-              variant={rsvpStatus === "going" ? "default" : "outline"}
-              size="sm"
-              onClick={() => handleRsvp("going")}
-              disabled={isPending}
-              className={rsvpStatus === "going" ? "bg-green-700 text-white hover:bg-green-800" : ""}
-            >
-              Going
-            </Button>
-            <Button
-              type="button"
-              variant={rsvpStatus === "maybe" ? "default" : "outline"}
-              size="sm"
-              onClick={() => handleRsvp("maybe")}
-              disabled={isPending}
-              className={rsvpStatus === "maybe" ? "bg-amber-600 text-white hover:bg-amber-700" : ""}
-            >
-              Maybe
-            </Button>
-            <Button
-              type="button"
-              variant={rsvpStatus === "declined" ? "default" : "outline"}
-              size="sm"
-              onClick={() => handleRsvp("declined")}
-              disabled={isPending}
-              className={rsvpStatus === "declined" ? "bg-red-700 text-white hover:bg-red-800" : ""}
-            >
-              No
-            </Button>
+            {rsvpDeadlinePassed ? (
+              <span className="text-sm text-muted-foreground">Deadline passed</span>
+            ) : (
+              <>
+                <Button
+                  type="button"
+                  variant={rsvpStatus === "going" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handleRsvp("going")}
+                  disabled={isPending}
+                  className={rsvpStatus === "going" ? "bg-green-700 text-white hover:bg-green-800" : ""}
+                >
+                  Going
+                </Button>
+                <Button
+                  type="button"
+                  variant={rsvpStatus === "maybe" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handleRsvp("maybe")}
+                  disabled={isPending}
+                  className={rsvpStatus === "maybe" ? "bg-amber-600 text-white hover:bg-amber-700" : ""}
+                >
+                  Maybe
+                </Button>
+                <Button
+                  type="button"
+                  variant={rsvpStatus === "declined" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handleRsvp("declined")}
+                  disabled={isPending}
+                  className={rsvpStatus === "declined" ? "bg-red-700 text-white hover:bg-red-800" : ""}
+                >
+                  No
+                </Button>
+              </>
+            )}
           </div>
         )}
         {!readOnly && (

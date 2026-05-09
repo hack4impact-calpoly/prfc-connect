@@ -31,7 +31,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
     <SidebarProvider>
       <TopBarActionProvider>
         <TopBarSearchProvider>
-          <Sidebar />
+          <Sidebar isAdmin={session.isAdmin} />
           <TopBar
             userName={session.ownername}
             userRole={userRole}

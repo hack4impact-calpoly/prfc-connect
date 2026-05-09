@@ -95,6 +95,7 @@ export function ComposeContent({ groups, currentUser, isAdmin, smsFeatureEnabled
       groups={groups}
       currentUser={currentUser}
       onSend={handleSend}
+      isAdmin={isAdmin}
       isSending={isPending}
       smsFeatureEnabled={smsFeatureEnabled}
     />

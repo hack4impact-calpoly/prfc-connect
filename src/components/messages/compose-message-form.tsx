@@ -30,6 +30,7 @@ interface ComposeMessageFormProps {
   }) => void;
   isSending?: boolean;
   smsFeatureEnabled?: boolean;
+  isAdmin?: boolean;
 }
 
 export function ComposeMessageForm({
@@ -39,6 +40,7 @@ export function ComposeMessageForm({
   onSend,
   isSending = false,
   smsFeatureEnabled = false,
+  isAdmin = false,
 }: ComposeMessageFormProps) {
   const [isBlast, setIsBlast] = useState(false);
   const [selectedGroupIds, setSelectedGroupIds] = useState<Set<number>>(new Set());
@@ -164,14 +166,16 @@ export function ComposeMessageForm({
               <CommandList>
                 <CommandEmpty>No groups found.</CommandEmpty>
                 <CommandGroup>
-                  <CommandItem
-                    value="all-members-blast"
-                    onSelect={handleBlastToggle}
-                    className="flex items-center gap-2"
-                  >
-                    <Check className={cn("h-4 w-4", isBlast ? "opacity-100" : "opacity-0")} />
-                    All Members
-                  </CommandItem>
+                  {isAdmin && (
+                    <CommandItem
+                      value="all-members-blast"
+                      onSelect={handleBlastToggle}
+                      className="flex items-center gap-2"
+                    >
+                      <Check className={cn("h-4 w-4", isBlast ? "opacity-100" : "opacity-0")} />
+                      All Members
+                    </CommandItem>
+                  )}
                   {groups.map((g) => (
                     <CommandItem
                       key={g.id}

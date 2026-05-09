@@ -120,6 +120,18 @@ export async function rsvpAction(input: { eventId: number; status: string }): Pr
   try {
     const session = await verifySession();
     const validated = RsvpSchema.parse(input);
+
+    const event = await getEventById(validated.eventId);
+
+    if (event.rsvpDeadline && event.rsvpDeadline.getTime() < Date.now()) {
+      return { success: false, error: "RSVP deadline has passed" };
+    }
+
+    const inviteeIds = await getEventInviteeMemberIds(validated.eventId);
+    if (!inviteeIds.includes(session.ownerid) && event.ownerid !== session.ownerid) {
+      return { success: false, error: "You are not invited to this event" };
+    }
+
     await rsvpToEvent(validated.eventId, session.ownerid, validated.status);
 
     revalidatePath("/events");
@@ -155,9 +167,10 @@ export async function fetchEventsForWeek(
   filters?: { inviteeMemberId?: number },
 ): Promise<ActionResult<EventSummary[]>> {
   try {
-    await verifySession();
+    const session = await verifySession();
     const validatedWeekStart = WeekStartSchema.parse(weekStart);
-    const events = await getEventsForWeek(validatedWeekStart, filters);
+    const scopedFilters = session.isAdmin ? filters : { ...filters, inviteeMemberId: session.ownerid };
+    const events = await getEventsForWeek(validatedWeekStart, scopedFilters);
     return { success: true, data: events };
   } catch (error) {
     const appError = transformError(error);
@@ -171,9 +184,12 @@ export async function fetchEventsForMonth(
   filters?: { eventType?: EventType; groupId?: number; inviteeMemberId?: number },
 ): Promise<ActionResult<EventSummary[]>> {
   try {
-    await verifySession();
+    const session = await verifySession();
     const validated = FetchEventsForMonthSchema.parse({ year, month, filters });
-    const events = await getEventsForMonth(validated.year, validated.month, validated.filters);
+    const scopedFilters = session.isAdmin
+      ? validated.filters
+      : { ...validated.filters, inviteeMemberId: session.ownerid };
+    const events = await getEventsForMonth(validated.year, validated.month, scopedFilters);
     return { success: true, data: events };
   } catch (error) {
     const appError = transformError(error);

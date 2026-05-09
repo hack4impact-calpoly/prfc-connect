@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { verifySession } from "@/lib/dal";
+import { env } from "@/env";
 import { UpdatePreferencesSchema } from "@/schema/settings";
 import { grantSmsConsent, revokeSmsConsent } from "@/services/sms-consent";
 import { getMemberProfile } from "@/services/profile";
@@ -19,11 +20,13 @@ export async function updateUserPreferencesAction(input: {
     const validated = UpdatePreferencesSchema.parse(input);
     const updated = await updateUserPreferences(session.ownerid, validated);
 
-    if (validated.notifySmsDefault === true) {
-      const profile = await getMemberProfile(session.ownerid, session.isAdmin);
-      await grantSmsConsent(session.ownerid, profile.phone);
-    } else if (validated.notifySmsDefault === false) {
-      await revokeSmsConsent(session.ownerid, "web_settings_toggle", null);
+    if (env.SMS_ENABLED) {
+      if (validated.notifySmsDefault === true) {
+        const profile = await getMemberProfile(session.ownerid, session.isAdmin);
+        await grantSmsConsent(session.ownerid, profile.phone);
+      } else if (validated.notifySmsDefault === false) {
+        await revokeSmsConsent(session.ownerid, "web_settings_toggle", null);
+      }
     }
 
     revalidatePath("/settings");

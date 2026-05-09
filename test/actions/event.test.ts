@@ -189,6 +189,8 @@ describe("rsvpAction", () => {
   });
 
   it("submits RSVP and revalidates", async () => {
+    mockGetEventById.mockResolvedValue({ ...sampleEvent, rsvpDeadline: null, ownerid: 100002 } as never);
+    mockGetEventInviteeMemberIds.mockResolvedValue([100001]);
     mockRsvpToEvent.mockResolvedValue(undefined);
 
     const result = await rsvpAction({ eventId: 1, status: "going" });
@@ -239,7 +241,7 @@ describe("fetchEventsForWeek", () => {
     const result = await fetchEventsForWeek(weekStart);
 
     expect(result).toEqual({ success: true, data: events });
-    expect(mockGetEventsForWeek).toHaveBeenCalledWith(weekStart, undefined);
+    expect(mockGetEventsForWeek).toHaveBeenCalledWith(weekStart, { inviteeMemberId: 100001 });
   });
 
   it("returns error when service throws", async () => {
@@ -282,7 +284,7 @@ describe("fetchEventsForMonth", () => {
     const result = await fetchEventsForMonth(2026, 4);
 
     expect(result).toEqual({ success: true, data: events });
-    expect(mockGetEventsForMonth).toHaveBeenCalledWith(2026, 4, undefined);
+    expect(mockGetEventsForMonth).toHaveBeenCalledWith(2026, 4, { inviteeMemberId: 100001 });
   });
 
   it("forwards filters to the service", async () => {
@@ -293,6 +295,7 @@ describe("fetchEventsForMonth", () => {
     expect(mockGetEventsForMonth).toHaveBeenCalledWith(2026, 4, {
       eventType: "meeting",
       groupId: 7,
+      inviteeMemberId: 100001,
     });
   });
 

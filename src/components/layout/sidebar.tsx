@@ -10,6 +10,7 @@ import {
   LayoutGrid,
   MessageSquareMore,
   Settings,
+  Table2,
   UserRound,
   UsersRound,
 } from "lucide-react";
@@ -63,7 +64,11 @@ function NavItem({ item, active, collapsed }: { item: SidebarNavItem; active: bo
   );
 }
 
-export function Sidebar() {
+interface SidebarProps {
+  isAdmin?: boolean;
+}
+
+export function Sidebar({ isAdmin = false }: SidebarProps) {
   const pathname = usePathname();
   const { collapsed, width } = useSidebar();
   const [isPending, startTransition] = useTransition();
@@ -78,6 +83,13 @@ export function Sidebar() {
           {SIDEBAR_ITEMS.map((item) => (
             <NavItem key={item.href} item={item} active={isItemActive(pathname, item.href)} collapsed={collapsed} />
           ))}
+          {isAdmin && (
+            <NavItem
+              item={{ label: "Referral Database", href: "/referral-database", icon: Table2 }}
+              active={isItemActive(pathname, "/referral-database")}
+              collapsed={collapsed}
+            />
+          )}
         </ul>
       </nav>
 
