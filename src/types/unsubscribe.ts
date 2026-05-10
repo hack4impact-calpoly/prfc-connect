@@ -1,9 +1,3 @@
-export interface UnsubscribeTokenPayload {
-  memberId: number;
-  groupId: number;
-  timestamp: number;
-}
-
 export interface TokenVerificationResult {
   valid: boolean;
   error?: string;

@@ -1,4 +1,4 @@
-import { escapeHtml, plaintextToHtml, stripHtmlTags } from "@/utils/html";
+import { escapeHtml, plaintextToHtml } from "@/utils/html";
 
 describe("escapeHtml", () => {
   it("escapes ampersands", () => {
@@ -55,23 +55,5 @@ describe("plaintextToHtml", () => {
     const result = plaintextToHtml("<script>alert(1)</script>");
     expect(result).toContain("&lt;script&gt;");
     expect(result).not.toContain("<script>");
-  });
-});
-
-describe("stripHtmlTags", () => {
-  it("removes all HTML tags", () => {
-    expect(stripHtmlTags("<p>Hello <strong>world</strong></p>")).toBe("Hello world");
-  });
-
-  it("converts br to newline", () => {
-    expect(stripHtmlTags("Line one.<br>Line two.")).toBe("Line one.\nLine two.");
-  });
-
-  it("converts closing p to double newline", () => {
-    expect(stripHtmlTags("<p>First</p><p>Second</p>")).toBe("First\n\nSecond");
-  });
-
-  it("unescapes HTML entities", () => {
-    expect(stripHtmlTags("Tom &amp; Jerry &lt;3")).toBe("Tom & Jerry <3");
   });
 });

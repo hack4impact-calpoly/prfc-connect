@@ -3,11 +3,7 @@ import crypto from "crypto";
 import { env } from "@/env";
 import type { TokenVerificationResult, EmailTokenVerificationResult } from "@/types/unsubscribe";
 
-export type {
-  UnsubscribeTokenPayload,
-  TokenVerificationResult,
-  EmailTokenVerificationResult,
-} from "@/types/unsubscribe";
+export type { TokenVerificationResult, EmailTokenVerificationResult } from "@/types/unsubscribe";
 
 const TEN_YEARS_MS = 10 * 365 * 24 * 60 * 60 * 1000;
 
@@ -17,8 +13,7 @@ export function generateUnsubscribeToken(memberId: number, groupId: number): str
 
   const signature = crypto.createHmac("sha256", env.UNSUBSCRIBE_SECRET).update(payload).digest("base64url");
 
-  const token = Buffer.from(`${payload}|${signature}`).toString("base64url");
-  return token;
+  return Buffer.from(`${payload}|${signature}`).toString("base64url");
 }
 
 export function verifyUnsubscribeToken(token: string): TokenVerificationResult {
