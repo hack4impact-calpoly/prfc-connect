@@ -78,6 +78,27 @@ export async function getAllGroupsWithMemberIds(): Promise<GroupWithMemberIds[]>
   }
 }
 
+export async function getGroupsWithMemberIdsByOwner(ownerid: number): Promise<GroupWithMemberIds[]> {
+  try {
+    const groups = await prisma.contactGroup.findMany({
+      where: { ownerid },
+      include: {
+        members: { select: { memberId: true } },
+        _count: { select: { members: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return groups.map((g) => ({
+      ...g,
+      memberCount: g._count.members,
+      memberIds: g.members.map((m) => m.memberId),
+    }));
+  } catch (error) {
+    throw transformError(error);
+  }
+}
+
 export async function getGroupById(id: number): Promise<GroupWithMembers> {
   try {
     const group = await prisma.contactGroup.findUnique({

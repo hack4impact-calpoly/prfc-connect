@@ -4,6 +4,7 @@ vi.mock("@/services/contact-group", () => ({
   getGroupsByOwner: vi.fn(),
   getAllGroups: vi.fn(),
   getAllGroupsWithMemberIds: vi.fn(),
+  getGroupsWithMemberIdsByOwner: vi.fn(),
   getGroupById: vi.fn(),
   isGroupOwner: vi.fn(),
   createGroup: vi.fn(),
@@ -23,6 +24,7 @@ import {
   getGroupsByOwner,
   getAllGroups,
   getAllGroupsWithMemberIds,
+  getGroupsWithMemberIdsByOwner,
   getGroupById,
   isGroupOwner,
   createGroup,
@@ -41,6 +43,7 @@ import {
 export const mockGetGroupsByOwner = vi.mocked(getGroupsByOwner);
 export const mockGetAllGroups = vi.mocked(getAllGroups);
 export const mockGetAllGroupsWithMemberIds = vi.mocked(getAllGroupsWithMemberIds);
+export const mockGetGroupsWithMemberIdsByOwner = vi.mocked(getGroupsWithMemberIdsByOwner);
 export const mockGetGroupById = vi.mocked(getGroupById);
 export const mockIsGroupOwner = vi.mocked(isGroupOwner);
 export const mockCreateGroup = vi.mocked(createGroup);

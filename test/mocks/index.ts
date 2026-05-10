@@ -24,6 +24,7 @@ export {
   mockGetGroupsByOwner,
   mockGetAllGroups,
   mockGetAllGroupsWithMemberIds,
+  mockGetGroupsWithMemberIdsByOwner,
   mockGetGroupById,
   mockIsGroupOwner,
   mockCreateGroup,
