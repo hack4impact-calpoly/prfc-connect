@@ -3,7 +3,8 @@ import prisma from "@/lib/db";
 import { env } from "@/env";
 import { AppError, transformError } from "@/utils/errors";
 import { getGroupRecipients } from "@/services/contact-group";
-import { sendGroupEmails, validateEmailAllowed, getRemainingEmailQuota } from "@/services/email";
+import { sendGroupEmails, validateEmailAllowed } from "@/services/email";
+import { reserveEmailQuota } from "@/lib/email-quota";
 import { sendGroupSms, validateSmsAllowed } from "@/services/sms";
 import { getConsentedPhones } from "@/services/sms-consent";
 import { getMemberDetails, getAllActiveMemberIds } from "@/lib/api/member-api";
@@ -223,9 +224,9 @@ export async function sendGroupMessage(input: ComposeMessage, senderId: number):
     let smsFailed = 0;
 
     if (sendEmail && emailRecipientIds.length > 0) {
-      const remaining = await getRemainingEmailQuota();
-      const sendNowIds = emailRecipientIds.slice(0, remaining);
-      const queueIds = emailRecipientIds.slice(remaining);
+      const { allowed } = await reserveEmailQuota(emailRecipientIds.length);
+      const sendNowIds = emailRecipientIds.slice(0, allowed);
+      const queueIds = emailRecipientIds.slice(allowed);
 
       if (sendNowIds.length > 0) {
         const sendNowRecipients = members.filter((m) => sendNowIds.includes(m.ownerid));
@@ -348,9 +349,9 @@ export async function sendBlastMessage(input: BlastMessage, senderId: number): P
     let smsFailed = 0;
 
     if (sendEmail && emailRecipientIds.length > 0) {
-      const remaining = await getRemainingEmailQuota();
-      const sendNowIds = emailRecipientIds.slice(0, remaining);
-      const queueIds = emailRecipientIds.slice(remaining);
+      const { allowed } = await reserveEmailQuota(emailRecipientIds.length);
+      const sendNowIds = emailRecipientIds.slice(0, allowed);
+      const queueIds = emailRecipientIds.slice(allowed);
 
       if (sendNowIds.length > 0) {
         const sendNowMembers = members.filter((m) => sendNowIds.includes(m.ownerid));
@@ -405,12 +406,12 @@ export async function processEmailQueue(): Promise<{ sent: number; failed: numbe
       return { sent: 0, failed: 0, remaining: 0 };
     }
 
-    const remaining = await getRemainingEmailQuota();
-    if (remaining === 0) {
+    const { allowed } = await reserveEmailQuota(queued.length);
+    if (allowed === 0) {
       return { sent: 0, failed: 0, remaining: queued.length };
     }
 
-    const toProcess = queued.slice(0, remaining);
+    const toProcess = queued.slice(0, allowed);
     const messageGroups = new Map<number, Array<{ id: number; messageId: number; memberId: number }>>();
     for (const r of toProcess) {
       const existing = messageGroups.get(r.messageId) ?? [];

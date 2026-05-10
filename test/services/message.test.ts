@@ -2,10 +2,12 @@ import { vi } from "vitest";
 import "../mocks/contact-group-service";
 import "../mocks/member-api";
 import "../mocks/email-service";
+import "../mocks/email-quota";
 import { mockPrisma, mockInteractiveTransaction } from "../mocks/prisma";
 import { mockGetGroupRecipients } from "../mocks/contact-group-service";
 import { mockGetMemberDetails, mockGetAllActiveMemberIds } from "../mocks/member-api";
-import { mockValidateEmailAllowed, mockSendGroupEmails, mockGetRemainingEmailQuota } from "../mocks/email-service";
+import { mockValidateEmailAllowed, mockSendGroupEmails } from "../mocks/email-service";
+import { mockReserveEmailQuota } from "../mocks/email-quota";
 import { mockMembers } from "@/lib/mock-members";
 import { isQuietHours, validateSmsAllowed, sendGroupMessage, sendBlastMessage } from "@/services/message";
 import { AppError } from "@/utils/errors";
@@ -318,7 +320,7 @@ describe("daily quota split-send", () => {
     mockGetGroupRecipients.mockResolvedValue([100001, 100002, 100003]);
     mockGetMemberDetails.mockResolvedValue([...mockMembers.slice(0, 3)]);
     mockSendGroupEmails.mockResolvedValue({ sent: 1, failed: 0, suppressed: 0, results: [] });
-    mockGetRemainingEmailQuota.mockResolvedValue(1);
+    mockReserveEmailQuota.mockResolvedValue({ allowed: 1, total: 1 });
     mockPrisma.message.create.mockResolvedValue({ ...testMessage, id: 1 });
     mockPrisma.messageRecipient.createMany.mockResolvedValue({ count: 3 });
     mockPrisma.messageRecipient.updateMany.mockResolvedValue({ count: 2 });
@@ -340,7 +342,7 @@ describe("daily quota split-send", () => {
     mockGetGroupRecipients.mockResolvedValue([100001, 100002, 100003]);
     mockGetMemberDetails.mockResolvedValue([...mockMembers.slice(0, 3)]);
     mockSendGroupEmails.mockResolvedValue({ sent: 3, failed: 0, suppressed: 0, results: [] });
-    mockGetRemainingEmailQuota.mockResolvedValue(300);
+    mockReserveEmailQuota.mockResolvedValue({ allowed: 300, total: 300 });
     mockPrisma.message.create.mockResolvedValue({ ...testMessage, id: 1 });
     mockPrisma.messageRecipient.createMany.mockResolvedValue({ count: 3 });
     mockPrisma.message.update.mockResolvedValue(testMessage);
@@ -396,7 +398,7 @@ describe("processEmailQueue", () => {
         error: null,
       },
     ]);
-    mockGetRemainingEmailQuota.mockResolvedValue(0);
+    mockReserveEmailQuota.mockResolvedValue({ allowed: 0, total: 300 });
 
     const { processEmailQueue } = await import("@/services/message");
     const result = await processEmailQueue();

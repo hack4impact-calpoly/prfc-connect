@@ -36,12 +36,6 @@ export async function getDailyEmailCount(): Promise<number> {
     },
   });
 }
-
-export async function getRemainingEmailQuota(): Promise<number> {
-  const sentToday = await getDailyEmailCount();
-  return Math.max(0, env.DAILY_EMAIL_LIMIT - sentToday);
-}
-
 interface SendReferralEmailParams {
   prospects: Prospect[];
   referralCode: string;

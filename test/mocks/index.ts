@@ -13,6 +13,7 @@ export { memberKermit, memberAngelica } from "./members";
 export { groupAlpha, groupBravo, groupCharlie, allGroups, memberAlice, memberBob } from "./contact-groups";
 export { eventTownHall, eventMemberTownHall, eventBoardMeeting } from "./events";
 export { mockIsEmailSuppressed, mockFilterSuppressedEmails, mockSuppressEmail } from "./email-suppression";
+export { mockReserveEmailQuota } from "./email-quota";
 export {
   mockGenerateUnsubscribeToken,
   mockGenerateEmailUnsubscribeToken,
@@ -42,7 +43,6 @@ export {
 export {
   mockValidateEmailAllowed,
   mockGetDailyEmailCount,
-  mockGetRemainingEmailQuota,
   mockSendReferralEmails,
   mockSendGroupEmails,
 } from "./email-service";
