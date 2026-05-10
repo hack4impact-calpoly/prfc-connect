@@ -1,17 +1,7 @@
-import { vi, type MockedFunction } from "vitest";
 import { mockPrisma } from "../mocks/prisma";
+import { mockGetMemberDetails } from "../mocks/member-api";
+import { mockGetGroupMembers } from "../mocks/contact-group-service";
 import { eventMemberTownHall } from "../mocks/events";
-
-vi.mock("@/lib/api/member-api", () => ({
-  getMemberDetails: vi.fn(),
-}));
-
-vi.mock("@/services/contact-group", () => ({
-  getGroupMembers: vi.fn(),
-}));
-
-import { getMemberDetails } from "@/lib/api/member-api";
-import { getGroupMembers } from "@/services/contact-group";
 import {
   createEvent,
   updateEvent,
@@ -30,9 +20,6 @@ import {
   getEventInvitees,
   setEventInvitees,
 } from "@/services/event";
-
-const mockGetMemberDetails = getMemberDetails as MockedFunction<typeof getMemberDetails>;
-const mockGetGroupMembers = getGroupMembers as MockedFunction<typeof getGroupMembers>;
 
 const sampleEvent = eventMemberTownHall;
 

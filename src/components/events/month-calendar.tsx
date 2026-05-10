@@ -94,7 +94,7 @@ export function MonthCalendar({ currentMonth, onMonthChange, eventsByDate, onDay
           weekdays: "grid grid-cols-7",
           weekday: "border-r border-border py-2 text-center text-xs font-bold text-prfc-brown",
           week: "grid min-h-0 flex-1 grid-cols-7",
-          day: "min-h-[112px] border-r border-b border-border text-center",
+          day: "overflow-hidden border-r border-b border-border text-center",
         }}
       />
     </div>

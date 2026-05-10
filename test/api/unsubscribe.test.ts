@@ -1,14 +1,17 @@
 import "../mocks/prisma";
 import "../mocks/encryption";
-import { mockPrisma } from "../mocks";
+import "../mocks/email-suppression";
+import "../mocks/unsubscribe-tokens";
+import "../mocks/member-api";
+import {
+  mockPrisma,
+  mockVerifyUnsubscribeToken,
+  mockVerifyEmailUnsubscribeToken,
+  mockSuppressEmail,
+  mockGetMemberById,
+} from "../mocks";
 import { POST } from "@/app/api/unsubscribe/route";
 import { NextRequest } from "next/server";
-
-vi.mock("@/lib/unsubscribe-tokens", () => ({
-  verifyUnsubscribeToken: vi.fn(),
-}));
-
-import { verifyUnsubscribeToken } from "@/lib/unsubscribe-tokens";
 
 describe("POST /api/unsubscribe", () => {
   beforeEach(() => {
@@ -26,7 +29,7 @@ describe("POST /api/unsubscribe", () => {
   });
 
   it("returns 400 for invalid token", async () => {
-    vi.mocked(verifyUnsubscribeToken).mockReturnValue({
+    mockVerifyUnsubscribeToken.mockReturnValue({
       valid: false,
       error: "Invalid token",
     });
@@ -40,7 +43,7 @@ describe("POST /api/unsubscribe", () => {
   });
 
   it("returns 400 for expired token", async () => {
-    vi.mocked(verifyUnsubscribeToken).mockReturnValue({
+    mockVerifyUnsubscribeToken.mockReturnValue({
       valid: false,
       error: "Token expired",
     });
@@ -53,13 +56,18 @@ describe("POST /api/unsubscribe", () => {
     expect(res.status).toBe(400);
   });
 
-  it("returns 204 and updates database for valid token", async () => {
-    vi.mocked(verifyUnsubscribeToken).mockReturnValue({
+  it("returns 204 and suppresses email for valid legacy token", async () => {
+    mockVerifyUnsubscribeToken.mockReturnValue({
       valid: true,
       memberId: 123,
       groupId: 456,
     });
-    mockPrisma.contactGroupMember.updateMany.mockResolvedValue({ count: 1 });
+    mockGetMemberById.mockResolvedValue({
+      ownerid: 123,
+      ownername: "Test User",
+      owneremail: "test@example.com",
+      ownerphone: "555-0100",
+    });
 
     const req = new NextRequest("http://localhost/api/unsubscribe?token=valid-token", {
       method: "POST",
@@ -67,23 +75,16 @@ describe("POST /api/unsubscribe", () => {
     const res = await POST(req);
 
     expect(res.status).toBe(204);
-    expect(mockPrisma.contactGroupMember.updateMany).toHaveBeenCalledWith({
-      where: { memberId: 123, groupId: 456 },
-      data: {
-        notifyEmail: false,
-        unsubscribedAt: expect.any(Date),
-        unsubscribeMethod: "one-click",
-      },
-    });
+    expect(mockSuppressEmail).toHaveBeenCalledWith("test@example.com", "unsubscribe");
   });
 
-  it("returns 204 on double unsubscribe (idempotent)", async () => {
-    vi.mocked(verifyUnsubscribeToken).mockReturnValue({
+  it("returns 204 when legacy token member not found", async () => {
+    mockVerifyUnsubscribeToken.mockReturnValue({
       valid: true,
-      memberId: 123,
+      memberId: 999,
       groupId: 456,
     });
-    mockPrisma.contactGroupMember.updateMany.mockResolvedValue({ count: 0 });
+    mockGetMemberById.mockResolvedValue(null);
 
     const req = new NextRequest("http://localhost/api/unsubscribe?token=valid-token", {
       method: "POST",
@@ -91,17 +92,75 @@ describe("POST /api/unsubscribe", () => {
     const res = await POST(req);
 
     expect(res.status).toBe(204);
+    expect(mockSuppressEmail).not.toHaveBeenCalled();
   });
 
   it("returns 500 on database error", async () => {
-    vi.mocked(verifyUnsubscribeToken).mockReturnValue({
+    mockVerifyUnsubscribeToken.mockReturnValue({
       valid: true,
       memberId: 123,
       groupId: 456,
     });
-    mockPrisma.contactGroupMember.updateMany.mockRejectedValue(new Error("DB error"));
+    mockGetMemberById.mockRejectedValue(new Error("DB error"));
 
     const req = new NextRequest("http://localhost/api/unsubscribe?token=valid-token", {
+      method: "POST",
+    });
+    const res = await POST(req);
+
+    expect(res.status).toBe(500);
+  });
+});
+
+describe("POST /api/unsubscribe (email token)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns 204 and suppresses email for valid referral token", async () => {
+    const referralToken = Buffer.from("prospect@example.com|referral|12345|fakesig").toString("base64url");
+    mockVerifyEmailUnsubscribeToken.mockReturnValue({
+      valid: true,
+      email: "prospect@example.com",
+      timestamp: 12345,
+    });
+
+    const req = new NextRequest(`http://localhost/api/unsubscribe?token=${referralToken}`, {
+      method: "POST",
+    });
+    const res = await POST(req);
+
+    expect(res.status).toBe(204);
+    expect(mockSuppressEmail).toHaveBeenCalledWith("prospect@example.com", "unsubscribe");
+    expect(mockPrisma.contactGroupMember.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 for invalid referral token", async () => {
+    const referralToken = Buffer.from("bad@example.com|referral|12345|badsig").toString("base64url");
+    mockVerifyEmailUnsubscribeToken.mockReturnValue({
+      valid: false,
+      error: "Invalid signature",
+    });
+
+    const req = new NextRequest(`http://localhost/api/unsubscribe?token=${referralToken}`, {
+      method: "POST",
+    });
+    const res = await POST(req);
+
+    expect(res.status).toBe(400);
+    expect(mockSuppressEmail).not.toHaveBeenCalled();
+  });
+
+  it("returns 500 when suppression fails", async () => {
+    const referralToken = Buffer.from("test@example.com|referral|12345|fakesig").toString("base64url");
+    mockVerifyEmailUnsubscribeToken.mockReturnValue({
+      valid: true,
+      email: "test@example.com",
+      timestamp: 12345,
+    });
+    mockSuppressEmail.mockRejectedValueOnce(new Error("DB error"));
+
+    const req = new NextRequest(`http://localhost/api/unsubscribe?token=${referralToken}`, {
       method: "POST",
     });
     const res = await POST(req);

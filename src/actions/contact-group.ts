@@ -31,7 +31,9 @@ import {
   getMessageRecipients,
   previewRecipientCounts,
 } from "@/services/message";
+import { z } from "zod";
 import { MessageHistoryQuerySchema } from "@/schema/message";
+import { PositiveIntSchema } from "@/schema/common";
 import { getMemberById } from "@/lib/api/member-api";
 import { transformError } from "@/utils/errors";
 import type { ActionResult } from "@/types/action";
@@ -42,19 +44,20 @@ import type {
   MessageDetail,
   RecipientStatus,
   RecipientCounts,
-} from "@/services/message";
+} from "@/types/message";
 import type { EnrichedGroupData } from "@/types/group";
 export type { EnrichedGroupData } from "@/types/group";
 
 export async function fetchEnrichedGroup(groupId: number): Promise<ActionResult<EnrichedGroupData>> {
   try {
     const session = await verifySession();
+    const validGroupId = PositiveIntSchema.parse(groupId);
 
-    if (!session.isAdmin && !(await isGroupOwner(groupId, session.ownerid))) {
+    if (!session.isAdmin && !(await isGroupOwner(validGroupId, session.ownerid))) {
       return { success: false, error: "You do not have permission to view this group" };
     }
 
-    const group = await getGroupById(groupId);
+    const group = await getGroupById(validGroupId);
     const [enriched, owner] = await Promise.all([enrichGroupMembers(group), getMemberById(group.ownerid)]);
 
     return {
@@ -133,12 +136,13 @@ export async function updateContactGroup(groupId: number, formData: FormData): P
 export async function deleteContactGroup(groupId: number): Promise<ActionResult> {
   try {
     const session = await verifySession();
+    const validGroupId = PositiveIntSchema.parse(groupId);
 
-    if (!session.isAdmin && !(await isGroupOwner(groupId, session.ownerid))) {
+    if (!session.isAdmin && !(await isGroupOwner(validGroupId, session.ownerid))) {
       return { success: false, error: "You do not have permission to delete this group" };
     }
 
-    await deleteGroup(groupId);
+    await deleteGroup(validGroupId);
 
     revalidatePath("/groups");
     return { success: true };
@@ -173,14 +177,16 @@ export async function addMembers(input: {
 export async function removeMember(groupId: number, memberId: number): Promise<ActionResult> {
   try {
     const session = await verifySession();
+    const validGroupId = PositiveIntSchema.parse(groupId);
+    const validMemberId = PositiveIntSchema.parse(memberId);
 
-    if (!session.isAdmin && !(await isGroupOwner(groupId, session.ownerid))) {
+    if (!session.isAdmin && !(await isGroupOwner(validGroupId, session.ownerid))) {
       return { success: false, error: "You do not have permission to remove members from this group" };
     }
 
-    await removeMemberFromGroup(groupId, memberId);
+    await removeMemberFromGroup(validGroupId, validMemberId);
 
-    revalidatePath(`/groups/${groupId}`);
+    revalidatePath(`/groups/${validGroupId}`);
     return { success: true };
   } catch (error) {
     const appError = transformError(error);
@@ -191,9 +197,10 @@ export async function removeMember(groupId: number, memberId: number): Promise<A
 export async function leaveGroup(groupId: number): Promise<ActionResult> {
   try {
     const session = await verifySession();
-    await removeMemberFromGroup(groupId, session.ownerid);
+    const validGroupId = PositiveIntSchema.parse(groupId);
+    await removeMemberFromGroup(validGroupId, session.ownerid);
 
-    revalidatePath(`/groups/${groupId}`);
+    revalidatePath(`/groups/${validGroupId}`);
     revalidatePath("/groups");
     return { success: true };
   } catch (error) {
@@ -205,14 +212,16 @@ export async function leaveGroup(groupId: number): Promise<ActionResult> {
 export async function removeMembers(groupId: number, memberIds: number[]): Promise<ActionResult<{ count: number }>> {
   try {
     const session = await verifySession();
+    const validGroupId = PositiveIntSchema.parse(groupId);
+    const validMemberIds = z.array(PositiveIntSchema).min(1).parse(memberIds);
 
-    if (!session.isAdmin && !(await isGroupOwner(groupId, session.ownerid))) {
+    if (!session.isAdmin && !(await isGroupOwner(validGroupId, session.ownerid))) {
       return { success: false, error: "You do not have permission to remove members from this group" };
     }
 
-    const result = await removeMembersFromGroup(groupId, memberIds);
+    const result = await removeMembersFromGroup(validGroupId, validMemberIds);
 
-    revalidatePath(`/groups/${groupId}`);
+    revalidatePath(`/groups/${validGroupId}`);
     return { success: true, data: result };
   } catch (error) {
     const appError = transformError(error);
@@ -323,15 +332,16 @@ export async function fetchMessageDetail(messageId: number): Promise<
 > {
   try {
     const session = await verifySession();
-    const message = await getMessageById(messageId);
+    const validMessageId = PositiveIntSchema.parse(messageId);
+    const message = await getMessageById(validMessageId);
 
     const isSender = message.senderId === session.ownerid;
-    const isRecipient = await isMessageRecipient(messageId, session.ownerid);
+    const isRecipient = await isMessageRecipient(validMessageId, session.ownerid);
     if (!session.isAdmin && !isSender && !isRecipient) {
       return { success: false, error: "You do not have permission to view this message" };
     }
 
-    const recipients = await getMessageRecipients(messageId);
+    const recipients = await getMessageRecipients(validMessageId);
     return { success: true, data: { message, recipients } };
   } catch (error) {
     const appError = transformError(error);
@@ -342,12 +352,13 @@ export async function fetchMessageDetail(messageId: number): Promise<
 export async function fetchRecipientPreview(groupId: number): Promise<ActionResult<RecipientCounts>> {
   try {
     const session = await verifySession();
+    const validGroupId = PositiveIntSchema.parse(groupId);
 
-    if (!session.isAdmin && !(await isGroupOwner(groupId, session.ownerid))) {
+    if (!session.isAdmin && !(await isGroupOwner(validGroupId, session.ownerid))) {
       return { success: false, error: "You do not have permission to preview recipients for this group" };
     }
 
-    const counts = await previewRecipientCounts(groupId);
+    const counts = await previewRecipientCounts(validGroupId);
     return { success: true, data: counts };
   } catch (error) {
     const appError = transformError(error);

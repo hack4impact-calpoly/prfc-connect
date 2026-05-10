@@ -32,7 +32,7 @@ import {
 } from "@/utils/time";
 import { cn } from "@/lib/utils";
 import type { EventType } from "@/generated/prisma/client";
-import type { EventWithRsvpCount } from "@/services/event";
+import type { EventWithRsvpCount } from "@/types/event";
 
 type Props = {
   onClose: () => void;

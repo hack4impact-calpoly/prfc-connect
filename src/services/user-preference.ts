@@ -4,10 +4,9 @@ import prisma from "@/lib/db";
 import { AppError, transformError } from "@/utils/errors";
 import { MAX_PHOTO_BYTES, ALLOWED_PHOTO_TYPES } from "@/utils/photo-constraints";
 
-export interface UserPreferenceData {
-  notifyEmailDefault: boolean;
-  notifySmsDefault: boolean;
-}
+import type { UserPreferenceData } from "@/types/settings";
+
+export type { UserPreferenceData } from "@/types/settings";
 
 const DEFAULTS: UserPreferenceData = {
   notifyEmailDefault: true,

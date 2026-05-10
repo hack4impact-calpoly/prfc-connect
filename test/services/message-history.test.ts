@@ -1,18 +1,8 @@
+import "../mocks/contact-group-service";
+import "../mocks/email-service";
+import "../mocks/member-api";
 import { mockPrisma } from "../mocks/prisma";
 import { getGroupMessageHistory } from "@/services/message";
-
-vi.mock("@/services/contact-group", () => ({
-  getGroupRecipients: vi.fn(),
-}));
-
-vi.mock("@/services/email", () => ({
-  sendGroupEmails: vi.fn(),
-}));
-
-vi.mock("@/lib/api/member-api", () => ({
-  getMemberDetails: vi.fn(),
-  getAllActiveMemberIds: vi.fn(),
-}));
 
 vi.mock("@/env", () => ({
   env: { SMS_ENABLED: false, FROM_EMAIL: "no-reply@prfc.coop" },

@@ -1,14 +1,7 @@
-import { vi, type MockedFunction } from "vitest";
-
-vi.mock("@/lib/api/member-api", () => ({
-  getMemberById: vi.fn(),
-}));
-
-import { getMemberById } from "@/lib/api/member-api";
+import { vi } from "vitest";
+import { mockGetMemberById } from "../mocks/member-api";
 import { getMemberProfile } from "@/services/profile";
 import { memberKermit } from "../mocks/members";
-
-const mockGetMemberById = getMemberById as MockedFunction<typeof getMemberById>;
 
 describe("getMemberProfile", () => {
   beforeEach(() => {

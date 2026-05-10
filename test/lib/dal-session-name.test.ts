@@ -1,4 +1,5 @@
-import { vi, type MockedFunction } from "vitest";
+import { vi } from "vitest";
+import { mockGetMemberById } from "../mocks/member-api";
 
 const { mockCookieStore } = vi.hoisted(() => ({
   mockCookieStore: {
@@ -17,14 +18,7 @@ vi.mock("react", async () => {
   return { ...actual, cache: (fn: unknown) => fn };
 });
 
-vi.mock("@/lib/api/member-api", () => ({
-  getMemberById: vi.fn(),
-}));
-
 import { generateToken, getSessionWithName, AUTH_COOKIE } from "@/lib/dal";
-import { getMemberById } from "@/lib/api/member-api";
-
-const mockGetMemberById = getMemberById as MockedFunction<typeof getMemberById>;
 
 describe("getSessionWithName", () => {
   beforeEach(() => {

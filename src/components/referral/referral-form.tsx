@@ -183,10 +183,7 @@ export function ReferralForm() {
           ))}
         </div>
 
-        <Button
-          type="submit"
-          className="self-end px-6 py-2 bg-prfc-red text-white text-[1.125rem] font-extralight rounded-lg hover:bg-prfc-red/90"
-        >
+        <Button type="submit" className="self-end px-6 py-2 bg-prfc-red text-white rounded-lg hover:bg-prfc-red/90">
           Invite
         </Button>
 
@@ -202,7 +199,7 @@ export function ReferralForm() {
             <Plus className="h-6 w-6" strokeWidth={2} />
           </button>
         ) : (
-          <p className="text-[1.8rem] font-semibold text-[#7b3f00] m-0">You've reached the max of 5 referrals.</p>
+          <p className="text-[1.8rem] font-semibold text-prfc-brown m-0">You've reached the max of 5 referrals.</p>
         )}
 
         <input type="hidden" name="referrerEmail" value={referrerEmail} />

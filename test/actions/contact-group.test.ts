@@ -1,35 +1,22 @@
 import "../mocks/next-cache";
 import "../mocks/dal";
+import "../mocks/contact-group-service";
+import "../mocks/message-service";
 
-import { vi, type MockedFunction } from "vitest";
 import { AppError } from "@/utils/errors";
-import { mockVerifySession, mockRevalidatePath } from "../mocks";
-
-vi.mock("@/services/contact-group", () => ({
-  createGroup: vi.fn(),
-  updateGroup: vi.fn(),
-  deleteGroup: vi.fn(),
-  isGroupOwner: vi.fn(),
-  addMembersToGroup: vi.fn(),
-  removeMemberFromGroup: vi.fn(),
-  updateMemberNotifications: vi.fn(),
-}));
-
-vi.mock("@/services/message", () => ({
-  sendGroupMessage: vi.fn(),
-  sendBlastMessage: vi.fn(),
-}));
-
 import {
-  createGroup,
-  updateGroup,
-  deleteGroup,
-  isGroupOwner,
-  addMembersToGroup,
-  removeMemberFromGroup,
-  updateMemberNotifications,
-} from "@/services/contact-group";
-import { sendGroupMessage, sendBlastMessage } from "@/services/message";
+  mockVerifySession,
+  mockRevalidatePath,
+  mockCreateGroup,
+  mockUpdateGroup,
+  mockDeleteGroup,
+  mockIsGroupOwner,
+  mockAddMembersToGroup,
+  mockRemoveMemberFromGroup,
+  mockUpdateMemberNotifications,
+  mockSendGroupMessage,
+  mockSendBlastMessage,
+} from "../mocks";
 import {
   createContactGroup,
   updateContactGroup,
@@ -40,16 +27,6 @@ import {
   sendMessage,
   sendBlast,
 } from "@/actions/contact-group";
-
-const mockCreateGroup = createGroup as MockedFunction<typeof createGroup>;
-const mockUpdateGroup = updateGroup as MockedFunction<typeof updateGroup>;
-const mockDeleteGroup = deleteGroup as MockedFunction<typeof deleteGroup>;
-const mockIsGroupOwner = isGroupOwner as MockedFunction<typeof isGroupOwner>;
-const mockAddMembersToGroup = addMembersToGroup as MockedFunction<typeof addMembersToGroup>;
-const mockRemoveMemberFromGroup = removeMemberFromGroup as MockedFunction<typeof removeMemberFromGroup>;
-const mockUpdateMemberNotifications = updateMemberNotifications as MockedFunction<typeof updateMemberNotifications>;
-const mockSendGroupMessage = sendGroupMessage as MockedFunction<typeof sendGroupMessage>;
-const mockSendBlastMessage = sendBlastMessage as MockedFunction<typeof sendBlastMessage>;
 
 function createFormData(data: Record<string, string>): FormData {
   const formData = new FormData();

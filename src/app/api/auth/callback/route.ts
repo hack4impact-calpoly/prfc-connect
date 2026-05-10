@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { AUTH_COOKIE, validateToken, getSecret } from "@/lib/dal";
+
+const AuthCallbackSchema = z.object({
+  token: z.string().min(1),
+});
 
 export async function POST(req: NextRequest) {
   let secret: string;
@@ -10,11 +15,13 @@ export async function POST(req: NextRequest) {
   }
 
   const formData = await req.formData();
-  const token = formData.get("token") as string | null;
+  const parsed = AuthCallbackSchema.safeParse({ token: formData.get("token") });
 
-  if (!token) {
+  if (!parsed.success) {
     return NextResponse.redirect(new URL("/", req.url));
   }
+
+  const { token } = parsed.data;
 
   const session = validateToken(token, secret);
   if (!session) {

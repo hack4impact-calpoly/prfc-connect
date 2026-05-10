@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { ProfilePhotoUpload } from "@/components/profile/profile-photo-upload";
 import { PersonalInformationCard } from "@/components/profile/personal-information-card";
 import { uploadPhotoAction, deletePhotoAction } from "@/actions/settings";
-import type { MemberProfile } from "@/services/profile";
+import type { MemberProfile } from "@/types/settings";
 
 type Props = {
   profile: MemberProfile;

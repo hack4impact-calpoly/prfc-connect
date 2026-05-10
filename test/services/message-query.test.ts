@@ -1,24 +1,12 @@
-import { vi, type MockedFunction } from "vitest";
+import "../mocks/contact-group-service";
+import "../mocks/email-service";
 import { mockPrisma } from "../mocks/prisma";
-
-vi.mock("@/services/contact-group", () => ({
-  getGroupRecipients: vi.fn(),
-}));
-
-vi.mock("@/services/email", () => ({
-  sendGroupEmails: vi.fn(),
-}));
-
-vi.mock("@/lib/api/member-api", () => ({
-  getMemberDetails: vi.fn(),
-  getAllActiveMemberIds: vi.fn(),
-}));
+import { mockGetMemberDetails } from "../mocks/member-api";
 
 vi.mock("@/env", () => ({
   env: { SMS_ENABLED: false, FROM_EMAIL: "no-reply@prfc.coop" },
 }));
 
-import { getMemberDetails } from "@/lib/api/member-api";
 import {
   getAllMessageHistory,
   getMessageHistoryPage,
@@ -26,8 +14,6 @@ import {
   getMessageRecipients,
   previewRecipientCounts,
 } from "@/services/message";
-
-const mockGetMemberDetails = getMemberDetails as MockedFunction<typeof getMemberDetails>;
 
 describe("getAllMessageHistory", () => {
   it("returns messages with group names", async () => {

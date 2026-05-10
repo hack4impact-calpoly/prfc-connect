@@ -1,29 +1,18 @@
 import "../mocks/next-cache";
 import "../mocks/dal";
+import "../mocks/sms-consent-service";
+import "../mocks/profile-service";
+import "../mocks/user-preference-service";
 
-import { vi, type MockedFunction } from "vitest";
 import { AppError } from "@/utils/errors";
-import { mockVerifySession, mockRevalidatePath, allDisabledPreferences } from "../mocks";
-
-vi.mock("@/services/sms-consent", () => ({
-  grantSmsConsent: vi.fn(),
-  revokeSmsConsent: vi.fn(),
-}));
-
-vi.mock("@/services/profile", () => ({
-  getMemberProfile: vi.fn(),
-}));
-
-vi.mock("@/services/user-preference", () => ({
-  updateUserPreferences: vi.fn(),
-  uploadProfilePhoto: vi.fn(),
-}));
-
-import { updateUserPreferences, uploadProfilePhoto } from "@/services/user-preference";
+import {
+  mockVerifySession,
+  mockRevalidatePath,
+  allDisabledPreferences,
+  mockUpdateUserPreferences,
+  mockUploadProfilePhoto,
+} from "../mocks";
 import { updateUserPreferencesAction, uploadPhotoAction } from "@/actions/settings";
-
-const mockUpdateUserPreferences = updateUserPreferences as MockedFunction<typeof updateUserPreferences>;
-const mockUploadProfilePhoto = uploadProfilePhoto as MockedFunction<typeof uploadProfilePhoto>;
 
 describe("updateUserPreferencesAction", () => {
   beforeEach(() => {

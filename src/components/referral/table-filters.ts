@@ -1,4 +1,5 @@
 import type { Row, FilterFn } from "@tanstack/react-table";
+import { rankItem } from "@tanstack/match-sorter-utils";
 import type { ApiReferral } from "@/schema/api";
 
 export type FilterOperator =
@@ -38,6 +39,14 @@ export const operatorFilter: FilterFn<ApiReferral> = (
 };
 
 operatorFilter.autoRemove = (value: ColumnFilterValue) => !value?.text || value.text.trim() === "";
+
+export const fuzzyFilter: FilterFn<ApiReferral> = (row, columnId, value, addMeta) => {
+  const itemRank = rankItem(String(row.getValue(columnId) ?? ""), value as string);
+  addMeta({ itemRank });
+  return itemRank.passed;
+};
+
+fuzzyFilter.autoRemove = (value: string) => !value || value.trim() === "";
 
 export const filterOperators: { value: FilterOperator; label: string }[] = [
   { value: "contains", label: "contains" },

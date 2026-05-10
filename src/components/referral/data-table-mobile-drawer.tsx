@@ -66,7 +66,7 @@ export function DataTableMobileDrawer({
         >
           <SlidersHorizontal className="h-5 w-5" />
           {(isFiltered || hiddenColumnCount > 0) && (
-            <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-prfc-blue" />
+            <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-prfc-red" />
           )}
         </Button>
       </DrawerTrigger>
@@ -77,13 +77,13 @@ export function DataTableMobileDrawer({
         <div className="space-y-6 px-4 pb-4 overflow-y-auto">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="font-medium text-prfc-blue">
+              <h3 className="font-medium text-prfc-red">
                 Visible Columns
                 {hiddenColumnCount > 0 && (
                   <span className="ml-2 text-sm text-muted-foreground">({hiddenColumnCount} hidden)</span>
                 )}
               </h3>
-              <button type="button" onClick={onResetColumns} className="text-sm text-prfc-blue hover:underline">
+              <button type="button" onClick={onResetColumns} className="text-sm text-prfc-red hover:underline">
                 Reset to defaults
               </button>
             </div>
@@ -104,7 +104,7 @@ export function DataTableMobileDrawer({
           </div>
 
           <div className="space-y-3">
-            <h3 className="font-medium text-prfc-blue">Filters</h3>
+            <h3 className="font-medium text-prfc-red">Filters</h3>
             <div className="space-y-2">
               <Select value={filterColumn} onValueChange={onFilterColumnChange}>
                 <SelectTrigger className="w-full min-h-[44px]">
@@ -149,7 +149,7 @@ export function DataTableMobileDrawer({
           </div>
 
           <div className="space-y-3">
-            <h3 className="font-medium text-prfc-blue">Table Density</h3>
+            <h3 className="font-medium text-prfc-red">Table Density</h3>
             <div className="flex flex-col gap-2">
               {(["compact", "standard", "comfortable"] as Density[]).map((densityOption) => (
                 <label

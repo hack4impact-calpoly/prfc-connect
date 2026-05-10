@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifySession } from "@/lib/dal";
 import { membersRateLimiter } from "@/lib/rate-limit";
 import { getMemberById } from "@/lib/api/member-api";
+import { StringIntSchema } from "@/schema/common";
 import { AppError, apiErrorHandler } from "@/utils/errors";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -28,12 +29,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     const { id } = await params;
-
-    if (!/^\d+$/.test(id)) {
-      throw new AppError("VALIDATION_ERROR", "Invalid member ID format");
-    }
-
-    const memberId = parseInt(id, 10);
+    const memberId = StringIntSchema.parse(id);
     const member = await getMemberById(memberId);
 
     if (!member) {

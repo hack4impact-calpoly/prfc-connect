@@ -8,8 +8,9 @@ import { grantSmsConsent, revokeSmsConsent } from "@/services/sms-consent";
 import { getMemberProfile } from "@/services/profile";
 import { updateUserPreferences, uploadProfilePhoto, deleteProfilePhoto } from "@/services/user-preference";
 import { transformError } from "@/utils/errors";
+import { MAX_PHOTO_BYTES, ALLOWED_PHOTO_TYPES } from "@/utils/photo-constraints";
 import type { ActionResult } from "@/types/action";
-import type { UserPreferenceData } from "@/services/user-preference";
+import type { UserPreferenceData } from "@/types/settings";
 
 export async function updateUserPreferencesAction(input: {
   notifyEmailDefault?: boolean;
@@ -43,6 +44,12 @@ export async function uploadPhotoAction(formData: FormData): Promise<ActionResul
     const file = formData.get("file");
     if (!(file instanceof File) || file.size === 0) {
       return { success: false, error: "No file provided" };
+    }
+    if (!ALLOWED_PHOTO_TYPES.has(file.type)) {
+      return { success: false, error: "Only JPEG and PNG files are allowed" };
+    }
+    if (file.size > MAX_PHOTO_BYTES) {
+      return { success: false, error: "File must be under 2MB" };
     }
     const url = await uploadProfilePhoto(session.ownerid, file);
     revalidatePath("/profile");

@@ -1,13 +1,8 @@
 import { vi } from "vitest";
 import { groupAlpha, memberAlice, memberBob } from "../mocks/contact-groups";
+import { mockGetMemberDetails } from "../mocks/member-api";
 import { enrichGroupMembers } from "@/services/contact-group";
 import type { GroupWithMembers } from "@/services/contact-group";
-
-vi.mock("@/lib/api/member-api", () => ({
-  getMemberDetails: vi.fn(),
-}));
-
-import { getMemberDetails } from "@/lib/api/member-api";
 
 const mockGroup: GroupWithMembers = {
   ...groupAlpha,
@@ -21,7 +16,7 @@ describe("enrichGroupMembers", () => {
   });
 
   it("maps member details onto group members", async () => {
-    vi.mocked(getMemberDetails).mockResolvedValue([
+    mockGetMemberDetails.mockResolvedValue([
       { ownerid: 10, ownername: "Alice Smith", owneremail: "alice@example.com", ownerphone: "+15550001" },
       { ownerid: 20, ownername: "Bob Jones", owneremail: "bob@example.com", ownerphone: "+15550002" },
     ]);
@@ -42,11 +37,11 @@ describe("enrichGroupMembers", () => {
     const result = await enrichGroupMembers(emptyGroup);
 
     expect(result.members).toEqual([]);
-    expect(getMemberDetails).not.toHaveBeenCalled();
+    expect(mockGetMemberDetails).not.toHaveBeenCalled();
   });
 
   it("falls back to Unknown Member when member not found in portal", async () => {
-    vi.mocked(getMemberDetails).mockResolvedValue([
+    mockGetMemberDetails.mockResolvedValue([
       { ownerid: 10, ownername: "Alice Smith", owneremail: "alice@example.com", ownerphone: "+15550001" },
     ]);
 
@@ -58,7 +53,7 @@ describe("enrichGroupMembers", () => {
   });
 
   it("handles partial API response", async () => {
-    vi.mocked(getMemberDetails).mockResolvedValue([
+    mockGetMemberDetails.mockResolvedValue([
       { ownerid: 20, ownername: "Bob Jones", owneremail: "bob@example.com", ownerphone: "+15550002" },
     ]);
 
@@ -69,19 +64,19 @@ describe("enrichGroupMembers", () => {
   });
 
   it("calls getMemberDetails once with all member IDs", async () => {
-    vi.mocked(getMemberDetails).mockResolvedValue([
+    mockGetMemberDetails.mockResolvedValue([
       { ownerid: 10, ownername: "Alice Smith", owneremail: "alice@example.com", ownerphone: "+15550001" },
       { ownerid: 20, ownername: "Bob Jones", owneremail: "bob@example.com", ownerphone: "+15550002" },
     ]);
 
     await enrichGroupMembers(mockGroup);
 
-    expect(getMemberDetails).toHaveBeenCalledTimes(1);
-    expect(getMemberDetails).toHaveBeenCalledWith([10, 20]);
+    expect(mockGetMemberDetails).toHaveBeenCalledTimes(1);
+    expect(mockGetMemberDetails).toHaveBeenCalledWith([10, 20]);
   });
 
   it("falls back for all members when API returns empty array", async () => {
-    vi.mocked(getMemberDetails).mockResolvedValue([]);
+    mockGetMemberDetails.mockResolvedValue([]);
 
     const result = await enrichGroupMembers(mockGroup);
 
@@ -92,7 +87,7 @@ describe("enrichGroupMembers", () => {
   });
 
   it("preserves original member fields alongside enriched fields", async () => {
-    vi.mocked(getMemberDetails).mockResolvedValue([
+    mockGetMemberDetails.mockResolvedValue([
       { ownerid: 10, ownername: "Alice Smith", owneremail: "alice@example.com", ownerphone: "+15550001" },
     ]);
 
@@ -105,7 +100,7 @@ describe("enrichGroupMembers", () => {
   });
 
   it("throws on API error", async () => {
-    vi.mocked(getMemberDetails).mockRejectedValue(new Error("API unavailable"));
+    mockGetMemberDetails.mockRejectedValue(new Error("API unavailable"));
 
     await expect(enrichGroupMembers(mockGroup)).rejects.toMatchObject({
       code: "INTERNAL_ERROR",

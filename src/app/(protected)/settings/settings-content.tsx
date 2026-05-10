@@ -5,8 +5,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { NotificationPreferencesCard } from "@/components/settings/notification-preferences-card";
 import { updateUserPreferencesAction } from "@/actions/settings";
-import type { UserPreferenceData } from "@/services/user-preference";
-import type { SmsConsentRecord } from "@/services/sms-consent";
+import type { UserPreferenceData } from "@/types/settings";
+import type { SmsConsentRecord } from "@/types/settings";
 
 type Props = {
   preferences: UserPreferenceData;

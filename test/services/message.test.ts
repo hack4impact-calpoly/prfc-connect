@@ -1,11 +1,16 @@
 import { vi } from "vitest";
+import "../mocks/contact-group-service";
+import "../mocks/member-api";
+import "../mocks/email-service";
 import { mockPrisma, mockInteractiveTransaction } from "../mocks/prisma";
+import { mockGetGroupRecipients } from "../mocks/contact-group-service";
+import { mockGetMemberDetails, mockGetAllActiveMemberIds } from "../mocks/member-api";
+import { mockValidateEmailAllowed, mockSendGroupEmails, mockGetRemainingEmailQuota } from "../mocks/email-service";
 import { mockMembers } from "@/lib/mock-members";
 import { isQuietHours, validateSmsAllowed, sendGroupMessage, sendBlastMessage } from "@/services/message";
 import { AppError } from "@/utils/errors";
 import type { Message } from "@/generated/prisma/client";
 
-// Test fixtures
 const testMessage: Message = {
   id: 1,
   senderId: 100001,
@@ -36,33 +41,9 @@ const mockEnv = vi.hoisted(() => ({
   FROM_EMAIL: "no-reply@prfc.coop",
 }));
 
-// Mock modules
-vi.mock("@/services/contact-group", () => ({
-  getGroupRecipients: vi.fn(),
-}));
-
-vi.mock("@/services/email", () => ({
-  sendGroupEmails: vi.fn(),
-  getRemainingEmailQuota: vi.fn().mockResolvedValue(300),
-  validateEmailAllowed: vi.fn(() => {
-    if (!mockEnv.EMAIL_ENABLED) {
-      throw new AppError("FORBIDDEN", "Email functionality is currently disabled", { reason: "EMAIL_DISABLED" });
-    }
-  }),
-}));
-
-vi.mock("@/lib/api/member-api", () => ({
-  getMemberDetails: vi.fn(),
-  getAllActiveMemberIds: vi.fn(),
-}));
-
 vi.mock("@/env", () => ({
   env: mockEnv,
 }));
-
-import { getGroupRecipients } from "@/services/contact-group";
-import { sendGroupEmails, getRemainingEmailQuota } from "@/services/email";
-import { getMemberDetails, getAllActiveMemberIds } from "@/lib/api/member-api";
 
 describe("isQuietHours", () => {
   beforeEach(() => {
@@ -163,14 +144,15 @@ describe("sendGroupMessage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockEnv.EMAIL_ENABLED = true;
+    mockValidateEmailAllowed.mockImplementation(() => {});
     mockEnv.SMS_ENABLED = false;
     mockInteractiveTransaction();
   });
 
   it("creates Message record with correct data", async () => {
-    vi.mocked(getGroupRecipients).mockResolvedValue([100002, 100003, 100004]);
-    vi.mocked(getMemberDetails).mockResolvedValue(testRecipients);
-    vi.mocked(sendGroupEmails).mockResolvedValue({ sent: 3, failed: 0, suppressed: 0, results: [] });
+    mockGetGroupRecipients.mockResolvedValue([100002, 100003, 100004]);
+    mockGetMemberDetails.mockResolvedValue(testRecipients);
+    mockSendGroupEmails.mockResolvedValue({ sent: 3, failed: 0, suppressed: 0, results: [] });
     mockPrisma.message.create.mockResolvedValue({ ...testMessage, id: 1 });
     mockPrisma.messageRecipient.createMany.mockResolvedValue({ count: 3 });
     mockPrisma.messageRecipient.updateMany.mockResolvedValue({ count: 3 });
@@ -193,9 +175,9 @@ describe("sendGroupMessage", () => {
   });
 
   it("creates MessageRecipient records for email recipients", async () => {
-    vi.mocked(getGroupRecipients).mockResolvedValue([100002, 100003, 100004]);
-    vi.mocked(getMemberDetails).mockResolvedValue(testRecipients);
-    vi.mocked(sendGroupEmails).mockResolvedValue({ sent: 3, failed: 0, suppressed: 0, results: [] });
+    mockGetGroupRecipients.mockResolvedValue([100002, 100003, 100004]);
+    mockGetMemberDetails.mockResolvedValue(testRecipients);
+    mockSendGroupEmails.mockResolvedValue({ sent: 3, failed: 0, suppressed: 0, results: [] });
     mockPrisma.message.create.mockResolvedValue({ ...testMessage, id: 1 });
     mockPrisma.messageRecipient.createMany.mockResolvedValue({ count: 3 });
     mockPrisma.messageRecipient.updateMany.mockResolvedValue({ count: 3 });
@@ -221,7 +203,7 @@ describe("sendGroupMessage", () => {
   });
 
   it("throws when no recipients found", async () => {
-    vi.mocked(getGroupRecipients).mockResolvedValue([]);
+    mockGetGroupRecipients.mockResolvedValue([]);
 
     await expect(sendGroupMessage(defaultInput, 100001)).rejects.toMatchObject({
       code: "VALIDATION_ERROR",
@@ -229,9 +211,9 @@ describe("sendGroupMessage", () => {
   });
 
   it("updates failedCount when emails fail", async () => {
-    vi.mocked(getGroupRecipients).mockResolvedValue([100002, 100003, 100004]);
-    vi.mocked(getMemberDetails).mockResolvedValue(testRecipients);
-    vi.mocked(sendGroupEmails).mockResolvedValue({ sent: 1, failed: 2, suppressed: 0, results: [] });
+    mockGetGroupRecipients.mockResolvedValue([100002, 100003, 100004]);
+    mockGetMemberDetails.mockResolvedValue(testRecipients);
+    mockSendGroupEmails.mockResolvedValue({ sent: 1, failed: 2, suppressed: 0, results: [] });
     mockPrisma.message.create.mockResolvedValue({ ...testMessage, id: 1 });
     mockPrisma.messageRecipient.createMany.mockResolvedValue({ count: 3 });
     mockPrisma.messageRecipient.updateMany.mockResolvedValue({ count: 2 });
@@ -261,15 +243,16 @@ describe("sendBlastMessage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockEnv.EMAIL_ENABLED = true;
+    mockValidateEmailAllowed.mockImplementation(() => {});
     mockEnv.SMS_ENABLED = false;
     mockInteractiveTransaction();
     mockPrisma.userPreference.findMany.mockResolvedValue([]);
   });
 
   it("creates Message with isBlast=true and no groupId", async () => {
-    vi.mocked(getAllActiveMemberIds).mockResolvedValue(allMemberIds);
-    vi.mocked(getMemberDetails).mockResolvedValue([...mockMembers]);
-    vi.mocked(sendGroupEmails).mockResolvedValue({ sent: 389, failed: 0, suppressed: 0, results: [] });
+    mockGetAllActiveMemberIds.mockResolvedValue(allMemberIds);
+    mockGetMemberDetails.mockResolvedValue([...mockMembers]);
+    mockSendGroupEmails.mockResolvedValue({ sent: 389, failed: 0, suppressed: 0, results: [] });
     mockPrisma.message.create.mockResolvedValue({ ...testBlastMessage, id: 2 });
     mockPrisma.messageRecipient.createMany.mockResolvedValue({ count: 389 });
     mockPrisma.messageRecipient.updateMany.mockResolvedValue({ count: 389 });
@@ -288,9 +271,9 @@ describe("sendBlastMessage", () => {
   });
 
   it("sends to all active members", async () => {
-    vi.mocked(getAllActiveMemberIds).mockResolvedValue(allMemberIds);
-    vi.mocked(getMemberDetails).mockResolvedValue([...mockMembers]);
-    vi.mocked(sendGroupEmails).mockResolvedValue({ sent: 389, failed: 0, suppressed: 0, results: [] });
+    mockGetAllActiveMemberIds.mockResolvedValue(allMemberIds);
+    mockGetMemberDetails.mockResolvedValue([...mockMembers]);
+    mockSendGroupEmails.mockResolvedValue({ sent: 389, failed: 0, suppressed: 0, results: [] });
     mockPrisma.message.create.mockResolvedValue({ ...testBlastMessage, id: 2 });
     mockPrisma.messageRecipient.createMany.mockResolvedValue({ count: 389 });
     mockPrisma.messageRecipient.updateMany.mockResolvedValue({ count: 389 });
@@ -298,14 +281,14 @@ describe("sendBlastMessage", () => {
 
     await sendBlastMessage(defaultInput, 100001);
 
-    expect(getAllActiveMemberIds).toHaveBeenCalled();
-    expect(getMemberDetails).toHaveBeenCalledWith(allMemberIds);
+    expect(mockGetAllActiveMemberIds).toHaveBeenCalled();
+    expect(mockGetMemberDetails).toHaveBeenCalledWith(allMemberIds);
   });
 
   it("updates failedCount when emails fail", async () => {
-    vi.mocked(getAllActiveMemberIds).mockResolvedValue(allMemberIds);
-    vi.mocked(getMemberDetails).mockResolvedValue([...mockMembers]);
-    vi.mocked(sendGroupEmails).mockResolvedValue({ sent: 350, failed: 39, suppressed: 0, results: [] });
+    mockGetAllActiveMemberIds.mockResolvedValue(allMemberIds);
+    mockGetMemberDetails.mockResolvedValue([...mockMembers]);
+    mockSendGroupEmails.mockResolvedValue({ sent: 350, failed: 39, suppressed: 0, results: [] });
     mockPrisma.message.create.mockResolvedValue({ ...testBlastMessage, id: 2 });
     mockPrisma.messageRecipient.createMany.mockResolvedValue({ count: 389 });
     mockPrisma.messageRecipient.updateMany.mockResolvedValue({ count: 39 });
@@ -326,15 +309,16 @@ describe("daily quota split-send", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockEnv.EMAIL_ENABLED = true;
+    mockValidateEmailAllowed.mockImplementation(() => {});
     mockEnv.SMS_ENABLED = false;
     mockInteractiveTransaction();
   });
 
   it("queues excess recipients when over daily quota", async () => {
-    vi.mocked(getGroupRecipients).mockResolvedValue([100001, 100002, 100003]);
-    vi.mocked(getMemberDetails).mockResolvedValue([...mockMembers.slice(0, 3)]);
-    vi.mocked(sendGroupEmails).mockResolvedValue({ sent: 1, failed: 0, suppressed: 0, results: [] });
-    vi.mocked(getRemainingEmailQuota).mockResolvedValue(1);
+    mockGetGroupRecipients.mockResolvedValue([100001, 100002, 100003]);
+    mockGetMemberDetails.mockResolvedValue([...mockMembers.slice(0, 3)]);
+    mockSendGroupEmails.mockResolvedValue({ sent: 1, failed: 0, suppressed: 0, results: [] });
+    mockGetRemainingEmailQuota.mockResolvedValue(1);
     mockPrisma.message.create.mockResolvedValue({ ...testMessage, id: 1 });
     mockPrisma.messageRecipient.createMany.mockResolvedValue({ count: 3 });
     mockPrisma.messageRecipient.updateMany.mockResolvedValue({ count: 2 });
@@ -353,10 +337,10 @@ describe("daily quota split-send", () => {
   });
 
   it("sends all when under daily quota with queuedCount 0", async () => {
-    vi.mocked(getGroupRecipients).mockResolvedValue([100001, 100002, 100003]);
-    vi.mocked(getMemberDetails).mockResolvedValue([...mockMembers.slice(0, 3)]);
-    vi.mocked(sendGroupEmails).mockResolvedValue({ sent: 3, failed: 0, suppressed: 0, results: [] });
-    vi.mocked(getRemainingEmailQuota).mockResolvedValue(300);
+    mockGetGroupRecipients.mockResolvedValue([100001, 100002, 100003]);
+    mockGetMemberDetails.mockResolvedValue([...mockMembers.slice(0, 3)]);
+    mockSendGroupEmails.mockResolvedValue({ sent: 3, failed: 0, suppressed: 0, results: [] });
+    mockGetRemainingEmailQuota.mockResolvedValue(300);
     mockPrisma.message.create.mockResolvedValue({ ...testMessage, id: 1 });
     mockPrisma.messageRecipient.createMany.mockResolvedValue({ count: 3 });
     mockPrisma.message.update.mockResolvedValue(testMessage);
@@ -375,6 +359,7 @@ describe("processEmailQueue", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockEnv.EMAIL_ENABLED = true;
+    mockValidateEmailAllowed.mockImplementation(() => {});
   });
 
   it("returns zeros when no queued recipients", async () => {
@@ -411,7 +396,7 @@ describe("processEmailQueue", () => {
         error: null,
       },
     ]);
-    vi.mocked(getRemainingEmailQuota).mockResolvedValue(0);
+    mockGetRemainingEmailQuota.mockResolvedValue(0);
 
     const { processEmailQueue } = await import("@/services/message");
     const result = await processEmailQueue();

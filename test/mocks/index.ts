@@ -12,3 +12,62 @@ export { defaultPreferences, allEnabledPreferences, allDisabledPreferences } fro
 export { memberKermit, memberAngelica } from "./members";
 export { groupAlpha, groupBravo, groupCharlie, allGroups, memberAlice, memberBob } from "./contact-groups";
 export { eventTownHall, eventMemberTownHall, eventBoardMeeting } from "./events";
+export { mockIsEmailSuppressed, mockFilterSuppressedEmails, mockSuppressEmail } from "./email-suppression";
+export {
+  mockGenerateUnsubscribeToken,
+  mockGenerateEmailUnsubscribeToken,
+  mockVerifyUnsubscribeToken,
+  mockVerifyEmailUnsubscribeToken,
+} from "./unsubscribe-tokens";
+export { mockGetMemberDetails, mockGetAllActiveMemberIds, mockGetAllMembers, mockGetMemberById } from "./member-api";
+export {
+  mockGetGroupsByOwner,
+  mockGetAllGroups,
+  mockGetAllGroupsWithMemberIds,
+  mockGetGroupById,
+  mockIsGroupOwner,
+  mockCreateGroup,
+  mockUpdateGroup,
+  mockDeleteGroup,
+  mockAddMemberToGroup,
+  mockAddMembersToGroup,
+  mockRemoveMemberFromGroup,
+  mockRemoveMembersFromGroup,
+  mockUpdateMemberNotifications,
+  mockGetGroupMembers,
+  mockGetGroupRecipients,
+  mockEnrichGroupMembers,
+} from "./contact-group-service";
+export {
+  mockValidateEmailAllowed,
+  mockGetDailyEmailCount,
+  mockGetRemainingEmailQuota,
+  mockSendReferralEmails,
+  mockSendGroupEmails,
+} from "./email-service";
+export {
+  mockSendGroupMessage,
+  mockSendBlastMessage,
+  mockGetMessageHistoryPage,
+  mockGetMessageById,
+  mockIsMessageRecipient,
+  mockGetMessageRecipients,
+  mockPreviewRecipientCounts,
+  mockProcessEmailQueue,
+} from "./message-service";
+export {
+  mockGetUserPreferences,
+  mockUpdateUserPreferences,
+  mockUploadProfilePhoto,
+  mockGetProfilePhotoUrl,
+  mockDeleteProfilePhoto,
+} from "./user-preference-service";
+export { mockGetMemberProfile } from "./profile-service";
+export {
+  mockGetMemberSmsConsent,
+  mockGrantSmsConsent,
+  mockHasActiveConsent,
+  mockRevokeSmsConsent,
+  mockRevokeConsentByPhone,
+  mockGetConsentedPhones,
+} from "./sms-consent-service";

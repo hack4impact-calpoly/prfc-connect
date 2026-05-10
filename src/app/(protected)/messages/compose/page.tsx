@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getSessionWithName } from "@/lib/dal";
-import { getAllGroups } from "@/services/contact-group";
+import { getAllGroups, getGroupsByOwner } from "@/services/contact-group";
 import { getDailyEmailCount } from "@/services/email";
 import { env } from "@/env";
 import { ComposeContent } from "./compose-content";
@@ -11,7 +11,8 @@ export const metadata: Metadata = {
 
 export default async function ComposeMessagePage() {
   const session = await getSessionWithName();
-  const [groups, dailySentCount] = await Promise.all([getAllGroups(), getDailyEmailCount()]);
+  const groupsFn = session.isAdmin ? getAllGroups() : getGroupsByOwner(session.ownerid);
+  const [groups, dailySentCount] = await Promise.all([groupsFn, getDailyEmailCount()]);
   const dailyEmailsRemaining = Math.max(0, env.DAILY_EMAIL_LIMIT - dailySentCount);
 
   return (

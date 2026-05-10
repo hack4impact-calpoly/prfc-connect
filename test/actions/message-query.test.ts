@@ -1,40 +1,19 @@
 import "../mocks/next-cache";
 import "../mocks/dal";
+import "../mocks/message-service";
+import "../mocks/contact-group-service";
 
-import { vi, type MockedFunction } from "vitest";
 import { AppError } from "@/utils/errors";
-import { mockVerifySession } from "../mocks";
-
-vi.mock("@/services/message", () => ({
-  sendGroupMessage: vi.fn(),
-  sendBlastMessage: vi.fn(),
-  getMessageHistoryPage: vi.fn(),
-  getMessageById: vi.fn(),
-  isMessageRecipient: vi.fn(),
-  getMessageRecipients: vi.fn(),
-  previewRecipientCounts: vi.fn(),
-}));
-
-vi.mock("@/services/contact-group", () => ({
-  isGroupOwner: vi.fn(),
-}));
-
 import {
-  getMessageHistoryPage,
-  getMessageById,
-  isMessageRecipient,
-  getMessageRecipients,
-  previewRecipientCounts,
-} from "@/services/message";
-import { isGroupOwner } from "@/services/contact-group";
+  mockVerifySession,
+  mockGetMessageHistoryPage,
+  mockGetMessageById,
+  mockIsMessageRecipient,
+  mockGetMessageRecipients,
+  mockPreviewRecipientCounts,
+  mockIsGroupOwner,
+} from "../mocks";
 import { fetchMessageHistoryPage, fetchMessageDetail, fetchRecipientPreview } from "@/actions/contact-group";
-
-const mockGetMessageHistoryPage = getMessageHistoryPage as MockedFunction<typeof getMessageHistoryPage>;
-const mockGetMessageById = getMessageById as MockedFunction<typeof getMessageById>;
-const mockIsMessageRecipient = isMessageRecipient as MockedFunction<typeof isMessageRecipient>;
-const mockGetMessageRecipients = getMessageRecipients as MockedFunction<typeof getMessageRecipients>;
-const mockPreviewRecipientCounts = previewRecipientCounts as MockedFunction<typeof previewRecipientCounts>;
-const mockIsGroupOwner = isGroupOwner as MockedFunction<typeof isGroupOwner>;
 
 describe("fetchMessageDetail", () => {
   beforeEach(() => {

@@ -70,7 +70,6 @@ async function sendEmailsForMessage(
   recipients: MockMember[],
   subject: string,
   body: string,
-  groupIds: number[] | null,
 ): Promise<{ sent: number; failed: number }> {
   try {
     const emailResult = await sendGroupEmails({
@@ -83,7 +82,6 @@ async function sendEmailsForMessage(
       body,
       senderName: "Paso Robles Food Co-op",
       replyTo: env.FROM_EMAIL ?? "",
-      groupId: groupIds?.[0] ?? 0,
     });
 
     const now = new Date();
@@ -231,7 +229,7 @@ export async function sendGroupMessage(input: ComposeMessage, senderId: number):
 
       if (sendNowIds.length > 0) {
         const sendNowRecipients = members.filter((m) => sendNowIds.includes(m.ownerid));
-        const emailResult = await sendEmailsForMessage(result.id, sendNowRecipients, subject, body, groupIds);
+        const emailResult = await sendEmailsForMessage(result.id, sendNowRecipients, subject, body);
         emailsSent = emailResult.sent;
         emailsFailed = emailResult.failed;
       }
@@ -356,7 +354,7 @@ export async function sendBlastMessage(input: BlastMessage, senderId: number): P
 
       if (sendNowIds.length > 0) {
         const sendNowMembers = members.filter((m) => sendNowIds.includes(m.ownerid));
-        const emailResult = await sendEmailsForMessage(result.id, sendNowMembers, subject, body, null);
+        const emailResult = await sendEmailsForMessage(result.id, sendNowMembers, subject, body);
         emailsSent = emailResult.sent;
         emailsFailed = emailResult.failed;
       }
@@ -433,15 +431,8 @@ export async function processEmailQueue(): Promise<{ sent: number; failed: numbe
 
       const memberIds = recipients.map((r: { memberId: number }) => r.memberId);
       const memberDetails = await getMemberDetails(memberIds);
-      const groupIds = message.groups.map((g) => g.groupId);
 
-      const emailResult = await sendEmailsForMessage(
-        messageId,
-        memberDetails,
-        message.subject,
-        message.body,
-        groupIds.length > 0 ? groupIds : null,
-      );
+      const emailResult = await sendEmailsForMessage(messageId, memberDetails, message.subject, message.body);
       totalSent += emailResult.sent;
       totalFailed += emailResult.failed;
 

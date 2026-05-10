@@ -3,14 +3,9 @@ import { getMemberById } from "@/lib/api/member-api";
 import { splitName } from "@/utils/name";
 import { AppError } from "@/utils/errors";
 
-export interface MemberProfile {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  altPhone: string | undefined;
-  role: "Admin" | "Member";
-}
+import type { MemberProfile } from "@/types/settings";
+
+export type { MemberProfile } from "@/types/settings";
 
 export async function getMemberProfile(ownerid: number, isAdmin: boolean): Promise<MemberProfile> {
   const member = await getMemberById(ownerid);

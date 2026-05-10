@@ -357,6 +357,7 @@ export function EventsContent({
         {view === "week" ? (
           <div className="min-h-0 flex-1">
             <WeekCalendar
+              key={currentDate.toISOString()}
               events={weekEvents}
               selectedDate={currentDate}
               onTimeSlotClick={handleTimeSlotClick}
@@ -373,13 +374,13 @@ export function EventsContent({
                 onDayClick={handleDayClickInMonth}
               />
             </div>
-            <aside className="rounded-lg border border-prfc-border/30 bg-white p-4">
+            <aside className="flex min-h-0 flex-col rounded-lg border border-prfc-border/30 bg-white p-4">
               <h2 className="text-xs font-bold uppercase tracking-wide text-prfc-brown">
                 Events for {coopFormatTimed(currentDate, "MMMM")}
               </h2>
               <p className="mt-2 font-angkor text-5xl text-prfc-red">{coopFormatFloating(selectedDay, "d")}</p>
               <p className="text-sm text-muted-foreground">{coopFormatFloating(selectedDay, "EEEE, MMMM d")}</p>
-              <div className="mt-4 space-y-2">
+              <div className="mt-4 min-h-0 flex-1 space-y-2 overflow-y-auto">
                 {selectedDayEvents.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No events on this day.</p>
                 ) : (
@@ -390,7 +391,9 @@ export function EventsContent({
                       onClick={() => handleEventClick(e.id)}
                       className="w-full rounded-md border border-prfc-border/20 p-2 text-left hover:bg-paso-grey"
                     >
-                      <p className="text-base font-semibold">{e.title}</p>
+                      <p className="truncate text-base font-semibold" title={e.title}>
+                        {e.title}
+                      </p>
                       <p className="text-sm text-muted-foreground">
                         {e.isAllDay
                           ? "All day"

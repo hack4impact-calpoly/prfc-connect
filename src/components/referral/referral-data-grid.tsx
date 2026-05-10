@@ -19,10 +19,11 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { Search } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { ApiReferral } from "@/schema/api";
-import { operatorFilter, type FilterOperator, type ColumnFilterValue } from "./table-filters";
+import { operatorFilter, fuzzyFilter, type FilterOperator, type ColumnFilterValue } from "./table-filters";
 import { toast } from "sonner";
 import { useReferrals } from "@/components/referral/use-referrals";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -211,7 +212,7 @@ export function ReferralDataGrid() {
     onColumnVisibilityChange: handleColumnVisibilityChange,
     onRowSelectionChange: setRowSelection,
     onGlobalFilterChange: setGlobalFilter,
-    globalFilterFn: "includesString",
+    globalFilterFn: fuzzyFilter,
     state: {
       sorting,
       columnFilters,
@@ -282,40 +283,19 @@ export function ReferralDataGrid() {
   );
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2 p-2 md:flex-row md:items-center md:justify-between">
+    <div>
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <div className="relative max-w-md flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={globalFilter}
+            onChange={(e) => setGlobalFilter(e.target.value)}
+            placeholder="Search"
+            className="pl-9"
+            aria-label="Search referrals"
+          />
+        </div>
         <div className="flex items-center gap-2">
-          <div
-            className="flex flex-1 items-center bg-white px-2 py-1"
-            style={{
-              border: "2px solid #831002",
-              borderRadius: "28px",
-            }}
-          >
-            <svg
-              className="w-5 h-5 text-gray-500 mr-1"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-            <Input
-              type="text"
-              placeholder="Search…"
-              value={globalFilter}
-              onChange={(event) => setGlobalFilter(event.target.value)}
-              className="border-none shadow-none focus-visible:ring-0 w-40 p-0 h-auto text-sm"
-              aria-label="Search referrals"
-            />
-          </div>
-
           <DataTableMobileDrawer
             table={table}
             open={mobileDrawerOpen}
@@ -348,11 +328,7 @@ export function ReferralDataGrid() {
 
         <Button
           onClick={exportToPDF}
-          className="w-full md:w-auto text-white border-none rounded cursor-pointer"
-          style={{
-            backgroundColor: "#831002",
-            padding: "8px 16px",
-          }}
+          className="ml-auto w-full md:w-auto bg-prfc-red px-4 py-2 text-white hover:bg-prfc-red/90"
         >
           Export to PDF
         </Button>
@@ -364,13 +340,9 @@ export function ReferralDataGrid() {
         aria-busy={isFetching ? "true" : "false"}
         tabIndex={0}
         className={cn(
-          "overflow-x-auto focus:outline-2 focus:outline-blue-500 transition-opacity",
+          "mt-6 overflow-x-auto rounded-xl border-2 border-prfc-border focus:outline-2 focus:outline-prfc-red transition-opacity",
           isFetching && !isLoading && "opacity-60",
         )}
-        style={{
-          border: "2px solid #968676",
-          borderRadius: "12px",
-        }}
       >
         <DataTableFilterPanel
           visible={showFilterPanel}
@@ -385,22 +357,15 @@ export function ReferralDataGrid() {
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow
-                key={headerGroup.id}
-                style={{
-                  borderTop: "2px solid #968676",
-                  backgroundColor: "#EDDDCC",
-                }}
-              >
+              <TableRow key={headerGroup.id} className="border-t-2 border-prfc-border bg-prfc-cream">
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
                     className={cn(
-                      "font-bold",
+                      "font-bold text-prfc-red",
                       header.column.getCanSort() && "cursor-pointer underline select-none",
                       !hasCustomized && header.column.columnDef.meta?.className,
                     )}
-                    style={{ color: "#831002" }}
                     onClick={header.column.getToggleSortingHandler()}
                   >
                     {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
@@ -419,11 +384,7 @@ export function ReferralDataGrid() {
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
-                  className={cn(densityClasses[density])}
-                  style={{
-                    backgroundColor: index % 2 === 0 ? "#ffffff" : "#D9D9D9",
-                    transition: "none",
-                  }}
+                  className={cn(densityClasses[density], index % 2 === 0 ? "bg-white" : "bg-muted")}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
@@ -446,7 +407,9 @@ export function ReferralDataGrid() {
         </Table>
       </div>
 
-      <DataTablePagination table={table} />
+      <div className="mt-4">
+        <DataTablePagination table={table} />
+      </div>
     </div>
   );
 }

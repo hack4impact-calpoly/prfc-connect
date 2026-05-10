@@ -3,16 +3,9 @@ import prisma from "@/lib/db";
 import { transformError } from "@/utils/errors";
 import { encrypt, decrypt, blindIndex } from "@/lib/encryption";
 
-export interface SmsConsentRecord {
-  id: number;
-  memberId: number;
-  consentedAt: Date;
-  consentMethod: string;
-  consentText: string;
-  consentPurpose: string;
-  revokedAt: Date | null;
-  revokeMethod: string | null;
-}
+import type { SmsConsentRecord } from "@/types/settings";
+
+export type { SmsConsentRecord } from "@/types/settings";
 
 export async function getMemberSmsConsent(memberId: number): Promise<SmsConsentRecord | null> {
   try {

@@ -67,7 +67,7 @@ export function DataTableFilterPanel({
         </SelectContent>
       </Select>
 
-      <span className="text-sm text-prfc-blue">Value</span>
+      <span className="text-sm text-prfc-red">Value</span>
       <Input
         type="text"
         placeholder="Filter value"

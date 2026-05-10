@@ -8,7 +8,7 @@ export default async function ReferralDatabasePage() {
 
   return (
     <div>
-      <h1 className="font-komika text-[2rem] text-[#333] mb-4">Referral History</h1>
+      <h1 className="font-angkor text-3xl text-prfc-brown">Referral History</h1>
       <ReferralDataGrid />
     </div>
   );

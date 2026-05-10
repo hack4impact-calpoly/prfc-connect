@@ -9,6 +9,7 @@ import { useTopBarAction } from "@/components/layout/top-bar-action-context";
 import { UserMenu } from "@/components/layout/user-menu";
 import { NotificationDropdown } from "@/components/layout/notification-dropdown";
 import { useSidebar } from "@/components/layout/sidebar-context";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface TopBarProps {
   userName: string;
@@ -20,14 +21,15 @@ interface TopBarProps {
 
 export function TopBar({ userName, userRole, unseenCount = 0, lastSeenAt = null, photoUrl = null }: TopBarProps) {
   const action = useTopBarAction();
-  const { toggle } = useSidebar();
+  const { toggle, mobileOpen, setMobileOpen } = useSidebar();
+  const isMobile = useIsMobile();
 
   return (
     <header className="fixed top-0 left-0 right-0 z-40 flex h-[var(--header-height)] items-center border-b border-border bg-paso-grey px-3.5">
       <div className="flex w-full items-center gap-3">
         <button
           type="button"
-          onClick={toggle}
+          onClick={isMobile ? () => setMobileOpen(!mobileOpen) : toggle}
           aria-label="Toggle sidebar"
           className="inline-flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground hover:bg-prfc-brown/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >

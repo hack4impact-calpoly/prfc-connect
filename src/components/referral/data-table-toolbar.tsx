@@ -65,7 +65,7 @@ export function DataTableToolbar({
     <div className="hidden md:flex items-center gap-4">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button type="button" className="flex items-center gap-1 text-sm text-prfc-blue hover:opacity-80">
+          <button type="button" className="flex items-center gap-1 text-sm text-prfc-red hover:opacity-80">
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M4 4h4v4H4V4zm6 0h4v4h-4V4zm6 0h4v4h-4V4zM4 10h4v4H4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4zM4 16h4v4H4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4z" />
             </svg>
@@ -129,7 +129,7 @@ export function DataTableToolbar({
       <button
         type="button"
         onClick={onToggleFilterPanel}
-        className="flex items-center gap-1 text-sm text-prfc-blue hover:opacity-80"
+        className="flex items-center gap-1 text-sm text-prfc-red hover:opacity-80"
       >
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z" />
@@ -139,7 +139,7 @@ export function DataTableToolbar({
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button type="button" className="flex items-center gap-1 text-sm text-prfc-blue hover:opacity-80">
+          <button type="button" className="flex items-center gap-1 text-sm text-prfc-red hover:opacity-80">
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M4 8h16V6H4v2zm0 5h16v-2H4v2zm0 5h16v-2H4v2z" />
             </svg>

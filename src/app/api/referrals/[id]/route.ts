@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/dal";
 import { validateOrigin } from "@/lib/csrf";
 import { UpdateRedeemedSchema } from "@/schema/api";
+import { StringIntSchema } from "@/schema/common";
 import { updateReferralRedeemed, deleteReferral } from "@/services/referral";
-import { AppError, apiErrorHandler } from "@/utils/errors";
+import { apiErrorHandler } from "@/utils/errors";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -14,11 +15,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     }
 
     const { id } = await params;
-    if (!/^\d+$/.test(id)) {
-      throw new AppError("VALIDATION_ERROR", "Invalid referral ID format");
-    }
-
-    const referralId = parseInt(id, 10);
+    const referralId = StringIntSchema.parse(id);
     const body = await req.json();
     const { redeemed } = UpdateRedeemedSchema.parse(body);
 
@@ -38,11 +35,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     }
 
     const { id } = await params;
-    if (!/^\d+$/.test(id)) {
-      throw new AppError("VALIDATION_ERROR", "Invalid referral ID format");
-    }
-
-    const referralId = parseInt(id, 10);
+    const referralId = StringIntSchema.parse(id);
     await deleteReferral(referralId);
     return NextResponse.json({ message: "Referral deleted" }, { status: 200 });
   } catch (error) {

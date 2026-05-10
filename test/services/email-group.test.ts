@@ -1,14 +1,10 @@
 import "../mocks/email";
+import "../mocks/email-suppression";
+import "../mocks/unsubscribe-tokens";
 
-import { vi } from "vitest";
-import { mockBrevoSend } from "../mocks";
-
-const mockFilterSuppressedEmails = vi.hoisted(() => vi.fn());
-
-vi.mock("@/services/email-suppression", async () => ({
-  filterSuppressedEmails: mockFilterSuppressedEmails,
-}));
-
+import { mockBrevoSend } from "../mocks/email";
+import { mockFilterSuppressedEmails } from "../mocks/email-suppression";
+import { mockGenerateEmailUnsubscribeToken } from "../mocks/unsubscribe-tokens";
 import { sendGroupEmails } from "@/services/email";
 import {
   recipientBobby,
@@ -18,16 +14,12 @@ import {
   recipientSnoopy,
   allRecipients,
 } from "../mocks/email-group";
-import * as tokenModule from "@/lib/unsubscribe-tokens";
-
-const tokenSpy = vi.spyOn(tokenModule, "generateUnsubscribeToken");
 
 const defaultParams = {
   subject: "Test Subject",
   body: "<p>Test Body</p>",
   senderName: "Test Sender",
   replyTo: "reply@test.com",
-  groupId: 123,
 };
 
 describe("sendGroupEmails", () => {
@@ -79,10 +71,10 @@ describe("sendGroupEmails", () => {
     });
     tokens.forEach((token: string | null) => expect(token).toBeTruthy());
     expect(new Set(tokens).size).toBe(tokens.length);
-    expect(tokenSpy).toHaveBeenCalledTimes(3);
-    expect(tokenSpy).toHaveBeenCalledWith(recipientBobby.memberId, 123);
-    expect(tokenSpy).toHaveBeenCalledWith(recipientLucy.memberId, 123);
-    expect(tokenSpy).toHaveBeenCalledWith(recipientMarcie.memberId, 123);
+    expect(mockGenerateEmailUnsubscribeToken).toHaveBeenCalledTimes(3);
+    expect(mockGenerateEmailUnsubscribeToken).toHaveBeenCalledWith(recipientBobby.email);
+    expect(mockGenerateEmailUnsubscribeToken).toHaveBeenCalledWith(recipientLucy.email);
+    expect(mockGenerateEmailUnsubscribeToken).toHaveBeenCalledWith(recipientMarcie.email);
   });
 
   it("includes RFC 8058 one-click unsubscribe headers", async () => {
@@ -118,7 +110,7 @@ describe("sendGroupEmails", () => {
       const html = String(fields.htmlContent ?? "");
       expect(html).toContain("Paso Robles Food Cooperative, Inc.");
       expect(html).toContain("P.O. Box 922, Paso Robles, CA 93447");
-      expect(html).toMatch(/<a href="[^"]*\/api\/unsubscribe\?token=[^"]*"[^>]*>Unsubscribe from this group<\/a>/);
+      expect(html).toMatch(/<a href="[^"]*\/api\/unsubscribe\?token=[^"]*"[^>]*>Unsubscribe<\/a>/);
     }
   });
 

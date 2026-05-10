@@ -8,7 +8,7 @@ import { createScrollControllerPlugin } from "@schedule-x/scroll-controller";
 import "@schedule-x/theme-default/dist/index.css";
 import { COOP_TZ, DEFAULT_EVENT_DURATION_MS, coopDateParts, coopWallClockToUtc } from "@/utils/time";
 import type { EventType } from "@/generated/prisma/client";
-import type { EventSummary } from "@/services/event";
+import type { EventSummary } from "@/types/event";
 
 type WeekCalendarEvent = Pick<EventSummary, "id" | "title" | "startDate" | "endDate" | "eventType" | "isAllDay">;
 

@@ -301,21 +301,16 @@ export function ComposeMessageForm({
           {isSending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
           {isSending ? "Sending..." : "Send"}
         </Button>
-        {dailyEmailsRemaining !== undefined && (
-          <p
-            className={cn(
-              "text-sm",
-              dailyEmailsRemaining === 0
-                ? "font-semibold text-prfc-red"
-                : dailyEmailsRemaining < 50
-                  ? "text-amber-600"
-                  : "text-muted-foreground",
-            )}
-          >
-            {dailyEmailsRemaining === 0
-              ? "Daily email limit reached"
-              : `${dailyEmailsRemaining} emails remaining today`}
+        {dailyEmailsRemaining !== undefined && dailyEmailsRemaining === 0 && (
+          <p className="text-sm font-semibold text-prfc-red">Daily email limit reached</p>
+        )}
+        {dailyEmailsRemaining !== undefined && dailyEmailsRemaining > 0 && isAdmin && (
+          <p className={cn("text-sm", dailyEmailsRemaining < 50 ? "text-amber-600" : "text-muted-foreground")}>
+            {dailyEmailsRemaining} emails remaining today
           </p>
+        )}
+        {dailyEmailsRemaining !== undefined && dailyEmailsRemaining > 0 && dailyEmailsRemaining <= 50 && !isAdmin && (
+          <p className="text-sm text-amber-600">Limited emails available today</p>
         )}
       </div>
     </form>

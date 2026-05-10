@@ -1,15 +1,10 @@
 import "../mocks/rate-limit";
 import "../mocks/dal";
-import { mockVerifySession, mockMembersRateLimiter } from "../mocks";
+import "../mocks/member-api";
+import { mockVerifySession, mockMembersRateLimiter, mockGetAllMembers } from "../mocks";
 import { GET } from "@/app/api/members/route";
 import { NextRequest } from "next/server";
 import { AppError } from "@/utils/errors";
-
-vi.mock("@/lib/api/member-api", () => ({
-  getAllMembers: vi.fn(),
-}));
-
-import { getAllMembers } from "@/lib/api/member-api";
 
 const testSession = { ownerid: 100001, isAdmin: false };
 const fakeMembers = [
@@ -23,7 +18,7 @@ describe("GET /api/members", () => {
   });
 
   it("returns member list with valid session", async () => {
-    vi.mocked(getAllMembers).mockResolvedValue(fakeMembers);
+    mockGetAllMembers.mockResolvedValue(fakeMembers);
 
     const req = new NextRequest("http://localhost/api/members");
     const res = await GET(req);
@@ -57,7 +52,7 @@ describe("GET /api/members", () => {
   });
 
   it("returns 500 on unexpected error", async () => {
-    vi.mocked(getAllMembers).mockRejectedValue(new Error("Connection lost"));
+    mockGetAllMembers.mockRejectedValue(new Error("Connection lost"));
 
     const req = new NextRequest("http://localhost/api/members");
     const res = await GET(req);

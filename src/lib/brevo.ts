@@ -1,17 +1,11 @@
 import "server-only";
 import { env } from "@/env";
 import { AppError } from "@/utils/errors";
+import type { BrevoEmailPayload } from "@/types/email";
+
+export type { BrevoEmailPayload } from "@/types/email";
 
 const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
-
-export interface BrevoEmailPayload {
-  sender: { name?: string; email: string };
-  to: Array<{ email: string; name?: string }>;
-  subject: string;
-  htmlContent: string;
-  replyTo?: { email: string };
-  headers?: Record<string, string>;
-}
 
 export async function sendBrevoEmail(payload: BrevoEmailPayload): Promise<string> {
   const apiKey = env.BREVO_API_KEY;

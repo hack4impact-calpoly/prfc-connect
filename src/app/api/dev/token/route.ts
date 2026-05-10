@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { generateToken } from "@/lib/dal";
+
+const DevTokenSchema = z.object({
+  ownerid: z.number().int().positive(),
+  isAdmin: z.boolean(),
+});
 
 export async function POST(req: NextRequest) {
   if (process.env.NODE_ENV === "production" && process.env.USE_MOCK_MEMBER_API !== "true") {
@@ -13,14 +19,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const ownerid = parseInt(body.ownerid, 10);
-  const isAdmin = Boolean(body.isAdmin);
-
-  if (isNaN(ownerid)) {
-    return NextResponse.json({ error: "Invalid ownerid" }, { status: 400 });
+  const parsed = DevTokenSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid request", details: parsed.error.flatten() }, { status: 400 });
   }
 
-  const token = generateToken(ownerid, isAdmin);
+  const token = generateToken(parsed.data.ownerid, parsed.data.isAdmin);
 
   return NextResponse.json({ token });
 }

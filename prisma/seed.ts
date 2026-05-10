@@ -2,6 +2,20 @@ import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient, Prisma } from "../src/generated/prisma/client";
 import { faker } from "@faker-js/faker";
 import { parseArgs } from "node:util";
+import crypto from "node:crypto";
+
+const ALGORITHM = "aes-256-gcm";
+const IV_LENGTH = 12;
+
+function encrypt(plaintext: string): string {
+  const key = process.env.FIELD_ENCRYPTION_KEY;
+  if (!key) throw new Error("FIELD_ENCRYPTION_KEY is required for seeding");
+  const iv = crypto.randomBytes(IV_LENGTH);
+  const cipher = crypto.createCipheriv(ALGORITHM, Buffer.from(key, "hex"), iv);
+  const encrypted = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return Buffer.concat([iv, encrypted, tag]).toString("base64url");
+}
 
 function createAdapter() {
   if (!process.env.DATABASE_URL) {
@@ -41,14 +55,16 @@ function genReferral(): ReferralInput {
   const pLast = faker.person.lastName();
 
   return {
-    memberName: `${mFirst} ${mLast}`,
-    memberEmail: faker.internet.email({
-      firstName: mFirst,
-      lastName: mLast,
-      provider: faker.helpers.arrayElement(EMAIL_PROVIDERS),
-    }),
-    prospectName: `${pFirst} ${pLast}`,
-    prospectEmail: faker.internet.email({ firstName: pFirst, lastName: pLast }),
+    memberName: encrypt(`${mFirst} ${mLast}`),
+    memberEmail: encrypt(
+      faker.internet.email({
+        firstName: mFirst,
+        lastName: mLast,
+        provider: faker.helpers.arrayElement(EMAIL_PROVIDERS),
+      }),
+    ),
+    prospectName: encrypt(`${pFirst} ${pLast}`),
+    prospectEmail: encrypt(faker.internet.email({ firstName: pFirst, lastName: pLast })),
     referralCode: faker.string.alphanumeric({ length: 8, casing: "upper", exclude: ["O", "0", "I", "L", "1"] }),
     redeemed: faker.datatype.boolean({ probability: 0.25 }),
     createdAt: faker.date.between({ from: "2025-01-01", to: "2025-12-01" }),

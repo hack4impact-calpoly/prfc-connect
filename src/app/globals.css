@@ -128,3 +128,9 @@
   height: 100%;
   min-height: 600px;
 }
+
+.sx__time-grid-event-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

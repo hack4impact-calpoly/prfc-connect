@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { verifyTwilioSignature } from "@/lib/sms";
 import { revokeConsentByPhone } from "@/services/sms-consent";
+
+const TwilioInboundSchema = z.object({
+  From: z.string().min(1),
+  Body: z.string().max(1600),
+});
 
 const STOP_KEYWORDS = new Set(["stop", "stopall", "unsubscribe", "cancel", "end", "quit", "optout", "revoke"]);
 
@@ -19,11 +25,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid signature" }, { status: 403 });
     }
 
-    const from = params.From ?? "";
-    const body = (params.Body ?? "").trim().toLowerCase();
+    const parsed = TwilioInboundSchema.safeParse(params);
+    if (!parsed.success) {
+      return new NextResponse(null, { status: 204 });
+    }
+
+    const { From: from, Body: rawBody } = parsed.data;
+    const body = rawBody.trim().toLowerCase();
 
     if (STOP_KEYWORDS.has(body)) {
-      await revokeConsentByPhone(from, "sms_reply_stop", params.Body ?? "");
+      await revokeConsentByPhone(from, "sms_reply_stop", rawBody);
     }
 
     return new NextResponse(null, { status: 204 });

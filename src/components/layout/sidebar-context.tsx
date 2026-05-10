@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useSyncExternalStore } from "react";
+import { createContext, useCallback, useContext, useState, useSyncExternalStore } from "react";
 
 const STORAGE_KEY = "sidebar-collapsed";
 const SIDEBAR_WIDTH = 220;
@@ -10,12 +10,16 @@ interface SidebarContextValue {
   collapsed: boolean;
   toggle: () => void;
   width: number;
+  mobileOpen: boolean;
+  setMobileOpen: (open: boolean) => void;
 }
 
 const SidebarContext = createContext<SidebarContextValue>({
   collapsed: false,
   toggle: () => {},
   width: SIDEBAR_WIDTH,
+  mobileOpen: false,
+  setMobileOpen: () => {},
 });
 
 function getSnapshot(): boolean {
@@ -33,6 +37,7 @@ function subscribe(callback: () => void): () => void {
 
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const collapsed = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const toggle = useCallback(() => {
     const next = !getSnapshot();
@@ -42,7 +47,11 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
 
   const width = collapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_WIDTH;
 
-  return <SidebarContext.Provider value={{ collapsed, toggle, width }}>{children}</SidebarContext.Provider>;
+  return (
+    <SidebarContext.Provider value={{ collapsed, toggle, width, mobileOpen, setMobileOpen }}>
+      {children}
+    </SidebarContext.Provider>
+  );
 }
 
 export function useSidebar() {

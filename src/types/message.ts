@@ -48,6 +48,12 @@ export interface RecipientCounts {
   smsIneligible: number;
 }
 
+export interface EmailRecipient {
+  email: string;
+  memberId: number;
+  name: string;
+}
+
 export interface RecipientSendResult {
   memberId: number;
   status: "sent" | "failed";
