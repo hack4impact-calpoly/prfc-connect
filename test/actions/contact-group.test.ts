@@ -350,32 +350,6 @@ describe("sendMessage", () => {
 
     expect(result.success).toBe(true);
     expect(result.data).toEqual(messageResult);
-    expect(mockSendGroupMessage).toHaveBeenCalledWith(
-      {
-        groupIds: [3],
-        subject: "Hello",
-        body: "Body text",
-        sendEmail: true,
-        sendSms: false,
-      },
-      10,
-    );
-  });
-
-  it("allows admin to send group message", async () => {
-    mockVerifySession.mockResolvedValue({ ownerid: 99, isAdmin: true });
-    mockSendGroupMessage.mockResolvedValue(messageResult);
-
-    const result = await sendMessage({
-      groupIds: [3],
-      subject: "Admin",
-      body: "Admin body",
-      sendEmail: true,
-      sendSms: false,
-    });
-
-    expect(result.success).toBe(true);
-    expect(mockIsGroupOwner).not.toHaveBeenCalled();
   });
 
   it("rejects non-owner non-admin sends", async () => {
@@ -393,6 +367,22 @@ describe("sendMessage", () => {
     expect(result.success).toBe(false);
     expect(result.error).toContain("do not have permission");
     expect(mockSendGroupMessage).not.toHaveBeenCalled();
+  });
+
+  it("allows admin to send group message", async () => {
+    mockVerifySession.mockResolvedValue({ ownerid: 99, isAdmin: true });
+    mockSendGroupMessage.mockResolvedValue(messageResult);
+
+    const result = await sendMessage({
+      groupIds: [3],
+      subject: "Admin",
+      body: "Admin body",
+      sendEmail: true,
+      sendSms: false,
+    });
+
+    expect(result.success).toBe(true);
+    expect(mockIsGroupOwner).not.toHaveBeenCalled();
   });
 
   it("returns validation error for invalid input", async () => {

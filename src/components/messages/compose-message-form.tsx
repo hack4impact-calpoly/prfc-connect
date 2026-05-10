@@ -307,14 +307,18 @@ export function ComposeMessageForm({
               "text-sm",
               dailyEmailsRemaining === 0
                 ? "font-semibold text-prfc-red"
-                : dailyEmailsRemaining < 50
+                : dailyEmailsRemaining <= 50
                   ? "text-amber-600"
                   : "text-muted-foreground",
             )}
           >
             {dailyEmailsRemaining === 0
               ? "Daily email limit reached"
-              : `${dailyEmailsRemaining} emails remaining today`}
+              : isAdmin
+                ? `${dailyEmailsRemaining} emails remaining today`
+                : dailyEmailsRemaining <= 50
+                  ? "Limited emails available today"
+                  : ""}
           </p>
         )}
       </div>

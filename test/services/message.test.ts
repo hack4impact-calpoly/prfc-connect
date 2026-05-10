@@ -41,9 +41,12 @@ vi.mock("@/services/contact-group", () => ({
   getGroupRecipients: vi.fn(),
 }));
 
+vi.mock("@/lib/email-quota", () => ({
+  reserveEmailQuota: vi.fn().mockResolvedValue({ allowed: 300, total: 0 }),
+}));
+
 vi.mock("@/services/email", () => ({
   sendGroupEmails: vi.fn(),
-  getRemainingEmailQuota: vi.fn().mockResolvedValue(300),
   validateEmailAllowed: vi.fn(() => {
     if (!mockEnv.EMAIL_ENABLED) {
       throw new AppError("FORBIDDEN", "Email functionality is currently disabled", { reason: "EMAIL_DISABLED" });
@@ -61,7 +64,8 @@ vi.mock("@/env", () => ({
 }));
 
 import { getGroupRecipients } from "@/services/contact-group";
-import { sendGroupEmails, getRemainingEmailQuota } from "@/services/email";
+import { sendGroupEmails } from "@/services/email";
+import { reserveEmailQuota } from "@/lib/email-quota";
 import { getMemberDetails, getAllActiveMemberIds } from "@/lib/api/member-api";
 
 describe("isQuietHours", () => {
@@ -334,7 +338,7 @@ describe("daily quota split-send", () => {
     vi.mocked(getGroupRecipients).mockResolvedValue([100001, 100002, 100003]);
     vi.mocked(getMemberDetails).mockResolvedValue([...mockMembers.slice(0, 3)]);
     vi.mocked(sendGroupEmails).mockResolvedValue({ sent: 1, failed: 0, suppressed: 0, results: [] });
-    vi.mocked(getRemainingEmailQuota).mockResolvedValue(1);
+    vi.mocked(reserveEmailQuota).mockResolvedValue({ allowed: 1, total: 1 });
     mockPrisma.message.create.mockResolvedValue({ ...testMessage, id: 1 });
     mockPrisma.messageRecipient.createMany.mockResolvedValue({ count: 3 });
     mockPrisma.messageRecipient.updateMany.mockResolvedValue({ count: 2 });
@@ -356,7 +360,7 @@ describe("daily quota split-send", () => {
     vi.mocked(getGroupRecipients).mockResolvedValue([100001, 100002, 100003]);
     vi.mocked(getMemberDetails).mockResolvedValue([...mockMembers.slice(0, 3)]);
     vi.mocked(sendGroupEmails).mockResolvedValue({ sent: 3, failed: 0, suppressed: 0, results: [] });
-    vi.mocked(getRemainingEmailQuota).mockResolvedValue(300);
+    vi.mocked(reserveEmailQuota).mockResolvedValue({ allowed: 300, total: 3 });
     mockPrisma.message.create.mockResolvedValue({ ...testMessage, id: 1 });
     mockPrisma.messageRecipient.createMany.mockResolvedValue({ count: 3 });
     mockPrisma.message.update.mockResolvedValue(testMessage);
@@ -411,7 +415,7 @@ describe("processEmailQueue", () => {
         error: null,
       },
     ]);
-    vi.mocked(getRemainingEmailQuota).mockResolvedValue(0);
+    vi.mocked(reserveEmailQuota).mockResolvedValue({ allowed: 0, total: 300 });
 
     const { processEmailQueue } = await import("@/services/message");
     const result = await processEmailQueue();

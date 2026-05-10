@@ -106,6 +106,54 @@ test.describe("Event RSVP", () => {
   });
 });
 
+test.describe("Event RSVP visibility", () => {
+  test("non-invitee sees event but RSVP buttons are hidden", async ({ page }) => {
+    await loginAs(page, "100001");
+    await openCreateEvent(page);
+
+    const eventTitle = `No RSVP ${Date.now()}`;
+    await page.getByPlaceholder("New Event Title").fill(eventTitle);
+    await page.getByRole("button", { name: "Social" }).click();
+    await page.getByRole("button", { name: "Save" }).click();
+    await expect(page.getByText("Event created")).toBeVisible({ timeout: 10000 });
+
+    await loginAs(page, "100003");
+    await page.goto("/events");
+
+    const event = calendarEvent(page, eventTitle);
+    if ((await event.count()) > 0) {
+      await event.first().click({ force: true });
+      await page.waitForTimeout(500);
+
+      await expect(page.getByRole("button", { name: "Going" })).not.toBeVisible();
+      await expect(page.getByRole("button", { name: "Maybe" })).not.toBeVisible();
+    }
+  });
+});
+
+test.describe("Event RSVP deadline", () => {
+  test("RSVP shows 'Deadline passed' for event with past deadline", async ({ page }) => {
+    await loginAs(page, "100001");
+    await page.goto("/events");
+
+    const events = page.locator(`[role="button"][data-event-id]`);
+    if ((await events.count()) > 0) {
+      await events.first().click({ force: true });
+      await page.waitForTimeout(500);
+
+      const deadlineText = page.getByText("Deadline passed");
+      const rsvpButtons = page.getByRole("button", { name: "Going" });
+
+      const hasDeadlinePassed = await deadlineText.isVisible().catch(() => false);
+      const hasRsvpButtons = await rsvpButtons.isVisible().catch(() => false);
+
+      if (hasDeadlinePassed) {
+        expect(hasRsvpButtons).toBe(false);
+      }
+    }
+  });
+});
+
 test.describe("Event security", () => {
   test("non-owner member cannot see edit controls on other's event", async ({ page }) => {
     await loginAs(page, "100001");

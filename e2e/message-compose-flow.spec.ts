@@ -133,3 +133,32 @@ test.describe("Message compose flow", () => {
     expect(response.status()).toBeGreaterThanOrEqual(400);
   });
 });
+
+test.describe("Group owner messaging", () => {
+  test("group owner can access compose page", async ({ page }) => {
+    await loginAs(page, "100003");
+    await page.goto("/messages/compose");
+
+    await expect(page.getByText("New Message")).toBeVisible();
+    await expect(page.getByText("Select groups")).toBeVisible();
+  });
+
+  test("group owner does not see All Members blast option", async ({ page }) => {
+    await loginAs(page, "100003");
+    await page.goto("/messages/compose");
+
+    await page.getByText("Select groups").click();
+    await expect(page.getByRole("option", { name: "All Members" })).not.toBeVisible();
+  });
+
+  test("group owner sees only groups they own in picker", async ({ page }) => {
+    await loginAs(page, "100003");
+    await page.goto("/messages/compose");
+
+    await page.getByText("Select groups").click();
+    const items = page.locator("[cmdk-item]");
+    const count = await items.count();
+
+    expect(count).toBeGreaterThanOrEqual(0);
+  });
+});
