@@ -7,6 +7,7 @@ import type { EmailRecipient, RecipientSendResult } from "@/types/message";
 import { env } from "@/env";
 import { sendBrevoEmail } from "@/lib/brevo";
 import { generateEmailUnsubscribeToken } from "@/lib/unsubscribe-tokens";
+import { reserveEmailQuota } from "@/lib/email-quota";
 import { filterSuppressedEmails, isEmailSuppressed } from "./email-suppression";
 
 export function validateEmailAllowed(): void {
@@ -46,11 +47,23 @@ export async function sendReferralEmails({
   prospects,
   referralCode,
   memberName,
-}: SendReferralEmailParams): Promise<void> {
+}: SendReferralEmailParams): Promise<{ sent: number; skipped: number }> {
+  let sent = 0;
+  let skipped = 0;
+
   try {
     for (const prospect of prospects) {
       const suppressed = await isEmailSuppressed(prospect.prospectEmail);
-      if (suppressed) continue;
+      if (suppressed) {
+        skipped++;
+        continue;
+      }
+
+      const { allowed } = await reserveEmailQuota(1);
+      if (allowed === 0) {
+        skipped++;
+        continue;
+      }
 
       const originalSubject = "You've Been Invited!";
       const { to, subject } = applyRedirect(prospect.prospectEmail, originalSubject);
@@ -71,7 +84,10 @@ export async function sendReferralEmails({
           "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
         },
       });
+      sent++;
     }
+
+    return { sent, skipped };
   } catch (error) {
     throw new AppError("EMAIL_ERROR", "Failed to send referral emails", {
       originalError: error instanceof Error ? error.message : String(error),
