@@ -8,13 +8,14 @@ function wrap(ui: React.ReactElement) {
 }
 
 const GROUPS = [
-  { id: 1, name: "Board of Directors", memberCount: 7, memberIds: [] },
-  { id: 2, name: "Volunteers", memberCount: 23, memberIds: [] },
+  { id: 1, name: "Board of Directors", memberCount: 2, memberIds: [100001, 100002] },
+  { id: 2, name: "Volunteers", memberCount: 1, memberIds: [100003] },
 ];
 
 const MEMBERS = [
   { ownerid: 100001, ownername: "Kevin Rutledge" },
   { ownerid: 100002, ownername: "Mary Jones" },
+  { ownerid: 100003, ownername: "Alice Smith" },
 ];
 
 describe("InviteeCombobox", () => {
@@ -35,20 +36,36 @@ describe("InviteeCombobox", () => {
     expect(screen.getByText("Nothing to invite yet.")).toBeInTheDocument();
   });
 
-  it("shows selected count in the header when groups are selected", () => {
+  it("counts unique members only, not groups", () => {
     render(
       wrap(
         <InviteeCombobox
           groups={GROUPS}
           members={MEMBERS}
           selectedGroupIds={new Set([1])}
-          selectedMemberIds={new Set([100001])}
+          selectedMemberIds={new Set([100001, 100002])}
           onToggleGroup={vi.fn()}
           onToggleMember={vi.fn()}
         />,
       ),
     );
     expect(screen.getByText("2 invitees selected")).toBeInTheDocument();
+  });
+
+  it("shows singular invitee for one member", () => {
+    render(
+      wrap(
+        <InviteeCombobox
+          groups={GROUPS}
+          members={MEMBERS}
+          selectedGroupIds={new Set()}
+          selectedMemberIds={new Set([100001])}
+          onToggleGroup={vi.fn()}
+          onToggleMember={vi.fn()}
+        />,
+      ),
+    );
+    expect(screen.getByText("1 invitee selected")).toBeInTheDocument();
   });
 
   it("calls onToggleGroup when a group item is clicked", () => {
