@@ -41,16 +41,12 @@ export function InviteeCombobox({
   const filteredMembers = useFuzzySearch(members, { keys: ["ownername"] }, query);
 
   const selectedInvitees = useMemo<InviteeAvatar[]>(() => {
-    const groupInvitees: InviteeAvatar[] = groups
-      .filter((g) => selectedGroupIds.has(g.id))
-      .map((g) => ({ id: `g-${g.id}`, name: g.name }));
-    const memberInvitees: InviteeAvatar[] = members
+    return members
       .filter((m) => selectedMemberIds.has(m.ownerid))
       .map((m) => ({ id: `m-${m.ownerid}`, name: m.ownername, photoUrl: m.photoUrl }));
-    return [...groupInvitees, ...memberInvitees];
-  }, [groups, members, selectedGroupIds, selectedMemberIds]);
+  }, [members, selectedMemberIds]);
 
-  const selectedCount = selectedInvitees.length;
+  const selectedCount = selectedMemberIds.size;
   const noOptions = groups.length === 0 && members.length === 0;
 
   return (
