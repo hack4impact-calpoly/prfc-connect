@@ -81,6 +81,32 @@ describe("getAllMessageHistory", () => {
     );
   });
 
+  it("filters by recipientId when provided", async () => {
+    mockPrisma.message.findMany.mockResolvedValue([] as never);
+
+    await getAllMessageHistory({ recipientId: 100003 });
+
+    expect(mockPrisma.message.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ recipients: { some: { memberId: 100003 } } }),
+      }),
+    );
+  });
+
+  it("combines recipientId and channel filter", async () => {
+    mockPrisma.message.findMany.mockResolvedValue([] as never);
+
+    await getAllMessageHistory({ recipientId: 100003, channel: "email" });
+
+    expect(mockPrisma.message.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          recipients: { some: { memberId: 100003, channel: "email" } },
+        }),
+      }),
+    );
+  });
+
   it("filters by channel when provided", async () => {
     mockPrisma.message.findMany.mockResolvedValue([] as never);
 

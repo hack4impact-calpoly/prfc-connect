@@ -453,18 +453,22 @@ export async function processEmailQueue(): Promise<{ sent: number; failed: numbe
 
 export async function getAllMessageHistory(options: {
   senderId?: number;
+  recipientId?: number;
   limit?: number;
   offset?: number;
   channel?: "email" | "sms";
 }): Promise<MessageHistoryItem[]> {
   try {
-    const { senderId, limit = 50, offset = 0, channel } = options;
+    const { senderId, recipientId, limit = 50, offset = 0, channel } = options;
     const effectiveLimit = Math.min(Math.max(1, limit), MAX_MESSAGE_HISTORY_LIMIT);
 
     const where: Record<string, unknown> = {};
     if (senderId) where.senderId = senderId;
-    if (channel) {
-      where.recipients = { some: { channel } };
+    const recipientFilter: Record<string, unknown> = {};
+    if (recipientId) recipientFilter.memberId = recipientId;
+    if (channel) recipientFilter.channel = channel;
+    if (Object.keys(recipientFilter).length > 0) {
+      where.recipients = { some: recipientFilter };
     }
 
     const messages = await prisma.message.findMany({
