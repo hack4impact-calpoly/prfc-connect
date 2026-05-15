@@ -10,12 +10,13 @@ export default async function HomePage() {
   const session = await verifySession();
   const now = coopNow();
 
+  const messageFilter = session.isAdmin ? { limit: 3 } : { limit: 3, recipientId: session.ownerid };
   const [memberList, monthEvents, upcomingEvents, recentActivity, recentMessages] = await Promise.all([
     getAllMembers(),
     getEventsForMonth(now.year, now.month0 + 1),
     getUpcomingEvents(4),
     getRecentActivity(session.ownerid, 3),
-    getAllMessageHistory({ limit: 3 }),
+    getAllMessageHistory(messageFilter),
   ]);
 
   return (
