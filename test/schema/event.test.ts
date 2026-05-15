@@ -1,4 +1,4 @@
-import { CreateEventSchema, RsvpSchema } from "@/schema/event";
+import { CreateEventSchema, UpdateEventSchema, RsvpSchema } from "@/schema/event";
 
 describe("CreateEventSchema", () => {
   it("accepts valid event data", () => {
@@ -59,6 +59,61 @@ describe("CreateEventSchema", () => {
       expect(result.data.startDate).toBeInstanceOf(Date);
       expect(result.data.endDate).toBeInstanceOf(Date);
     }
+  });
+
+  it("rejects endDate before startDate", () => {
+    const result = CreateEventSchema.safeParse({
+      title: "Test",
+      startDate: "2026-04-08T19:00:00Z",
+      endDate: "2026-04-08T18:00:00Z",
+      eventType: "meeting",
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].path).toContain("endDate");
+    }
+  });
+
+  it("accepts endDate equal to startDate", () => {
+    const result = CreateEventSchema.safeParse({
+      title: "Test",
+      startDate: "2026-04-08T18:00:00Z",
+      endDate: "2026-04-08T18:00:00Z",
+      eventType: "meeting",
+    });
+
+    expect(result.success).toBe(true);
+  });
+});
+
+describe("UpdateEventSchema", () => {
+  it("rejects endDate before startDate when both provided", () => {
+    const result = UpdateEventSchema.safeParse({
+      startDate: "2026-04-08T19:00:00Z",
+      endDate: "2026-04-08T18:00:00Z",
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].path).toContain("endDate");
+    }
+  });
+
+  it("accepts update with only startDate", () => {
+    const result = UpdateEventSchema.safeParse({
+      startDate: "2026-04-08T19:00:00Z",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts update with only endDate", () => {
+    const result = UpdateEventSchema.safeParse({
+      endDate: "2026-04-08T19:00:00Z",
+    });
+
+    expect(result.success).toBe(true);
   });
 });
 

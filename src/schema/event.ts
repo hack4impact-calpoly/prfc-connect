@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const CreateEventSchema = z.object({
+const EventFieldsSchema = z.object({
   title: z.string().min(1).max(200),
   description: z.string().max(5000).nullish(),
   location: z.string().max(200).nullish(),
@@ -14,7 +14,18 @@ export const CreateEventSchema = z.object({
   groupIds: z.array(z.number().int().positive()).optional(),
 });
 
-export const UpdateEventSchema = CreateEventSchema.partial();
+export const CreateEventSchema = EventFieldsSchema.refine((data) => data.endDate >= data.startDate, {
+  message: "End date must be after start date",
+  path: ["endDate"],
+});
+
+export const UpdateEventSchema = EventFieldsSchema.partial().refine(
+  (data) => {
+    if (data.startDate && data.endDate) return data.endDate >= data.startDate;
+    return true;
+  },
+  { message: "End date must be after start date", path: ["endDate"] },
+);
 
 export const RsvpSchema = z.object({
   eventId: z.number().int().positive(),
