@@ -20,6 +20,7 @@ import {
   mockMessageSendLimiter,
 } from "../mocks";
 import {
+  fetchEnrichedGroup,
   createContactGroup,
   updateContactGroup,
   deleteContactGroup,
@@ -35,6 +36,22 @@ function createFormData(data: Record<string, string>): FormData {
   Object.entries(data).forEach(([key, value]) => formData.append(key, value));
   return formData;
 }
+
+describe("fetchEnrichedGroup", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("rejects non-owner non-admin access", async () => {
+    mockVerifySession.mockResolvedValue({ ownerid: 10, isAdmin: false });
+    mockIsGroupOwner.mockResolvedValue(false);
+
+    const result = await fetchEnrichedGroup(5);
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("do not have permission");
+  });
+});
 
 describe("createContactGroup", () => {
   beforeEach(() => {
@@ -120,6 +137,24 @@ describe("createContactGroup", () => {
     expect(result.success).toBe(false);
     expect(result.error).toContain("Authentication required");
   });
+
+  it("logs audit event on successful group creation", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockVerifySession.mockResolvedValue({ ownerid: 10, isAdmin: false });
+    mockCreateGroup.mockResolvedValue({
+      id: 55,
+      name: "Neighbors",
+      description: null,
+      ownerid: 10,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    await createContactGroup({ name: "Neighbors", description: null });
+
+    expect(spy).toHaveBeenCalledWith("[AUDIT] createContactGroup", 10, 55);
+    spy.mockRestore();
+  });
 });
 
 describe("updateContactGroup", () => {
@@ -204,6 +239,17 @@ describe("deleteContactGroup", () => {
     expect(result.success).toBe(false);
     expect(result.error).toContain("do not have permission");
     expect(mockDeleteGroup).not.toHaveBeenCalled();
+  });
+
+  it("logs access denial with ownerid and resource", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockVerifySession.mockResolvedValue({ ownerid: 10, isAdmin: false });
+    mockIsGroupOwner.mockResolvedValue(false);
+
+    await deleteContactGroup(7);
+
+    expect(spy).toHaveBeenCalledWith("[ACCESS_DENIED] deleteContactGroup", 10, 7);
+    spy.mockRestore();
   });
 });
 
@@ -303,6 +349,21 @@ describe("updateNotifications", () => {
 
     expect(result.success).toBe(false);
     expect(result.error).toContain("At least one notification preference");
+    expect(mockUpdateMemberNotifications).not.toHaveBeenCalled();
+  });
+
+  it("rejects non-owner non-admin updates", async () => {
+    mockVerifySession.mockResolvedValue({ ownerid: 10, isAdmin: false });
+    mockIsGroupOwner.mockResolvedValue(false);
+
+    const result = await updateNotifications({
+      groupId: 3,
+      memberId: 101,
+      notifyEmail: false,
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain("do not have permission");
     expect(mockUpdateMemberNotifications).not.toHaveBeenCalled();
   });
 });

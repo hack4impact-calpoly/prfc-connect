@@ -44,4 +44,13 @@ describe("getMemberProfile", () => {
 
     expect(result.altPhone).toBeUndefined();
   });
+
+  it("wraps unexpected errors with transformError", async () => {
+    mockGetMemberById.mockRejectedValue(new Error("Connection refused"));
+
+    await expect(getMemberProfile(100001, false)).rejects.toMatchObject({
+      code: "INTERNAL_ERROR",
+      message: "Connection refused",
+    });
+  });
 });

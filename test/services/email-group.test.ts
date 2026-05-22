@@ -201,7 +201,7 @@ describe("sendGroupEmails", () => {
       valid: recipients.map((r) => r.email),
       suppressed: [],
     });
-    mockBrevoSend.mockRejectedValueOnce(new Error("API Error")).mockResolvedValue("ok");
+    mockBrevoSend.mockRejectedValueOnce(new Error("API Error")).mockResolvedValue({ messageId: "ok", remaining: null });
 
     const { sent, failed, suppressed } = await sendGroupEmails({ ...defaultParams, recipients });
 
@@ -209,6 +209,19 @@ describe("sendGroupEmails", () => {
     expect(sent).toBe(2);
     expect(failed).toBe(1);
     expect(suppressed).toBe(0);
+  });
+
+  it("logs email send errors with [EMAIL_SEND_ERROR] prefix", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const recipients = [recipientBobby];
+    mockFilterSuppressedEmails.mockResolvedValue({ valid: [recipientBobby.email], suppressed: [] });
+    const sendError = new Error("Connection timeout");
+    mockBrevoSend.mockRejectedValueOnce(sendError);
+
+    await sendGroupEmails({ ...defaultParams, recipients });
+
+    expect(spy).toHaveBeenCalledWith("[EMAIL_SEND_ERROR]", sendError);
+    spy.mockRestore();
   });
 
   it("returns zeros with empty recipient list", async () => {

@@ -9,9 +9,10 @@ import type { ActionResult } from "@/types/action";
 
 export async function toggleRedeemed(id: number): Promise<ActionResult> {
   try {
-    await requireAdmin();
+    const session = await requireAdmin();
     const validId = PositiveIntSchema.parse(id);
     await toggleReferralRedeemed(validId);
+    console.error("[AUDIT] toggleRedeemed", session.ownerid, validId);
     revalidatePath("/referral-database");
     return { success: true };
   } catch (error) {

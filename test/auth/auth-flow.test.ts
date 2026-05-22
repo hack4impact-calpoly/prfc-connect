@@ -36,6 +36,7 @@ vi.mock("react", async () => {
 });
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { validateToken, generateToken, getSecret, verifySession, getSession, AUTH_COOKIE } from "@/lib/dal";
 import { POST as callbackPOST } from "@/app/api/auth/callback/route";
 import { POST as logoutPOST } from "@/app/api/auth/logout/route";
@@ -126,6 +127,32 @@ describe("validateToken", () => {
   });
 });
 
+describe("getSecret", () => {
+  it("throws in production when PRFC_PORTAL_SECRET is unset", () => {
+    const originalSecret = process.env.PRFC_PORTAL_SECRET;
+    const originalNodeEnv = process.env.NODE_ENV;
+    delete process.env.PRFC_PORTAL_SECRET;
+    (process.env as Record<string, string | undefined>).NODE_ENV = "production";
+
+    expect(() => getSecret()).toThrow("PRFC_PORTAL_SECRET required in production");
+
+    process.env.PRFC_PORTAL_SECRET = originalSecret;
+    (process.env as Record<string, string | undefined>).NODE_ENV = originalNodeEnv;
+  });
+
+  it("returns dev secret in non-production when PRFC_PORTAL_SECRET is unset", () => {
+    const originalSecret = process.env.PRFC_PORTAL_SECRET;
+    delete process.env.PRFC_PORTAL_SECRET;
+
+    const secret = getSecret();
+
+    expect(secret).toBeDefined();
+    expect(secret.length).toBeGreaterThanOrEqual(32);
+
+    process.env.PRFC_PORTAL_SECRET = originalSecret;
+  });
+});
+
 describe("POST /api/auth/callback", () => {
   it("sets auth cookie for valid token", async () => {
     const token = generateToken(100001, true);
@@ -146,6 +173,8 @@ describe("POST /api/auth/callback", () => {
     expect(cookie!.httpOnly).toBe(true);
     expect(cookie!.sameSite).toBe("lax");
     expect(cookie!.path).toBe("/");
+    expect(cookie!.secure).toBe(process.env.NODE_ENV === "production");
+    expect(cookie!.maxAge).toBe(3600);
   });
 
   it("redirects without cookie for invalid token", async () => {
@@ -179,6 +208,30 @@ describe("POST /api/auth/callback", () => {
     expect(cookie).toBeUndefined();
   });
 
+  it("redirects valid and invalid tokens to the same URL to prevent enumeration", async () => {
+    const validToken = generateToken(100001, true);
+    const validForm = new FormData();
+    validForm.set("token", validToken);
+    const validReq = new NextRequest("http://localhost:3000/api/auth/callback", {
+      method: "POST",
+      body: validForm,
+    });
+
+    const invalidForm = new FormData();
+    invalidForm.set("token", "invalid|token|data|badhash!");
+    const invalidReq = new NextRequest("http://localhost:3000/api/auth/callback", {
+      method: "POST",
+      body: invalidForm,
+    });
+
+    const validResponse = await callbackPOST(validReq);
+    const invalidResponse = await callbackPOST(invalidReq);
+
+    const validUrl = new URL(validResponse.headers.get("location")!);
+    const invalidUrl = new URL(invalidResponse.headers.get("location")!);
+    expect(validUrl.pathname).toBe(invalidUrl.pathname);
+  });
+
   it("returns 429 when rate limited", async () => {
     mockAuthLimit.mockResolvedValueOnce({ success: false, remaining: 0, reset: Date.now() + 60000 });
 
@@ -197,6 +250,83 @@ describe("POST /api/auth/callback", () => {
     expect(response.status).toBe(429);
     expect(cookie).toBeUndefined();
     expect(mockAuthLimit).toHaveBeenCalledWith("127.0.0.1");
+  });
+
+  it("extracts client IP from x-forwarded-for header for rate limiting", async () => {
+    const token = generateToken(100001, true);
+    const formData = new FormData();
+    formData.set("token", token);
+
+    const request = new NextRequest("http://localhost:3000/api/auth/callback", {
+      method: "POST",
+      body: formData,
+      headers: { "x-forwarded-for": "203.0.113.42, 10.0.0.1" },
+    });
+
+    await callbackPOST(request);
+
+    expect(mockAuthLimit).toHaveBeenCalledWith("203.0.113.42");
+  });
+
+  it("replaces malformed IP with 'invalid' to prevent log injection", () => {
+    const malicious = "1.2.3.4\n[AUTH_CALLBACK] login success 99999";
+    const result = /^[\d.:a-f]+$/i.test(malicious) ? malicious : "invalid";
+
+    expect(result).toBe("invalid");
+  });
+
+  it("accepts valid IPv4 and IPv6 addresses", () => {
+    expect(/^[\d.:a-f]+$/i.test("203.0.113.42")).toBe(true);
+    expect(/^[\d.:a-f]+$/i.test("::1")).toBe(true);
+    expect(/^[\d.:a-f]+$/i.test("2001:db8::1")).toBe(true);
+  });
+
+  it("logs successful login with ownerid", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const token = generateToken(100001, true);
+    const formData = new FormData();
+    formData.set("token", token);
+
+    const request = new NextRequest("http://localhost:3000/api/auth/callback", {
+      method: "POST",
+      body: formData,
+    });
+
+    await callbackPOST(request);
+
+    expect(spy).toHaveBeenCalledWith("[AUTH_CALLBACK] login success", 100001, "127.0.0.1");
+    spy.mockRestore();
+  });
+
+  it("logs failed login for invalid token", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const formData = new FormData();
+    formData.set("token", "invalid|token|data|badhash!");
+
+    const request = new NextRequest("http://localhost:3000/api/auth/callback", {
+      method: "POST",
+      body: formData,
+    });
+
+    await callbackPOST(request);
+
+    expect(spy).toHaveBeenCalledWith("[AUTH_CALLBACK] invalid or expired token", "127.0.0.1");
+    spy.mockRestore();
+  });
+
+  it("logs failed login for missing token", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const formData = new FormData();
+
+    const request = new NextRequest("http://localhost:3000/api/auth/callback", {
+      method: "POST",
+      body: formData,
+    });
+
+    await callbackPOST(request);
+
+    expect(spy).toHaveBeenCalledWith("[AUTH_CALLBACK] missing or malformed token", "127.0.0.1");
+    spy.mockRestore();
   });
 });
 
@@ -224,6 +354,12 @@ describe("logout server action", () => {
 
     expect(mockCookieStore.delete).toHaveBeenCalledWith(AUTH_COOKIE);
     expect(mockRedirect).toHaveBeenCalledWith("/dev/mock-portal");
+  });
+
+  it("does not call revalidatePath to avoid error boundary on expired session", async () => {
+    await logout().catch(() => {});
+
+    expect(revalidatePath).not.toHaveBeenCalled();
   });
 });
 

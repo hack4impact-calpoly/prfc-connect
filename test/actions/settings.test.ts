@@ -97,4 +97,37 @@ describe("uploadPhotoAction", () => {
     expect(result).toEqual({ success: false, error: "No file provided" });
     expect(mockUploadProfilePhoto).not.toHaveBeenCalled();
   });
+
+  it("returns error when file MIME type is not JPEG or PNG", async () => {
+    const file = new File([new Uint8Array(1024)], "avatar.gif", { type: "image/gif" });
+    const formData = new FormData();
+    formData.set("file", file);
+
+    const result = await uploadPhotoAction(formData);
+
+    expect(result).toEqual({ success: false, error: "Only JPEG and PNG files are allowed" });
+    expect(mockUploadProfilePhoto).not.toHaveBeenCalled();
+  });
+
+  it("returns error when file exceeds 2MB", async () => {
+    const file = new File([new Uint8Array(2 * 1024 * 1024 + 1)], "large.jpg", { type: "image/jpeg" });
+    const formData = new FormData();
+    formData.set("file", file);
+
+    const result = await uploadPhotoAction(formData);
+
+    expect(result).toEqual({ success: false, error: "File must be under 2MB" });
+    expect(mockUploadProfilePhoto).not.toHaveBeenCalled();
+  });
+
+  it("returns error when file is zero bytes", async () => {
+    const file = new File([], "empty.png", { type: "image/png" });
+    const formData = new FormData();
+    formData.set("file", file);
+
+    const result = await uploadPhotoAction(formData);
+
+    expect(result).toEqual({ success: false, error: "No file provided" });
+    expect(mockUploadProfilePhoto).not.toHaveBeenCalled();
+  });
 });

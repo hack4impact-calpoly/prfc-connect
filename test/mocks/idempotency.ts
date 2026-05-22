@@ -1,17 +1,17 @@
 import { vi } from "vitest";
 
-const mockGetIdempotentResponse = vi.fn().mockResolvedValue(null);
+const mockClaimIdempotencyKey = vi.fn().mockResolvedValue({ claimed: true });
 const mockSetIdempotentResponse = vi.fn().mockResolvedValue(undefined);
 
 vi.mock("@/lib/idempotency", () => ({
-  getIdempotentResponse: mockGetIdempotentResponse,
+  claimIdempotencyKey: mockClaimIdempotencyKey,
   setIdempotentResponse: mockSetIdempotentResponse,
 }));
 
 beforeEach(() => {
-  mockGetIdempotentResponse.mockClear();
+  mockClaimIdempotencyKey.mockClear();
   mockSetIdempotentResponse.mockClear();
-  mockGetIdempotentResponse.mockResolvedValue(null);
+  mockClaimIdempotencyKey.mockResolvedValue({ claimed: true });
 });
 
-export { mockGetIdempotentResponse, mockSetIdempotentResponse };
+export { mockClaimIdempotencyKey, mockSetIdempotentResponse };

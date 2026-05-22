@@ -8,9 +8,10 @@ const AuthCallbackSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  const rawIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "127.0.0.1";
+  const ip = /^[\d.:a-f]+$/i.test(rawIp) ? rawIp : "invalid";
+
   if (authRateLimiter) {
-    const forwarded = req.headers.get("x-forwarded-for");
-    const ip = forwarded?.split(",")[0]?.trim() ?? "127.0.0.1";
     const { success } = await authRateLimiter.limit(ip);
 
     if (!success) {
@@ -22,22 +23,26 @@ export async function POST(req: NextRequest) {
   try {
     secret = getSecret();
   } catch {
-    return NextResponse.redirect(new URL("/", req.url));
+    return NextResponse.redirect(new URL("/home", req.url));
   }
 
   const formData = await req.formData();
   const parsed = AuthCallbackSchema.safeParse({ token: formData.get("token") });
 
   if (!parsed.success) {
-    return NextResponse.redirect(new URL("/", req.url));
+    console.error("[AUTH_CALLBACK] missing or malformed token", ip);
+    return NextResponse.redirect(new URL("/home", req.url));
   }
 
   const { token } = parsed.data;
 
   const session = validateToken(token, secret);
   if (!session) {
-    return NextResponse.redirect(new URL("/", req.url));
+    console.error("[AUTH_CALLBACK] invalid or expired token", ip);
+    return NextResponse.redirect(new URL("/home", req.url));
   }
+
+  console.error("[AUTH_CALLBACK] login success", session.ownerid, ip);
 
   const response = NextResponse.redirect(new URL("/home", req.url));
 

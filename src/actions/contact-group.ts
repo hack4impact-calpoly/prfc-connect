@@ -55,6 +55,7 @@ export async function fetchEnrichedGroup(groupId: number): Promise<ActionResult<
     const validGroupId = PositiveIntSchema.parse(groupId);
 
     if (!session.isAdmin && !(await isGroupOwner(validGroupId, session.ownerid))) {
+      console.error("[ACCESS_DENIED] fetchEnrichedGroup", session.ownerid, validGroupId);
       return { success: false, error: "You do not have permission to view this group" };
     }
 
@@ -102,6 +103,7 @@ export async function createContactGroup(input: {
       );
     }
 
+    console.error("[AUDIT] createContactGroup", session.ownerid, group.id);
     revalidatePath("/groups");
     return { success: true, data: { id: group.id } };
   } catch (error) {
@@ -115,6 +117,7 @@ export async function updateContactGroup(groupId: number, formData: FormData): P
     const session = await verifySession();
 
     if (!session.isAdmin && !(await isGroupOwner(groupId, session.ownerid))) {
+      console.error("[ACCESS_DENIED] updateContactGroup", session.ownerid, groupId);
       return { success: false, error: "You do not have permission to edit this group" };
     }
 
@@ -140,11 +143,13 @@ export async function deleteContactGroup(groupId: number): Promise<ActionResult>
     const validGroupId = PositiveIntSchema.parse(groupId);
 
     if (!session.isAdmin && !(await isGroupOwner(validGroupId, session.ownerid))) {
+      console.error("[ACCESS_DENIED] deleteContactGroup", session.ownerid, validGroupId);
       return { success: false, error: "You do not have permission to delete this group" };
     }
 
     await deleteGroup(validGroupId);
 
+    console.error("[AUDIT] deleteContactGroup", session.ownerid, validGroupId);
     revalidatePath("/groups");
     return { success: true };
   } catch (error) {
@@ -162,6 +167,7 @@ export async function addMembers(input: {
     const validated = AddMembersSchema.parse(input);
 
     if (!session.isAdmin && !(await isGroupOwner(validated.groupId, session.ownerid))) {
+      console.error("[ACCESS_DENIED] addMembers", session.ownerid, validated.groupId);
       return { success: false, error: "You do not have permission to add members to this group" };
     }
 
@@ -182,6 +188,7 @@ export async function removeMember(groupId: number, memberId: number): Promise<A
     const validMemberId = PositiveIntSchema.parse(memberId);
 
     if (!session.isAdmin && !(await isGroupOwner(validGroupId, session.ownerid))) {
+      console.error("[ACCESS_DENIED] removeMember", session.ownerid, validGroupId);
       return { success: false, error: "You do not have permission to remove members from this group" };
     }
 
@@ -217,6 +224,7 @@ export async function removeMembers(groupId: number, memberIds: number[]): Promi
     const validMemberIds = z.array(PositiveIntSchema).min(1).parse(memberIds);
 
     if (!session.isAdmin && !(await isGroupOwner(validGroupId, session.ownerid))) {
+      console.error("[ACCESS_DENIED] removeMembers", session.ownerid, validGroupId);
       return { success: false, error: "You do not have permission to remove members from this group" };
     }
 
@@ -241,6 +249,7 @@ export async function updateNotifications(input: {
     const validated = UpdateNotificationSchema.parse(input);
 
     if (!session.isAdmin && !(await isGroupOwner(validated.groupId, session.ownerid))) {
+      console.error("[ACCESS_DENIED] updateNotifications", session.ownerid, validated.groupId);
       return { success: false, error: "You do not have permission to update notification preferences" };
     }
 
@@ -280,12 +289,14 @@ export async function sendMessage(input: {
     if (!session.isAdmin) {
       const ownerChecks = await Promise.all(validated.groupIds.map((gid) => isGroupOwner(gid, session.ownerid)));
       if (ownerChecks.some((isOwner) => !isOwner)) {
+        console.error("[ACCESS_DENIED] sendMessage", session.ownerid, validated.groupIds);
         return { success: false, error: "You do not have permission to send messages to one or more selected groups" };
       }
     }
 
     const result = await sendGroupMessage(validated, session.ownerid);
 
+    console.error("[AUDIT] sendMessage", session.ownerid, result.messageId, validated.groupIds);
     return { success: true, data: result };
   } catch (error) {
     const appError = transformError(error);
@@ -314,11 +325,13 @@ export async function sendBlast(input: {
     const validated = BlastMessageSchema.parse(input);
 
     if (!session.isAdmin) {
+      console.error("[ACCESS_DENIED] sendBlast", session.ownerid);
       return { success: false, error: "You do not have permission to send blast messages" };
     }
 
     const result = await sendBlastMessage(validated, session.ownerid);
 
+    console.error("[AUDIT] sendBlast", session.ownerid, result.messageId);
     return { success: true, data: result };
   } catch (error) {
     const appError = transformError(error);
@@ -355,6 +368,7 @@ export async function fetchMessageDetail(messageId: number): Promise<
     const isSender = message.senderId === session.ownerid;
     const isRecipient = await isMessageRecipient(validMessageId, session.ownerid);
     if (!session.isAdmin && !isSender && !isRecipient) {
+      console.error("[ACCESS_DENIED] fetchMessageDetail", session.ownerid, validMessageId);
       return { success: false, error: "You do not have permission to view this message" };
     }
 
@@ -372,6 +386,7 @@ export async function fetchRecipientPreview(groupId: number): Promise<ActionResu
     const validGroupId = PositiveIntSchema.parse(groupId);
 
     if (!session.isAdmin && !(await isGroupOwner(validGroupId, session.ownerid))) {
+      console.error("[ACCESS_DENIED] fetchRecipientPreview", session.ownerid, validGroupId);
       return { success: false, error: "You do not have permission to preview recipients for this group" };
     }
 

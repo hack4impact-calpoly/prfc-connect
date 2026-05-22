@@ -8,7 +8,7 @@ import { apiErrorHandler } from "@/utils/errors";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    await requireAdmin();
+    const session = await requireAdmin();
 
     if (!validateOrigin(req)) {
       return NextResponse.json({ error: { code: "FORBIDDEN", message: "Invalid origin" } }, { status: 403 });
@@ -20,6 +20,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const { redeemed } = UpdateRedeemedSchema.parse(body);
 
     const updated = await updateReferralRedeemed(referralId, redeemed);
+    console.error("[AUDIT] updateReferralRedeemed", session.ownerid, referralId, redeemed);
     return NextResponse.json(updated, { status: 200 });
   } catch (error) {
     return apiErrorHandler(error);
@@ -28,7 +29,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    await requireAdmin();
+    const session = await requireAdmin();
 
     if (!validateOrigin(req)) {
       return NextResponse.json({ error: { code: "FORBIDDEN", message: "Invalid origin" } }, { status: 403 });
@@ -37,6 +38,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     const { id } = await params;
     const referralId = StringIntSchema.parse(id);
     await deleteReferral(referralId);
+    console.error("[AUDIT] deleteReferral", session.ownerid, referralId);
     return NextResponse.json({ message: "Referral deleted" }, { status: 200 });
   } catch (error) {
     return apiErrorHandler(error);

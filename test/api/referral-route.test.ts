@@ -13,7 +13,7 @@ import { allReferrals, formWithTwoProspects, referralCharlie } from "../mocks/re
 import { mockBrevoSend } from "../mocks/email";
 import { mockReserveEmailQuota } from "../mocks/email-quota";
 import { mockRateLimiter } from "../mocks/rate-limit";
-import { mockGetIdempotentResponse } from "../mocks/idempotency";
+import { mockClaimIdempotencyKey } from "../mocks/idempotency";
 import { mockValidateOrigin } from "../mocks/csrf";
 import { mockVerifySession, mockRequireAdmin } from "../mocks/dal";
 import { GET, POST } from "@/app/api/referrals/route";
@@ -137,7 +137,7 @@ describe("POST /api/referrals", () => {
 
   it("returns cached response for duplicate idempotency key", async () => {
     const cachedBody = { message: "Referrals created successfully!", referrals: [referralCharlie] };
-    mockGetIdempotentResponse.mockResolvedValueOnce({ status: 201, body: cachedBody });
+    mockClaimIdempotencyKey.mockResolvedValueOnce({ claimed: false, response: { status: 201, body: cachedBody } });
 
     const req = createMockRequest({
       body: formWithTwoProspects,
@@ -150,6 +150,30 @@ describe("POST /api/referrals", () => {
     expect(data.referrals).toHaveLength(1);
     expect(mockBrevoSend).not.toHaveBeenCalled();
     expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it("rejects concurrent submission when idempotency key is already claimed", async () => {
+    mockClaimIdempotencyKey.mockResolvedValueOnce({ claimed: true }).mockResolvedValueOnce({
+      claimed: false,
+      response: { status: 409, body: { error: { code: "CONFLICT", message: "Request is already being processed" } } },
+    });
+    const createdReferrals = [{ ...referralCharlie, id: 11 }];
+    mockPrisma.$transaction.mockResolvedValue(createdReferrals);
+
+    const req1 = createMockRequest({
+      body: formWithTwoProspects,
+      headers: { "idempotency-key": "same-key" },
+    });
+    const req2 = createMockRequest({
+      body: formWithTwoProspects,
+      headers: { "idempotency-key": "same-key" },
+    });
+
+    const [res1, res2] = await Promise.all([POST(req1), POST(req2)]);
+
+    expect(res1.status).toBe(201);
+    expect(res2.status).toBe(409);
+    expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
   });
 
   it("creates referrals even when email quota is exhausted", async () => {

@@ -63,4 +63,15 @@ describe("reserveEmailQuota", () => {
 
     expect(mockExpire).toHaveBeenCalledWith(expect.stringContaining("prfc:email-sent:"), 172800);
   });
+
+  it("handles concurrent reservations via atomic INCRBY", async () => {
+    mockIncrby.mockResolvedValueOnce(200).mockResolvedValueOnce(350);
+
+    const [result1, result2] = await Promise.all([reserveEmailQuota(200), reserveEmailQuota(150)]);
+
+    expect(result1).toEqual({ allowed: 200, total: 200 });
+    expect(result2).toEqual({ allowed: 100, total: 300 });
+    expect(mockIncrby).toHaveBeenCalledTimes(2);
+    expect(mockDecrby).toHaveBeenCalledTimes(1);
+  });
 });

@@ -57,4 +57,37 @@ describe("apiErrorHandler", () => {
 
     expect(res.status).toBe(status);
   });
+
+  it("returns only code and message in response body, no stack trace", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const err = new Error("Something broke internally");
+    const res = apiErrorHandler(err);
+    const body = await res.json();
+
+    expect(body).toEqual({
+      error: {
+        code: "INTERNAL_ERROR",
+        message: "Something broke internally",
+      },
+    });
+    expect(body.error).not.toHaveProperty("stack");
+    expect(body).not.toHaveProperty("stack");
+    spy.mockRestore();
+  });
+
+  it("transforms Prisma errors to generic message in response body", async () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const { Prisma } = await import("@/generated/prisma/client");
+    const prismaErr = new Prisma.PrismaClientKnownRequestError("Column 'email' not found", {
+      code: "P2022",
+      clientVersion: "7.0.0",
+    });
+    const res = apiErrorHandler(prismaErr);
+    const body = await res.json();
+
+    expect(body.error.message).toBe("Database operation failed");
+    expect(body.error.message).not.toContain("Column");
+    expect(body.error.message).not.toContain("email");
+    spy.mockRestore();
+  });
 });

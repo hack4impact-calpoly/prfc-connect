@@ -4,7 +4,7 @@ import { createManyReferrals, getAllReferrals } from "@/services/referral";
 import { sendReferralEmails } from "@/services/email";
 import { env } from "@/env";
 import { rateLimiter } from "@/lib/rate-limit";
-import { getIdempotentResponse, setIdempotentResponse } from "@/lib/idempotency";
+import { claimIdempotencyKey, setIdempotentResponse } from "@/lib/idempotency";
 import { validateOrigin } from "@/lib/csrf";
 import { verifySession, requireAdmin } from "@/lib/dal";
 import { apiErrorHandler, transformError, errorStatusMap } from "@/utils/errors";
@@ -20,9 +20,9 @@ export async function POST(req: NextRequest) {
     }
 
     if (idempotencyKey) {
-      const cached = await getIdempotentResponse(idempotencyKey);
-      if (cached) {
-        return NextResponse.json(cached.body, { status: cached.status });
+      const claim = await claimIdempotencyKey(idempotencyKey);
+      if (!claim.claimed) {
+        return NextResponse.json(claim.response.body, { status: claim.response.status });
       }
     }
 
@@ -62,6 +62,8 @@ export async function POST(req: NextRequest) {
     if (env.EMAIL_ENABLED) {
       await sendReferralEmails({ prospects, referralCode, memberName });
     }
+
+    console.error("[AUDIT] createReferrals", referralCode, newReferrals.length);
 
     const responseBody = { message: "Referrals created successfully!", referrals: newReferrals };
 
