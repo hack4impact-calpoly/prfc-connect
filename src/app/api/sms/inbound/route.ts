@@ -1,12 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 import { verifyTwilioSignature } from "@/lib/sms";
 import { revokeConsentByPhone } from "@/services/sms-consent";
-
-const TwilioInboundSchema = z.object({
-  From: z.string().min(1),
-  Body: z.string().max(1600),
-});
+import { TwilioInboundSchema } from "@/schema/sms";
 
 const STOP_KEYWORDS = new Set(["stop", "stopall", "unsubscribe", "cancel", "end", "quit", "optout", "revoke"]);
 
