@@ -1,27 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 import { requireAdmin } from "@/lib/dal";
+import { ReferralExportQuerySchema } from "@/schema/api";
 import { getAllReferrals } from "@/services/referral";
 import { generateReferralPdf } from "@/services/referral-pdf";
 import { apiErrorHandler } from "@/utils/errors";
-
-const ExportQuerySchema = z.object({
-  ids: z.preprocess((val) => {
-    if (typeof val !== "string" || val.length === 0) return undefined;
-    const parts = val
-      .split(",")
-      .map((part) => part.trim())
-      .filter((part) => part.length > 0);
-    return parts.map((part) => Number(part));
-  }, z.array(z.number().int().positive()).min(1).max(1000)),
-});
 
 export async function GET(req: NextRequest) {
   try {
     const session = await requireAdmin();
 
     const url = new URL(req.url);
-    const parsed = ExportQuerySchema.safeParse({ ids: url.searchParams.get("ids") });
+    const parsed = ReferralExportQuerySchema.safeParse({ ids: url.searchParams.get("ids") });
 
     if (!parsed.success) {
       return NextResponse.json(

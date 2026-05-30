@@ -19,6 +19,17 @@ export const UpdateRedeemedSchema = z.object({
   redeemed: z.boolean(),
 });
 
+export const ReferralExportQuerySchema = z.object({
+  ids: z.preprocess((val) => {
+    if (typeof val !== "string" || val.length === 0) return undefined;
+    const parts = val
+      .split(",")
+      .map((part) => part.trim())
+      .filter((part) => part.length > 0);
+    return parts.map((part) => Number(part));
+  }, z.array(z.number().int().positive()).min(1).max(1000)),
+});
+
 export const ApiReferralSchema = ReferralSchema.extend({
   createdAt: z.coerce.date(),
 });
@@ -26,4 +37,5 @@ export const ApiReferralSchema = ReferralSchema.extend({
 export type ReferralForm = z.infer<typeof ReferralFormSchema>;
 export type ChecksumInput = z.infer<typeof ChecksumSchema>;
 export type UpdateRedeemed = z.infer<typeof UpdateRedeemedSchema>;
+export type ReferralExportQuery = z.infer<typeof ReferralExportQuerySchema>;
 export type ApiReferral = z.infer<typeof ApiReferralSchema>;
