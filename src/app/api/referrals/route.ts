@@ -6,15 +6,13 @@ import { env } from "@/env";
 import { rateLimiter } from "@/lib/rate-limit";
 import { claimIdempotencyKey, setIdempotentResponse } from "@/lib/idempotency";
 import { validateOrigin } from "@/lib/csrf";
-import { verifySession, requireAdmin } from "@/lib/dal";
+import { requireAdmin } from "@/lib/dal";
 import { apiErrorHandler, transformError, errorStatusMap } from "@/utils/errors";
 
 export async function POST(req: NextRequest) {
   const idempotencyKey = req.headers.get("idempotency-key");
 
   try {
-    await verifySession();
-
     if (!validateOrigin(req)) {
       return NextResponse.json({ error: { code: "FORBIDDEN", message: "Invalid origin" } }, { status: 403 });
     }

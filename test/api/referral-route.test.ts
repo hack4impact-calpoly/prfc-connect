@@ -54,11 +54,6 @@ describe("GET /api/referrals", () => {
 });
 
 describe("POST /api/referrals", () => {
-  beforeEach(() => {
-    mockVerifySession.mockReset();
-    mockVerifySession.mockResolvedValue({ ownerid: 100184, isAdmin: false });
-  });
-
   it("creates referrals and sends emails", async () => {
     const createdReferrals = [
       { ...referralCharlie, id: 7 },
@@ -75,13 +70,15 @@ describe("POST /api/referrals", () => {
     expect(mockBrevoSend).toHaveBeenCalledTimes(2);
   });
 
-  it("returns 401 without valid session", async () => {
-    mockVerifySession.mockRejectedValue(new AppError("UNAUTHORIZED", "Authentication required"));
+  it("accepts anonymous submissions (no session required)", async () => {
+    const createdReferrals = [{ ...referralCharlie, id: 7 }];
+    mockPrisma.$transaction.mockResolvedValue(createdReferrals);
 
     const req = createMockRequest({ body: formWithTwoProspects });
     const response = await POST(req);
 
-    expect(response.status).toBe(401);
+    expect(response.status).toBe(201);
+    expect(mockVerifySession).not.toHaveBeenCalled();
   });
 
   it("returns 400 on invalid form data", async () => {
