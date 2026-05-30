@@ -36,7 +36,7 @@ export function ReferralForm() {
   // Idempotency key persists across retries, regenerated only on success
   const idempotencyKeyRef = useRef<string>(crypto.randomUUID());
 
-  const handleSubmit = async (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.SyntheticEvent) => {
     event.preventDefault();
     setErrorMessage("");
 

@@ -8,7 +8,7 @@ export interface MemberProfile {
   lastName: string;
   email: string;
   phone: string;
-  altPhone: string | undefined;
+  altPhone?: string;
   role: "Admin" | "Member";
 }
 

@@ -42,7 +42,7 @@ export function GroupEditModal({ open, onOpenChange, group, onSave, isSubmitting
     onOpenChange(nextOpen);
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (isSubmitting) return;
 

@@ -1,6 +1,3 @@
-/**
- * @jest-environment node
- */
 import { AppError, transformError, apiErrorHandler } from "@/utils/errors";
 import { z } from "zod";
 

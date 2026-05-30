@@ -21,6 +21,16 @@ describe("validateSmsAllowed", () => {
 
     vi.useRealTimers();
   });
+
+  it("throws during quiet hours", () => {
+    vi.useFakeTimers();
+    // 06:00 UTC on Jan 15 is 22:00 Pacific (PST) the prior evening, inside quiet hours
+    vi.setSystemTime(new Date("2026-01-15T06:00:00Z"));
+
+    expect(() => validateSmsAllowed()).toThrow(/quiet hours/i);
+
+    vi.useRealTimers();
+  });
 });
 
 describe("sendGroupSms", () => {

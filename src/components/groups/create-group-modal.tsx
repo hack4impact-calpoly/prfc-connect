@@ -50,7 +50,7 @@ export function CreateGroupModal({
 
   const filteredMembers = useFuzzySearch(members, { keys: ["ownername"] }, searchQuery);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!name.trim()) {
       setError("Group name is required.");

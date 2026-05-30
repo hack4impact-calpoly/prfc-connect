@@ -405,4 +405,107 @@ describe("processEmailQueue", () => {
 
     expect(result).toEqual({ sent: 0, failed: 0, remaining: 2 });
   });
+
+  it("sends queued emails and marks recipients sent", async () => {
+    mockPrisma.messageRecipient.findMany.mockResolvedValue([
+      {
+        id: 1,
+        messageId: 10,
+        memberId: 100001,
+        channel: "email",
+        status: "queued",
+        sentAt: null,
+        externalId: null,
+        deliveredAt: null,
+        error: null,
+      },
+      {
+        id: 2,
+        messageId: 10,
+        memberId: 100002,
+        channel: "email",
+        status: "queued",
+        sentAt: null,
+        externalId: null,
+        deliveredAt: null,
+        error: null,
+      },
+    ]);
+    mockReserveEmailQuota.mockResolvedValue({ allowed: 2, total: 300 });
+    mockPrisma.message.findUnique.mockResolvedValue({
+      subject: "Queued subject",
+      body: "Queued body",
+      groups: [],
+    } as never);
+    mockGetMemberDetails.mockResolvedValue([
+      { ownerid: 100001, ownername: "A", owneremail: "a@example.com", ownerphone: "" },
+      { ownerid: 100002, ownername: "B", owneremail: "b@example.com", ownerphone: "" },
+    ]);
+    mockSendGroupEmails.mockResolvedValue({
+      sent: 2,
+      failed: 0,
+      suppressed: 0,
+      results: [
+        { memberId: 100001, status: "sent", externalId: "ext1" },
+        { memberId: 100002, status: "sent", externalId: "ext2" },
+      ],
+    });
+
+    const { processEmailQueue } = await import("@/services/message");
+    const result = await processEmailQueue();
+
+    expect(result).toEqual({ sent: 2, failed: 0, remaining: 0 });
+    expect(mockSendGroupEmails).toHaveBeenCalledTimes(1);
+    expect(mockPrisma.messageRecipient.updateMany).toHaveBeenCalled();
+  });
+
+  it("increments failedCount when some queued sends fail", async () => {
+    mockPrisma.messageRecipient.findMany.mockResolvedValue([
+      {
+        id: 1,
+        messageId: 10,
+        memberId: 100001,
+        channel: "email",
+        status: "queued",
+        sentAt: null,
+        externalId: null,
+        deliveredAt: null,
+        error: null,
+      },
+      {
+        id: 2,
+        messageId: 10,
+        memberId: 100002,
+        channel: "email",
+        status: "queued",
+        sentAt: null,
+        externalId: null,
+        deliveredAt: null,
+        error: null,
+      },
+    ]);
+    mockReserveEmailQuota.mockResolvedValue({ allowed: 2, total: 300 });
+    mockPrisma.message.findUnique.mockResolvedValue({ subject: "S", body: "B", groups: [] } as never);
+    mockGetMemberDetails.mockResolvedValue([
+      { ownerid: 100001, ownername: "A", owneremail: "a@example.com", ownerphone: "" },
+      { ownerid: 100002, ownername: "B", owneremail: "b@example.com", ownerphone: "" },
+    ]);
+    mockSendGroupEmails.mockResolvedValue({
+      sent: 1,
+      failed: 1,
+      suppressed: 0,
+      results: [
+        { memberId: 100001, status: "sent", externalId: "ext1" },
+        { memberId: 100002, status: "failed", error: "boom" },
+      ],
+    });
+
+    const { processEmailQueue } = await import("@/services/message");
+    const result = await processEmailQueue();
+
+    expect(result).toEqual({ sent: 1, failed: 1, remaining: 0 });
+    expect(mockPrisma.message.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { failedCount: { increment: 1 } } }),
+    );
+  });
 });

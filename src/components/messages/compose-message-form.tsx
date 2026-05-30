@@ -71,7 +71,7 @@ export function ComposeMessageForm({
 
   const selectedGroups = groups.filter((g) => selectedGroupIds.has(g.id));
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
 

@@ -77,7 +77,7 @@ export function UserMenu({ userName, userRole, photoUrl }: UserMenuProps) {
           }}
         >
           <ExternalLink />
-          {isPending ? "Redirecting…" : "Back to Portal"}
+          {isPending ? "Redirecting..." : "Back to Portal"}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
