@@ -7,6 +7,7 @@ import { rateLimiter } from "@/lib/rate-limit";
 import { claimIdempotencyKey, setIdempotentResponse } from "@/lib/idempotency";
 import { validateOrigin } from "@/lib/csrf";
 import { requireAdmin } from "@/lib/dal";
+import { verifyReferralSignature } from "@/lib/referral-signature";
 import { apiErrorHandler, transformError, errorStatusMap } from "@/utils/errors";
 
 export async function POST(req: NextRequest) {
@@ -44,7 +45,14 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { memberName, memberEmail, referralCode, prospects } = ReferralFormSchema.parse(body);
+    const { memberName, memberEmail, referralCode, signature, prospects } = ReferralFormSchema.parse(body);
+
+    if (!verifyReferralSignature({ memberName, memberEmail, referralCode, signature })) {
+      return NextResponse.json(
+        { error: { code: "FORBIDDEN", message: "Invalid referral signature" } },
+        { status: 403 },
+      );
+    }
 
     const referrals = prospects.map((prospect) => ({
       memberName,

@@ -61,6 +61,7 @@ export const formWithTwoProspects = {
   memberName: memberCharlie.name,
   memberEmail: memberCharlie.email,
   referralCode: "REF001",
+  signature: "abcd1234",
   prospects: [
     { prospectName: prospectLucy.name, prospectEmail: prospectLucy.email },
     { prospectName: "Marcie Johnson", prospectEmail: "marcie.johnson@yahoo.com" },

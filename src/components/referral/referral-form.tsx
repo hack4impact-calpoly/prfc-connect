@@ -25,6 +25,7 @@ export function ReferralForm() {
   const referrerLastName = nameParts.slice(1).join(" ") || "";
   const referrerEmail = searchParams?.get("em") || "";
   const referralCode = searchParams?.get("ref") || "";
+  const signature = searchParams?.get("cs") || "";
 
   // Lazy initialization for yourEmail (gets cleared on success)
   const [yourEmail, setYourEmail] = useState(() => searchParams?.get("em") || "");
@@ -54,6 +55,7 @@ export function ReferralForm() {
         memberName: memberFullName.trim(),
         memberEmail: referrerEmail,
         referralCode,
+        signature,
         prospects: prospects.map((prospect) => ({
           prospectName: prospect.fullName.trim(),
           prospectEmail: prospect.email,

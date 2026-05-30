@@ -5,6 +5,10 @@ export const ReferralFormSchema = z.object({
   memberName: z.string().min(1).max(255),
   memberEmail: z.string().max(255).pipe(z.email()),
   referralCode: z.string().min(1).max(100),
+  signature: z
+    .string()
+    .length(8)
+    .regex(/^[0-9a-f]+$/i),
   prospects: z.array(ProspectSchema).min(1).max(5),
 });
 
