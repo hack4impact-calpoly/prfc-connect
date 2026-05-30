@@ -20,8 +20,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { Search } from "lucide-react";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import type { ApiReferral } from "@/schema/api";
 import { operatorFilter, fuzzyFilter, type FilterOperator, type ColumnFilterValue } from "./table-filters";
 import { toast } from "sonner";
@@ -234,36 +232,17 @@ export function ReferralDataGrid() {
   const isFiltered = columnFilters.length > 0;
 
   const exportToPDF = useCallback(() => {
-    const doc = new jsPDF();
-    const tableColumns = ["Date", "Member Name", "Member Email", "Prospect Name", "Prospect Email", "Code", "Redeemed"];
-    const tableRows = table
-      .getFilteredRowModel()
-      .rows.map((row) => [
-        formatDate(row.original.createdAt),
-        row.original.memberName,
-        row.original.memberEmail,
-        row.original.prospectName,
-        row.original.prospectEmail,
-        row.original.referralCode,
-        row.original.redeemed ? "Yes" : "No",
-      ]);
+    const ids = table.getFilteredRowModel().rows.map((row) => row.original.id);
 
-    doc.setFontSize(16);
-    doc.text("Paso Food Co-op Referral Database", doc.internal.pageSize.getWidth() / 2, 15, { align: "center" });
+    if (ids.length === 0) {
+      toast.error("No referrals to export");
+      return;
+    }
 
-    autoTable(doc, {
-      head: [tableColumns],
-      body: tableRows,
-      startY: 25,
-      styles: { fontSize: 10 },
-      headStyles: { fillColor: [131, 16, 2] },
-      alternateRowStyles: { fillColor: [237, 221, 204] },
-      margin: { left: 10, right: 10 },
-    });
-
-    doc.autoPrint();
-    window.open(doc.output("bloburl"), "_blank");
-  }, [table, formatDate]);
+    const anchor = document.createElement("a");
+    anchor.href = `/api/referrals/export?ids=${ids.join(",")}`;
+    anchor.click();
+  }, [table]);
 
   const handleFilterValueChange = useCallback(
     (value: string) => {
