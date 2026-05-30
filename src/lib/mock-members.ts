@@ -1,3 +1,4 @@
+import "server-only";
 import { faker } from "@faker-js/faker";
 
 export interface MockMember {

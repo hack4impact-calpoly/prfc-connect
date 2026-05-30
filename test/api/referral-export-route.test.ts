@@ -37,7 +37,7 @@ describe("GET /api/referrals/export", () => {
   });
 
   it("logs an audit line with ownerid and count before generating", async () => {
-    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const spy = vi.spyOn(console, "info").mockImplementation(() => {});
     mockRequireAdmin.mockResolvedValue({ ownerid: 100001, isAdmin: true });
 
     const req = createGetRequest("ids=1,2,3");

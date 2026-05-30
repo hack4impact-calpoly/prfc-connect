@@ -21,7 +21,6 @@ export const envSchema = z
       .string()
       .default("false")
       .transform((v) => v === "true"),
-    EMAIL_REDIRECT_TO: z.email().optional(),
 
     SMS_ENABLED: z
       .string()
@@ -66,6 +65,22 @@ export const envSchema = z
           message: "UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are required in production",
         });
       }
+    }
+
+    if (parsed.EMAIL_ENABLED && (!parsed.BREVO_API_KEY || !parsed.FROM_EMAIL)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["BREVO_API_KEY"],
+        message: "BREVO_API_KEY and FROM_EMAIL are required when EMAIL_ENABLED is true",
+      });
+    }
+
+    if (parsed.SMS_ENABLED && (!parsed.TWILIO_ACCOUNT_SID || !parsed.TWILIO_AUTH_TOKEN || !parsed.TWILIO_FROM_NUMBER)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["TWILIO_ACCOUNT_SID"],
+        message: "TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_FROM_NUMBER are required when SMS_ENABLED is true",
+      });
     }
   });
 

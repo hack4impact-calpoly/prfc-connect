@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
       await sendReferralEmails({ prospects, referralCode, memberName });
     }
 
-    console.error("[AUDIT] createReferrals", referralCode, newReferrals.length);
+    console.info("[AUDIT] createReferrals", referralCode, newReferrals.length);
 
     const responseBody = { message: "Referrals created successfully!", referrals: newReferrals };
 

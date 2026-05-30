@@ -41,6 +41,7 @@ import { validateToken, generateToken, getSecret, verifySession, getSession, AUT
 import { POST as callbackPOST } from "@/app/api/auth/callback/route";
 import { POST as logoutPOST } from "@/app/api/auth/logout/route";
 import { logout } from "@/actions/auth";
+import { getPortalLoginUrl } from "@/lib/portal";
 import { NextRequest } from "next/server";
 
 const mockRedirect = redirect as MockedFunction<typeof redirect>;
@@ -282,7 +283,7 @@ describe("POST /api/auth/callback", () => {
   });
 
   it("logs successful login with ownerid", async () => {
-    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const spy = vi.spyOn(console, "info").mockImplementation(() => {});
     const token = generateToken(100001, true);
     const formData = new FormData();
     formData.set("token", token);
@@ -299,7 +300,7 @@ describe("POST /api/auth/callback", () => {
   });
 
   it("logs failed login for invalid token", async () => {
-    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
     const formData = new FormData();
     formData.set("token", "invalid|token|data|badhash!");
 
@@ -315,7 +316,7 @@ describe("POST /api/auth/callback", () => {
   });
 
   it("logs failed login for missing token", async () => {
-    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
     const formData = new FormData();
 
     const request = new NextRequest("http://localhost:3000/api/auth/callback", {
@@ -334,6 +335,7 @@ describe("POST /api/auth/logout", () => {
   it("clears session cookie", async () => {
     const request = new NextRequest("http://localhost:3000/api/auth/logout", {
       method: "POST",
+      headers: { "sec-fetch-site": "same-origin" },
     });
 
     const response = await logoutPOST(request);
@@ -341,6 +343,17 @@ describe("POST /api/auth/logout", () => {
 
     expect(response.status).toBe(307);
     expect(setCookies.some((c) => c.includes(AUTH_COOKIE) && c.includes("Expires=Thu, 01 Jan 1970"))).toBe(true);
+  });
+
+  it("rejects a cross-site request", async () => {
+    const request = new NextRequest("http://localhost:3000/api/auth/logout", {
+      method: "POST",
+      headers: { "sec-fetch-site": "cross-site" },
+    });
+
+    const response = await logoutPOST(request);
+
+    expect(response.status).toBe(403);
   });
 });
 
@@ -353,7 +366,7 @@ describe("logout server action", () => {
     await logout().catch(() => {});
 
     expect(mockCookieStore.delete).toHaveBeenCalledWith(AUTH_COOKIE);
-    expect(mockRedirect).toHaveBeenCalledWith("/dev/mock-portal");
+    expect(mockRedirect).toHaveBeenCalledWith(getPortalLoginUrl());
   });
 
   it("does not call revalidatePath to avoid error boundary on expired session", async () => {

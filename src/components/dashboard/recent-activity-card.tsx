@@ -1,11 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { ActivityItem } from "@/types/dashboard";
 
 interface RecentActivityCardProps {
-  activities: Array<{
-    type: "message_sent" | "event_created";
-    title: string;
-    timestamp: Date;
-  }>;
+  activities: ActivityItem[];
 }
 
 export function RecentActivityCard({ activities }: RecentActivityCardProps) {

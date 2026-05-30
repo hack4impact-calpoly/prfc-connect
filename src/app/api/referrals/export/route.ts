@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
     const idSet = new Set(ids);
     const exportedAt = new Date();
 
-    console.error("[AUDIT] referral_pdf_export", session.ownerid, ids.length);
+    console.info("[AUDIT] referral_pdf_export", session.ownerid, ids.length);
 
     const allReferrals = await getAllReferrals();
     const found = allReferrals.filter((referral) => idSet.has(referral.id));

@@ -1,5 +1,10 @@
 import { test as setup, expect } from "@playwright/test";
 
+// Disabled: the mock-portal dev login was removed for production hardening, so
+// these setups can no longer mint a session cookie. Re-enable once the real
+// member-portal login flow can issue a prfc_auth cookie this setup can capture.
+setup.skip(() => true, "mock-portal removed; pending real portal login flow");
+
 const ADMIN_AUTH_FILE = "playwright/.auth/admin.json";
 const MEMBER_AUTH_FILE = "playwright/.auth/member.json";
 

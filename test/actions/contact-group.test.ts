@@ -139,7 +139,7 @@ describe("createContactGroup", () => {
   });
 
   it("logs audit event on successful group creation", async () => {
-    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const spy = vi.spyOn(console, "info").mockImplementation(() => {});
     mockVerifySession.mockResolvedValue({ ownerid: 10, isAdmin: false });
     mockCreateGroup.mockResolvedValue({
       id: 55,
@@ -242,7 +242,7 @@ describe("deleteContactGroup", () => {
   });
 
   it("logs access denial with ownerid and resource", async () => {
-    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
     mockVerifySession.mockResolvedValue({ ownerid: 10, isAdmin: false });
     mockIsGroupOwner.mockResolvedValue(false);
 

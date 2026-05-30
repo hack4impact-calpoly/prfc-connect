@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
@@ -7,7 +8,8 @@ export const metadata: Metadata = {
   description: "Paso Robles Food Co-op Connect",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  await connection();
   return (
     <html lang="en">
       <body>

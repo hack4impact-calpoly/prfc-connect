@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useState } from "react";
+import { createContext, useContext, useState } from "react";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
@@ -12,20 +12,16 @@ interface TopBarSearchContextValue {
 const TopBarSearchContext = createContext<TopBarSearchContextValue | null>(null);
 
 export function TopBarSearchProvider({ children }: { children: ReactNode }) {
-  const [query, setQueryState] = useState("");
+  const [query, setQuery] = useState("");
   const pathname = usePathname();
   const [prevPathname, setPrevPathname] = useState(pathname);
 
   if (pathname !== prevPathname) {
     setPrevPathname(pathname);
     if (query !== "") {
-      setQueryState("");
+      setQuery("");
     }
   }
-
-  const setQuery = useCallback((q: string) => {
-    setQueryState(q);
-  }, []);
 
   return <TopBarSearchContext.Provider value={{ query, setQuery }}>{children}</TopBarSearchContext.Provider>;
 }

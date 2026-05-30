@@ -173,7 +173,6 @@ export function GroupsContent({ myGroups, allGroups, isAdmin, ownerId, members }
         onOpenChange={(open) => {
           if (!open) handleDeleteCancel();
         }}
-        groupName={modal.type === "delete" ? modal.group.name : ""}
         onConfirm={handleConfirmDelete}
         isDeleting={modal.type === "delete" && isPending}
       />

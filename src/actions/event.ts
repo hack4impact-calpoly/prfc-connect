@@ -57,7 +57,7 @@ export async function createEventAction(input: {
       await inviteMembers(event.id, memberIds);
     }
 
-    console.error("[AUDIT] createEvent", session.ownerid, event.id);
+    console.info("[AUDIT] createEvent", session.ownerid, event.id);
     revalidatePath("/events");
     revalidatePath("/home");
     return { success: true, data: { id: event.id } };
@@ -73,7 +73,7 @@ export async function updateEventAction(eventId: number, input: Record<string, u
     const validatedId = EventIdSchema.parse(eventId);
 
     if (!session.isAdmin && !(await isEventOwner(validatedId, session.ownerid))) {
-      console.error("[ACCESS_DENIED] updateEvent", session.ownerid, validatedId);
+      console.warn("[ACCESS_DENIED] updateEvent", session.ownerid, validatedId);
       return { success: false, error: "You do not have permission to edit this event" };
     }
 
@@ -104,13 +104,13 @@ export async function deleteEventAction(eventId: number): Promise<ActionResult> 
     const validatedId = EventIdSchema.parse(eventId);
 
     if (!session.isAdmin && !(await isEventOwner(validatedId, session.ownerid))) {
-      console.error("[ACCESS_DENIED] deleteEvent", session.ownerid, validatedId);
+      console.warn("[ACCESS_DENIED] deleteEvent", session.ownerid, validatedId);
       return { success: false, error: "You do not have permission to delete this event" };
     }
 
     await deleteEvent(validatedId);
 
-    console.error("[AUDIT] deleteEvent", session.ownerid, validatedId);
+    console.info("[AUDIT] deleteEvent", session.ownerid, validatedId);
     revalidatePath("/events");
     revalidatePath("/home");
     return { success: true };

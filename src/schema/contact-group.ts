@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const ContactGroupSchema = z.object({
+const ContactGroupSchema = z.object({
   id: z.number().int().positive(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
@@ -64,7 +64,6 @@ export const BlastMessageSchema = BaseMessageSchema.extend({
   confirmationText: z.literal("SEND TO ALL"),
 });
 
-export type ContactGroup = z.infer<typeof ContactGroupSchema>;
 export type CreateContactGroup = z.infer<typeof CreateContactGroupSchema>;
 export type UpdateContactGroup = z.infer<typeof UpdateContactGroupSchema>;
 export type GroupMember = z.infer<typeof GroupMemberSchema>;

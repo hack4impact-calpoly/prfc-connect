@@ -14,7 +14,6 @@ import { Button } from "@/components/ui/button";
 interface DeleteGroupModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  groupName: string;
   onConfirm: () => void;
   isDeleting?: boolean;
 }

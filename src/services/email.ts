@@ -19,13 +19,6 @@ export function validateEmailAllowed(): void {
   }
 }
 
-function applyRedirect(to: string, subject: string): { to: string; subject: string } {
-  if (env.EMAIL_REDIRECT_TO) {
-    return { to: env.EMAIL_REDIRECT_TO, subject: `[TEST to: ${to}] ${subject}` };
-  }
-  return { to, subject };
-}
-
 export async function getDailyEmailCount(): Promise<number> {
   const todayStart = new Date();
   todayStart.setUTCHours(0, 0, 0, 0);
@@ -65,8 +58,7 @@ export async function sendReferralEmails({
         continue;
       }
 
-      const originalSubject = "You've Been Invited!";
-      const { to, subject } = applyRedirect(prospect.prospectEmail, originalSubject);
+      const subject = "You've Been Invited!";
       const unsubscribeToken = generateEmailUnsubscribeToken(prospect.prospectEmail);
       const unsubscribeUrl = `${env.APP_URL}/api/unsubscribe?token=${unsubscribeToken}`;
 
@@ -75,7 +67,7 @@ export async function sendReferralEmails({
 
       await sendBrevoEmail({
         sender: { name: "Paso Robles Food Co-op", email: env.FROM_EMAIL ?? "noreply@example.com" },
-        to: [{ email: to }],
+        to: [{ email: prospect.prospectEmail }],
         subject,
         htmlContent: generateReferralEmailHtml(prospect.prospectName, memberName, referralCode, unsubscribeUrl),
         textContent,
@@ -241,13 +233,11 @@ export async function sendGroupEmails(
 
         const textContent = `${plainBody}\n\n---\nPaso Robles Food Cooperative, Inc.\nP.O. Box 922, Paso Robles, CA 93447\nUnsubscribe: ${unsubscribeUrl}`;
 
-        const { to, subject: redirectedSubject } = applyRedirect(recipient.email, subject);
-
         const result = await sendBrevoEmail({
           sender: { name: senderName, email: env.FROM_EMAIL ?? "" },
-          to: [{ email: to }],
+          to: [{ email: recipient.email }],
           replyTo: { email: replyTo },
-          subject: redirectedSubject,
+          subject,
           htmlContent,
           textContent,
           headers: {

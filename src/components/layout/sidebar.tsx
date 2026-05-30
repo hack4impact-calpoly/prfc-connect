@@ -76,18 +76,22 @@ function NavItem({
   );
 }
 
-interface SidebarProps {
-  isAdmin?: boolean;
-}
-
-export function Sidebar({ isAdmin = false }: SidebarProps) {
-  const pathname = usePathname();
-  const { collapsed, width, mobileOpen, setMobileOpen } = useSidebar();
-  const [isPending, startTransition] = useTransition();
-
-  const closeMobile = () => setMobileOpen(false);
-
-  const navContent = (
+function NavSections({
+  isAdmin,
+  pathname,
+  collapsed,
+  isPending,
+  onNavigate,
+  onLogout,
+}: {
+  isAdmin: boolean;
+  pathname: string;
+  collapsed: boolean;
+  isPending: boolean;
+  onNavigate?: () => void;
+  onLogout: () => void;
+}) {
+  return (
     <>
       <nav aria-label="Main navigation" className="flex-1 overflow-y-auto px-2 py-2">
         <ul role="list" className="flex flex-col gap-1">
@@ -96,16 +100,16 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
               key={item.href}
               item={item}
               active={isItemActive(pathname, item.href)}
-              collapsed={false}
-              onClick={closeMobile}
+              collapsed={collapsed}
+              onClick={onNavigate}
             />
           ))}
           {isAdmin && (
             <NavItem
               item={{ label: "Referral Database", href: "/referral-database", icon: Table2 }}
               active={isItemActive(pathname, "/referral-database")}
-              collapsed={false}
-              onClick={closeMobile}
+              collapsed={collapsed}
+              onClick={onNavigate}
             />
           )}
         </ul>
@@ -118,26 +122,37 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
               key={item.href}
               item={item}
               active={isItemActive(pathname, item.href)}
-              collapsed={false}
-              onClick={closeMobile}
+              collapsed={collapsed}
+              onClick={onNavigate}
             />
           ))}
         </ul>
         <button
           type="button"
           disabled={isPending}
-          onClick={() => {
-            closeMobile();
-            startTransition(() => logout());
-          }}
+          onClick={onLogout}
+          title={collapsed ? "Back to Portal" : undefined}
           className="mt-2 flex h-11 w-full items-center gap-3 overflow-hidden rounded-md px-4 py-3 text-base text-muted-foreground hover:bg-prfc-brown/[0.08]"
         >
           <ExternalLink className="h-5 w-5 shrink-0" />
-          <span>{isPending ? "Redirecting..." : "Back to Portal"}</span>
+          {!collapsed && <span>{isPending ? "Redirecting..." : "Back to Portal"}</span>}
         </button>
       </div>
     </>
   );
+}
+
+interface SidebarProps {
+  isAdmin?: boolean;
+}
+
+export function Sidebar({ isAdmin = false }: SidebarProps) {
+  const pathname = usePathname();
+  const { collapsed, width, mobileOpen, setMobileOpen } = useSidebar();
+  const [isPending, startTransition] = useTransition();
+
+  const closeMobile = () => setMobileOpen(false);
+  const handleLogout = () => startTransition(() => logout());
 
   return (
     <>
@@ -145,38 +160,13 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
         style={{ width }}
         className="fixed left-0 top-[var(--header-height)] z-30 hidden h-[calc(100vh-var(--header-height))] border-r border-border bg-paso-grey transition-[width] duration-200 ease-in-out md:flex md:flex-col"
       >
-        <nav aria-label="Main navigation" className="flex-1 overflow-y-auto px-2 py-2">
-          <ul role="list" className="flex flex-col gap-1">
-            {SIDEBAR_ITEMS.map((item) => (
-              <NavItem key={item.href} item={item} active={isItemActive(pathname, item.href)} collapsed={collapsed} />
-            ))}
-            {isAdmin && (
-              <NavItem
-                item={{ label: "Referral Database", href: "/referral-database", icon: Table2 }}
-                active={isItemActive(pathname, "/referral-database")}
-                collapsed={collapsed}
-              />
-            )}
-          </ul>
-        </nav>
-
-        <div className="px-2 py-2">
-          <ul role="list" className="flex flex-col gap-1">
-            {SIDEBAR_UTILITY.map((item) => (
-              <NavItem key={item.href} item={item} active={isItemActive(pathname, item.href)} collapsed={collapsed} />
-            ))}
-          </ul>
-          <button
-            type="button"
-            disabled={isPending}
-            onClick={() => startTransition(() => logout())}
-            title={collapsed ? "Back to Portal" : undefined}
-            className="mt-2 flex h-11 w-full items-center gap-3 overflow-hidden rounded-md px-4 py-3 text-base text-muted-foreground hover:bg-prfc-brown/[0.08]"
-          >
-            <ExternalLink className="h-5 w-5 shrink-0" />
-            {!collapsed && <span>{isPending ? "Redirecting..." : "Back to Portal"}</span>}
-          </button>
-        </div>
+        <NavSections
+          isAdmin={isAdmin}
+          pathname={pathname}
+          collapsed={collapsed}
+          isPending={isPending}
+          onLogout={handleLogout}
+        />
       </aside>
 
       {mobileOpen && (
@@ -200,7 +190,17 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            {navContent}
+            <NavSections
+              isAdmin={isAdmin}
+              pathname={pathname}
+              collapsed={false}
+              isPending={isPending}
+              onNavigate={closeMobile}
+              onLogout={() => {
+                closeMobile();
+                handleLogout();
+              }}
+            />
           </aside>
         </>
       )}

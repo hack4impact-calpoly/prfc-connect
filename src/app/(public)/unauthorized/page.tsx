@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getPortalLoginUrl } from "@/utils/portal";
+import { getPortalLoginUrl } from "@/lib/portal";
 
 export const metadata: Metadata = {
   title: "Sign In Required | PRFC Connect",
