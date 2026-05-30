@@ -1,3 +1,5 @@
+import "server-only";
+
 import { env } from "@/env";
 
 const FALLBACK_PRODUCTION = "https://pasofoodcooperative.coop/accounts/";
