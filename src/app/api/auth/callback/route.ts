@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 import { AUTH_COOKIE, validateToken, getSecret } from "@/lib/dal";
 import { authRateLimiter } from "@/lib/rate-limit";
-
-const AuthCallbackSchema = z.object({
-  token: z.string().min(1),
-});
+import { AuthCallbackSchema } from "@/schema/auth";
 
 export async function POST(req: NextRequest) {
   const rawIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "127.0.0.1";
