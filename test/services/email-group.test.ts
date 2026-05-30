@@ -110,7 +110,8 @@ describe("sendGroupEmails", () => {
       const html = String(fields.htmlContent ?? "");
       expect(html).toContain("Paso Robles Food Cooperative, Inc.");
       expect(html).toContain("P.O. Box 922, Paso Robles, CA 93447");
-      expect(html).toMatch(/<a href="[^"]*\/api\/unsubscribe\?token=[^"]*"[^>]*>Unsubscribe<\/a>/);
+      expect(html).toMatch(/<a href="[^"]*\/unsubscribe\?token=[^"]*"[^>]*>Unsubscribe<\/a>/);
+      expect(html).not.toContain("/api/unsubscribe");
     }
   });
 

@@ -60,7 +60,8 @@ export async function sendReferralEmails({
 
       const subject = "You've Been Invited!";
       const unsubscribeToken = generateEmailUnsubscribeToken(prospect.prospectEmail);
-      const unsubscribeUrl = `${env.APP_URL}/api/unsubscribe?token=${unsubscribeToken}`;
+      const unsubscribeUrl = `${env.APP_URL}/unsubscribe?token=${unsubscribeToken}`;
+      const unsubscribeApiUrl = `${env.APP_URL}/api/unsubscribe?token=${unsubscribeToken}`;
 
       const joinUrl = `https://www.pasofoodcooperative.com/join-now1.html?enterReferral=${referralCode}`;
       const textContent = `Hi ${prospect.prospectName},\n\n${memberName} thinks you'd be a great fit for the Paso Robles Food Co-op. We are a member-owned grocery cooperative in Paso Robles, and each new member gets a vote in how we run the store.\n\nMembers shop at the Co-op, attend monthly meetings on the 4th Wednesday at 6 pm, and help choose which local farms and producers we carry. Annual membership is $25.\n\nUse referral code ${referralCode} when you register: ${joinUrl}\n\nQuestions? Reach us at info@pasofoodcooperative.com or visit pasofoodcooperative.com.\n\n---\nThis email was sent on behalf of a Co-op member who thought you might be interested.\nPaso Robles Food Cooperative, Inc. P.O. Box 922, Paso Robles, CA 93447\nUnsubscribe: ${unsubscribeUrl}`;
@@ -72,7 +73,7 @@ export async function sendReferralEmails({
         htmlContent: generateReferralEmailHtml(prospect.prospectName, memberName, referralCode, unsubscribeUrl),
         textContent,
         headers: {
-          "List-Unsubscribe": `<${unsubscribeUrl}>`,
+          "List-Unsubscribe": `<${unsubscribeApiUrl}>`,
           "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
         },
       });
@@ -223,7 +224,8 @@ export async function sendGroupEmails(
     const results = await Promise.allSettled(
       batch.map(async (recipient) => {
         const token = generateEmailUnsubscribeToken(recipient.email);
-        const unsubscribeUrl = `${env.APP_URL}/api/unsubscribe?token=${token}`;
+        const unsubscribeUrl = `${env.APP_URL}/unsubscribe?token=${token}`;
+        const unsubscribeApiUrl = `${env.APP_URL}/api/unsubscribe?token=${token}`;
 
         const footerHtml = `<strong>Paso Robles Food Cooperative, Inc.</strong><br>
             P.O. Box 922, Paso Robles, CA 93447<br>
@@ -241,7 +243,7 @@ export async function sendGroupEmails(
           htmlContent,
           textContent,
           headers: {
-            "List-Unsubscribe": `<${unsubscribeUrl}>`,
+            "List-Unsubscribe": `<${unsubscribeApiUrl}>`,
             "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
           },
         });

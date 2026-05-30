@@ -165,19 +165,19 @@ enum RsvpStatus {
 }
 
 model Event {
-  id           Int        @id @default(autoincrement())
-  createdAt    DateTime   @default(now()) @map("created_at")
-  updatedAt    DateTime   @updatedAt @map("updated_at")
-  title        String     @db.VarChar(200)
-  description  String?    @db.Text
-  location     String?    @db.VarChar(200)
-  startDate    DateTime   @map("start_date")
-  endDate      DateTime   @map("end_date")
-  isAllDay     Boolean    @default(false) @map("is_all_day")
-  rsvpDeadline DateTime?  @map("rsvp_deadline")
-  eventType    EventType  @map("event_type")
+  id           Int       @id @default(autoincrement())
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  title        String    @db.VarChar(200)
+  description  String?   @db.Text
+  location     String?   @db.VarChar(200)
+  startDate    DateTime  @map("start_date")
+  endDate      DateTime  @map("end_date")
+  isAllDay     Boolean   @default(false) @map("is_all_day")
+  rsvpDeadline DateTime? @map("rsvp_deadline")
+  eventType    EventType @map("event_type")
   ownerid      Int
-  groupId      Int?       @map("group_id")
+  groupId      Int?      @map("group_id")
 
   group    ContactGroup?  @relation(fields: [groupId], references: [id], onDelete: SetNull)
   rsvps    EventRsvp[]
@@ -219,14 +219,14 @@ model EventRsvp {
 }
 
 model UserPreference {
-  id                 Int      @id @default(autoincrement())
-  memberId           Int      @unique @map("member_id")
-  notifyEmailDefault Boolean  @default(true) @map("notify_email_default")
-  notifySmsDefault   Boolean  @default(false) @map("notify_sms_default")
-  photoUrl                String?   @map("photo_url") @db.VarChar(500)
+  id                     Int       @id @default(autoincrement())
+  memberId               Int       @unique @map("member_id")
+  notifyEmailDefault     Boolean   @default(true) @map("notify_email_default")
+  notifySmsDefault       Boolean   @default(false) @map("notify_sms_default")
+  photoUrl               String?   @map("photo_url") @db.VarChar(500)
   lastNotificationSeenAt DateTime? @map("last_notification_seen_at")
-  createdAt               DateTime  @default(now()) @map("created_at")
-  updatedAt          DateTime @updatedAt @map("updated_at")
+  createdAt              DateTime  @default(now()) @map("created_at")
+  updatedAt              DateTime  @updatedAt @map("updated_at")
 
   @@map("user_preference")
 }

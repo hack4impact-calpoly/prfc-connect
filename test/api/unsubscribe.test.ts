@@ -9,8 +9,33 @@ import {
   mockSuppressEmail,
   mockGetMemberById,
 } from "../mocks";
-import { POST } from "@/app/api/unsubscribe/route";
+import { GET, POST } from "@/app/api/unsubscribe/route";
 import { NextRequest } from "next/server";
+
+describe("GET /api/unsubscribe", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("redirects to the unsubscribe page preserving the token", () => {
+    const req = new NextRequest("http://localhost/api/unsubscribe?token=abc123", { method: "GET" });
+    const res = GET(req);
+
+    expect(res.status).toBe(302);
+    const location = res.headers.get("location");
+    expect(location).toContain("/unsubscribe");
+    expect(location).toContain("token=abc123");
+    expect(mockSuppressEmail).not.toHaveBeenCalled();
+  });
+
+  it("redirects to the unsubscribe page when no token is present", () => {
+    const req = new NextRequest("http://localhost/api/unsubscribe", { method: "GET" });
+    const res = GET(req);
+
+    expect(res.status).toBe(302);
+    expect(res.headers.get("location")).toContain("/unsubscribe");
+  });
+});
 
 describe("POST /api/unsubscribe", () => {
   beforeEach(() => {

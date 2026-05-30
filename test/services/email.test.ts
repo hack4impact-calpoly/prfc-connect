@@ -152,7 +152,8 @@ describe("sendReferralEmails", () => {
 
     const html = mockBrevoSend.mock.calls[0][0].htmlContent;
     expect(html).toContain("Unsubscribe");
-    expect(html).toContain("/api/unsubscribe?token=");
+    expect(html).toContain("/unsubscribe?token=");
+    expect(html).not.toContain("/api/unsubscribe");
   });
 
   it("includes List-Unsubscribe header", async () => {

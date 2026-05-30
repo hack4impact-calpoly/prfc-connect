@@ -14,6 +14,16 @@ function isEmailToken(token: string): boolean {
   }
 }
 
+export function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const token = searchParams.get("token");
+  const target = new URL("/unsubscribe", request.url);
+  if (token) {
+    target.searchParams.set("token", token);
+  }
+  return NextResponse.redirect(target, 302);
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
