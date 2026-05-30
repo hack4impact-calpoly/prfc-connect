@@ -13,6 +13,8 @@ const envSchema = z.object({
   // Shared secret for HMAC token validation with PRFC portal
   PRFC_PORTAL_SECRET: z.string().min(32).optional(),
 
+  PRFC_PORTAL_LOGIN_URL: z.url().optional(),
+
   // SMS feature flag (disabled by default)
   EMAIL_ENABLED: z
     .string()

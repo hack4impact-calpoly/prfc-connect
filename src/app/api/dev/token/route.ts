@@ -8,7 +8,7 @@ const DevTokenSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  if (process.env.NODE_ENV === "production" && process.env.USE_MOCK_MEMBER_API !== "true") {
+  if (process.env.NODE_ENV === "production") {
     return NextResponse.json({ error: "Not available" }, { status: 404 });
   }
 

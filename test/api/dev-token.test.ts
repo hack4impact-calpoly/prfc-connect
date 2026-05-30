@@ -33,7 +33,7 @@ describe("POST /api/dev/token", () => {
     expect(body.error).toBe("Not available");
   });
 
-  it("allows access in production when USE_MOCK_MEMBER_API is true (staging)", async () => {
+  it("returns 404 in production even when USE_MOCK_MEMBER_API is true", async () => {
     (process.env as Record<string, string | undefined>).NODE_ENV = "production";
     process.env.USE_MOCK_MEMBER_API = "true";
 
@@ -45,9 +45,9 @@ describe("POST /api/dev/token", () => {
 
     const res = await POST(req);
 
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(404);
     const body = await res.json();
-    expect(body.token).toBe("mock-token");
+    expect(body.error).toBe("Not available");
   });
 
   it("allows access in non-production environments", async () => {
