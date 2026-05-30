@@ -1,61 +1,73 @@
 import { z } from "zod";
 
-const envSchema = z.object({
-  DATABASE_URL: z.url(),
+export const envSchema = z
+  .object({
+    DATABASE_URL: z.url(),
 
-  BREVO_API_KEY: z.string().min(1).optional(),
-  FROM_EMAIL: z.email().optional(),
-  DAILY_EMAIL_LIMIT: z.coerce.number().int().positive().default(300),
+    BREVO_API_KEY: z.string().min(1).optional(),
+    FROM_EMAIL: z.email().optional(),
+    DAILY_EMAIL_LIMIT: z.coerce.number().int().positive().default(300),
 
-  UPSTASH_REDIS_REST_URL: z.url().optional(),
-  UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
+    UPSTASH_REDIS_REST_URL: z.url().optional(),
+    UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
 
-  // Shared secret for HMAC token validation with PRFC portal
-  PRFC_PORTAL_SECRET: z.string().min(32).optional(),
+    // Shared secret for HMAC token validation with PRFC portal
+    PRFC_PORTAL_SECRET: z.string().min(32).optional(),
 
-  PRFC_PORTAL_LOGIN_URL: z.url().optional(),
+    PRFC_PORTAL_LOGIN_URL: z.url().optional(),
 
-  // SMS feature flag (disabled by default)
-  EMAIL_ENABLED: z
-    .string()
-    .default("false")
-    .transform((v) => v === "true"),
-  EMAIL_REDIRECT_TO: z.email().optional(),
+    // SMS feature flag (disabled by default)
+    EMAIL_ENABLED: z
+      .string()
+      .default("false")
+      .transform((v) => v === "true"),
+    EMAIL_REDIRECT_TO: z.email().optional(),
 
-  SMS_ENABLED: z
-    .string()
-    .default("false")
-    .transform((v) => v === "true"),
+    SMS_ENABLED: z
+      .string()
+      .default("false")
+      .transform((v) => v === "true"),
 
-  TWILIO_ACCOUNT_SID: z.string().min(1).optional(),
-  TWILIO_AUTH_TOKEN: z.string().min(1).optional(),
-  TWILIO_FROM_NUMBER: z.string().min(1).optional(),
+    TWILIO_ACCOUNT_SID: z.string().min(1).optional(),
+    TWILIO_AUTH_TOKEN: z.string().min(1).optional(),
+    TWILIO_FROM_NUMBER: z.string().min(1).optional(),
 
-  // Member Portal API integration toggle
-  USE_MOCK_MEMBER_API: z
-    .string()
-    .default("true")
-    .transform((v) => v === "true"),
+    // Member Portal API integration toggle
+    USE_MOCK_MEMBER_API: z
+      .string()
+      .default("true")
+      .transform((v) => v === "true"),
 
-  // Unsubscribe token signing secret (256-bit minimum)
-  UNSUBSCRIBE_SECRET: z.string().min(32),
+    // Unsubscribe token signing secret (256-bit minimum)
+    UNSUBSCRIBE_SECRET: z.string().min(32),
 
-  FIELD_ENCRYPTION_KEY: z
-    .string()
-    .length(64)
-    .regex(/^[0-9a-f]+$/i),
-  BLIND_INDEX_KEY: z
-    .string()
-    .length(64)
-    .regex(/^[0-9a-f]+$/i),
+    FIELD_ENCRYPTION_KEY: z
+      .string()
+      .length(64)
+      .regex(/^[0-9a-f]+$/i),
+    BLIND_INDEX_KEY: z
+      .string()
+      .length(64)
+      .regex(/^[0-9a-f]+$/i),
 
-  // Application base URL for generating unsubscribe links
-  APP_URL: z.url().default("http://localhost:3000"),
+    // Application base URL for generating unsubscribe links
+    APP_URL: z.url().default("http://localhost:3000"),
 
-  CRON_SECRET: z.string().min(1).optional(),
+    CRON_SECRET: z.string().min(1).optional(),
 
-  NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
-});
+    NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+  })
+  .superRefine((parsed, ctx) => {
+    if (parsed.NODE_ENV === "production") {
+      if (!parsed.UPSTASH_REDIS_REST_URL || !parsed.UPSTASH_REDIS_REST_TOKEN) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["UPSTASH_REDIS_REST_URL"],
+          message: "UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are required in production",
+        });
+      }
+    }
+  });
 
 const skipValidation = process.env.CI === "true";
 
