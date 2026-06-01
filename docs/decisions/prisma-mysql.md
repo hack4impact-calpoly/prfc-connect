@@ -6,7 +6,7 @@
 
 The original referral system used MongoDB with Mongoose. We needed to rebuild the application with a database that would integrate with PRFC's existing infrastructure.
 
-The co-op's server uses MySQL with a `tblowner` table containing 376+ member records. Contact Groups will need to reference this data.
+The co-op's server uses MySQL with a `tblowner` table of member records, which Contact Groups reference for membership and messaging.
 
 ## Decision
 

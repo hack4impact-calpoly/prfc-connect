@@ -1,44 +1,36 @@
 flowchart TB
     User["<b>User</b><br/>(Member or Staff)"]
 
-    subgraph Auth["Authentication"]
-        Portal["<b>PRFC Member Portal</b><br/>[External Site]<br/><br/>Member authentication"]
-        MockPortal["<b>Mock Portal</b><br/>[/dev/mock-portal]<br/><br/>Development only"]
-    end
+    Portal["<b>PRFC Member Portal</b><br/>[External Site]<br/><br/>Member authentication"]
 
-    App["<b>PRFC Connect</b><br/>[Next.js App]<br/><br/>Handles referrals, contact groups,<br/>and admin dashboard"]
+    App["<b>PRFC Connect</b><br/>[Next.js App]<br/><br/>Referrals, contact groups,<br/>messaging, events, notifications"]
 
-    MySQL[("<b>MySQL</b><br/>[Database]<br/><br/>Stores referrals and<br/>contact groups")]
+    MySQL[("<b>MySQL</b><br/>[Database]<br/><br/>App tables: referrals, groups,<br/>messages, events")]
 
-    Redis["<b>Upstash Redis</b><br/>[Cache]<br/><br/>Rate limiting"]
+    Redis["<b>Upstash Redis</b><br/>[Cache]<br/><br/>Rate limiting, email quota,<br/>idempotency"]
 
-    Email["<b>Email Server</b><br/>[SMTP]<br/><br/>Sends emails"]
+    Brevo["<b>Brevo</b><br/>[Email API]<br/><br/>Sends email over REST"]
 
-    Twilio["<b>Twilio</b><br/>[SMS API]<br/><br/>Sends text messages"]
+    Twilio["<b>Twilio</b><br/>[SMS API]<br/><br/>Sends SMS (disabled at launch)"]
 
-    User -->|HTTPS| App
-    Portal -.->|Token Handoff| App
-    MockPortal -.->|Token Handoff| App
+    User -->|logs in| Portal
+    Portal -.->|token handoff| App
+    User -->|public referral form| App
     App -->|SQL| MySQL
     App -->|HTTPS| Redis
-    App -->|SMTP| Email
+    App -->|HTTPS| Brevo
     App -.->|SMS| Twilio
 
-    Email ~~~ Legend
+    Brevo ~~~ Legend
     Twilio ~~~ Legend
 
     subgraph Legend[" "]
         direction LR
         L1["Active"]
-        L2["Planned"]
-        L3["Dev Only"]
-        L1 ~~~ L2 ~~~ L3
+        L2["Not active yet"]
+        L1 ~~~ L2
     end
 
-    style Portal stroke-dasharray: 5 5
     style Twilio stroke-dasharray: 5 5
-    style Auth fill:#f9f9f9,stroke:#ccc
-    style MockPortal fill:#fff3cd,stroke:#856404
     style L2 stroke-dasharray: 5 5
-    style L3 fill:#fff3cd,stroke:#856404
     style Legend fill:none,stroke:#ccc

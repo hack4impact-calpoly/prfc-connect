@@ -20,13 +20,13 @@ npm install
 
 ### 2. Create a Branch
 
-Create a branch with a short, descriptive name.
+Create one branch per issue, using a conventional-commit prefix and a short kebab-case description.
 
 ```bash
-git checkout -b add-export-button
+git checkout -b feat/export-button
 ```
 
-Good branch names: `add-export-button`, `fix-email-validation`, `update-readme`
+Good branch names: `feat/export-button`, `fix/email-validation`, `docs/update-readme`
 
 Bad branch names: `john-branch`, `fix`, `test123`
 
@@ -73,7 +73,7 @@ git commit -m "feat: add PDF export button to referral table"
 Push your branch and open a pull request.
 
 ```bash
-git push -u origin add-export-button
+git push -u origin feat/export-button
 ```
 
 Go to GitHub, open a PR against `develop`, and fill out the template. Link your PR to the related issue by adding `Closes #123` in the description.
@@ -110,15 +110,11 @@ Always run checks locally before pushing to catch issues early.
 
 ## Security Notes
 
-GitHub Dependabot may flag vulnerabilities in dependencies. As of December 2025, known alerts are addressed:
+GitHub Dependabot and `npm audit` flag vulnerabilities in dependencies. They use different databases, so their alerts may differ. When either flags something, address it in a PR, usually a version bump. If a flag is a false positive for how we use the package, note the reasoning in the PR.
 
-| Package   | CVE                            | Status                                         |
-| --------- | ------------------------------ | ---------------------------------------------- |
-| `next`    | CVE-2025-55184, CVE-2025-55183 | Patched in 15.5.7+ (we use 15.5.9)             |
-| `glob`    | CVE-2025-64756                 | CLI-only vulnerability; library API unaffected |
-| `js-yaml` | CVE-2025-64718                 | Patched in 3.14.2+, 4.1.1+ (both in use)       |
-
-Run `npm audit` to check for new vulnerabilities. Dependabot and npm audit use different databases, so alerts may differ.
+```bash
+npm audit
+```
 
 ## Code Review
 

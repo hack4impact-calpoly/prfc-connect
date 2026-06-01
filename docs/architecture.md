@@ -1,176 +1,118 @@
 # Architecture
 
-PRFC Connect is a Next.js application that handles member referrals and will expand to support contact groups with email and SMS messaging.
+PRFC Connect is a Next.js application for the Paso Robles Food Co-op. It handles member referrals, contact groups, group and blast messaging, calendar events, and member notifications.
 
 ## System Diagram
 
 ![Architecture Diagram](figures/architecture.png)
 
+The diagram predates the contact-groups and messaging work and is due for a refresh.
+
 ## Tech Stack
 
-| Layer         | Technology     | Purpose                      |
-| ------------- | -------------- | ---------------------------- |
-| Framework     | Next.js 15     | App Router, server rendering |
-| UI            | React 19       | Components                   |
-| Language      | TypeScript     | Type safety                  |
-| Database      | MySQL + Prisma | Data storage and ORM         |
-| Styling       | Tailwind CSS   | Utility classes              |
-| Components    | shadcn/ui      | Pre-built UI primitives      |
-| Validation    | Zod            | Runtime type checking        |
-| Email         | Nodemailer     | SMTP delivery (Resend relay) |
-| Rate Limiting | Upstash Redis  | Request throttling           |
-
-**Planned Additions (Contact Groups):**
-
-| Layer           | Technology              | Purpose                    |
-| --------------- | ----------------------- | -------------------------- |
-| SMS             | Twilio                  | A2P 10DLC compliant SMS    |
-| List Rendering  | @tanstack/react-virtual | Handle 400+ member lists   |
-| Fuzzy Search    | fuse.js                 | Client-side member search  |
-| Email Templates | React Email             | Type-safe email components |
+| Layer         | Technology                            | Purpose                                    |
+| ------------- | ------------------------------------- | ------------------------------------------ |
+| Framework     | Next.js 16                            | App Router, server rendering               |
+| UI            | React 19                              | Components                                 |
+| Language      | TypeScript                            | Type safety                                |
+| Database      | MySQL + Prisma 7                      | Data storage and ORM                       |
+| Styling       | Tailwind CSS 3                        | Utility classes                            |
+| Components    | shadcn/ui                             | UI primitives over Radix                   |
+| Validation    | Zod                                   | Runtime type checking                      |
+| Email         | Brevo                                 | Transactional email over REST              |
+| SMS           | Twilio                                | A2P 10DLC SMS (disabled at launch)         |
+| Rate limiting | Upstash Redis                         | Throttling, daily email quota, idempotency |
+| Tables/lists  | @tanstack/react-table + react-virtual | Large referral and member tables           |
+| Search        | fuse.js                               | Client-side fuzzy search                   |
+| Calendar      | Schedule-X                            | Events week and month views                |
 
 ## Request Flow
 
 ![Request Flow](figures/request-flow.png)
 
+## Layers
+
+The code is organized in layers, each with one responsibility:
+
+- **Pages** (`src/app/`) - server components fetch data and pass it to client components.
+- **Actions** (`src/actions/`) - `"use server"` functions. They validate with Zod, call services, and return `ActionResult<T>`. Every action calls `verifySession()` first.
+- **Services** (`src/services/`) - `import "server-only"`. Database access through Prisma. Never imported by client code.
+- **Components** (`src/components/`) - UI. `"use client"` only when needed.
+- **Types** (`src/types/`) - shared interfaces that cross layers. Isomorphic, no runtime code.
+- **Schema** (`src/schema/`) - Zod schemas and their inferred types.
+- **Lib** (`src/lib/`) - server integrations: db, dal, encryption, csrf, rate-limit, idempotency, API clients.
+- **Utils** (`src/utils/`) - pure helpers and constants. Isomorphic.
+- **Hooks** (`src/hooks/`) - generic shared hooks.
+
 ## Key Patterns
 
 ### Server Actions for Mutations
 
-Form submissions use Server Actions instead of API routes. They're co-located with forms and handle validation, database writes, and redirects.
-
-```
-src/actions/referral.ts  -> handles form submission
-src/services/referral.ts -> business logic
-src/lib/db.ts            -> database connection
-```
+Group, message, event, and settings mutations use Server Actions, co-located with their features. A form calls an action, which validates with Zod, calls a service, and returns `{ success, error?, data? }`. See the [Server Actions ADR](decisions/server-actions.md).
 
 ### API Routes
 
-**Current:**
+API routes cover external integrations and reads, not the in-app group, message, and event mutations (those are server actions). Current routes:
 
-- `POST /api/referral` - External referral creation
-- `GET /api/referral` - Admin database access (requires admin session)
-- `POST /api/checksum` - Referral code validation
-
-**Upcoming (Contact Groups):**
-
-| Endpoint                   | Method         | Purpose                          |
-| -------------------------- | -------------- | -------------------------------- |
-| `/api/groups`              | GET/POST       | List/create groups               |
-| `/api/groups/[id]`         | GET/PUT/DELETE | Single group operations          |
-| `/api/groups/[id]/members` | GET/POST       | Manage group members             |
-| `/api/messages`            | POST           | Send message to group            |
-| `/api/unsubscribe/[token]` | GET/POST       | One-click email unsubscribe      |
-| `/api/webhooks/email`      | POST           | Resend bounce/complaint webhooks |
-| `/api/webhooks/sms`        | POST           | Twilio delivery status webhooks  |
+| Endpoint                            | Method         | Purpose                                            |
+| ----------------------------------- | -------------- | -------------------------------------------------- |
+| `/api/referrals`                    | POST / GET     | Create a referral (public form) / list (admin)     |
+| `/api/referrals/[id]`               | PATCH / DELETE | Update or delete a referral (admin)                |
+| `/api/referrals/export`             | GET            | Server-side PDF export (admin)                     |
+| `/api/members`, `/api/members/[id]` | GET            | Member lookups                                     |
+| `/api/auth/callback`                | POST           | Accept a signed portal token, set the auth cookie  |
+| `/api/auth/logout`                  | POST           | Clear the auth cookie                              |
+| `/api/cron/process-email-queue`     | GET            | Drain the email queue (Vercel cron, Bearer secret) |
+| `/api/sms/inbound`                  | POST           | Twilio inbound webhook (STOP handling)             |
+| `/api/unsubscribe`                  | GET / POST     | Email unsubscribe                                  |
+| `/api/checksum`                     | POST           | Referral code validation                           |
 
 ### Token Authentication
 
-Users authenticate through the PRFC member portal, which generates a signed token on click-through:
+Members authenticate through the PRFC member portal, which signs a token on click-through:
 
 ```
-ownerid|isAdmin|timestamp|hmac_signature
+ownerid|isAdmin|timestamp|signature
 ```
 
-- `ownerid`: Member ID from PRFC portal
-- `isAdmin`: `1` for admin, `0` for regular member
-- `timestamp`: Token creation time (60-minute expiry)
-- `hmac_signature`: 32-bit HMAC with shared secret
+- `ownerid` - member id from the portal
+- `isAdmin` - `1` for admin, `0` otherwise
+- `timestamp` - creation time (60-minute expiry)
+- `signature` - the first 8 hex characters of an HMAC-SHA256 (32-bit), with the shared secret
 
-The token arrives via POST to `/auth/callback`, gets validated, and stored in an httpOnly cookie.
+The token arrives via POST to `/api/auth/callback`, is validated, and is stored in an httpOnly cookie (`prfc_auth`). The public referral URL carries the same style of signature in a `cs` parameter, verified before any referral is accepted.
 
-During development, `/dev/mock-portal` simulates the PRFC portal login flow.
+### Routing and the Auth Boundary
 
-### Data Access Layer (DAL)
+Next.js 16 uses `src/proxy.ts`, not `middleware.ts`. The proxy checks for the auth cookie on protected paths and redirects when it is missing, which is a fast UX guard. The real security boundary is `verifySession()` in `src/lib/dal.ts`, which verifies the HMAC and expiry, and `requireAdmin()` gates admin-only features. See the [Auth Patterns ADR](decisions/auth-patterns.md).
 
-Auth validation happens in the DAL, not middleware. Middleware only checks cookie presence as an optimization.
+## Data Model
 
-```typescript
-// lib/dal.ts
-export const verifySession = cache(async () => {
-  const token = cookies().get("prfc_auth")?.value;
-  // Verify HMAC signature and expiry
-  return { ownerid, isAdmin };
-});
+The Prisma schema defines the app's tables. Referral PII and SMS/email PII are encrypted at the service layer with AES-256-GCM, alongside HMAC blind-index columns for lookup without decryption.
 
-export async function requireAdmin() {
-  const session = await verifySession();
-  if (!session.isAdmin) throw new AppError("FORBIDDEN", "...");
-  return session;
-}
-```
+| Model                                         | Purpose                                                         |
+| --------------------------------------------- | --------------------------------------------------------------- |
+| `Referral`                                    | Public referral submissions (encrypted PII)                     |
+| `ContactGroup`, `ContactGroupMember`          | Groups and membership with per-group notification preferences   |
+| `Message`, `MessageGroup`, `MessageRecipient` | Message history and per-recipient delivery status               |
+| `Event`, `EventInvitee`, `EventRsvp`          | Calendar events, invitations, and RSVPs                         |
+| `SmsConsent`                                  | TCPA consent records (encrypted phone, blind index)             |
+| `EmailSuppression`                            | Bounces, complaints, and unsubscribes (global suppression)      |
+| `UserPreference`                              | Per-member notification defaults, photo, notification watermark |
 
-Defense-in-depth: middleware redirects help UX, but the DAL is the true security boundary.
+Member identity (name, email, phone) lives in the co-op's MySQL `tblowner` table and is read through the member-portal API, not stored here. In local development it is backed by a 389-row mock in `src/lib/mock-members.ts`.
 
-## Directory Structure
+**Compliance:**
 
-```
-src/
-├── app/               # Pages and API routes
-│   ├── (public)/      # Public routes
-│   ├── (protected)/   # Auth-required routes
-│   └── api/           # API endpoints
-├── actions/           # Server Actions
-├── components/        # React components
-│   └── ui/            # shadcn/ui primitives
-├── hooks/             # Custom React hooks
-├── lib/               # Core utilities
-│   ├── db.ts          # Prisma client
-│   ├── dal.ts         # Data Access Layer (session validation)
-│   ├── csrf.ts        # CSRF protection
-│   ├── idempotency.ts # Duplicate request prevention
-│   ├── rate-limit.ts  # Request throttling
-│   └── utils.ts       # Tailwind class merging
-├── schema/            # Zod validation schemas
-├── services/          # Business logic
-└── utils/             # Helper functions
-```
-
-## Database
-
-### Current: Referral
-
-```prisma
-model Referral {
-  id            Int      @id @default(autoincrement())
-  memberName    String
-  memberEmail   String
-  prospectName  String
-  prospectEmail String
-  referralCode  String
-  redeemed      Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-}
-```
-
-### Upcoming: Contact Groups
-
-Six models will be added for Contact Groups with email/SMS messaging:
-
-| Model                | Purpose                                          |
-| -------------------- | ------------------------------------------------ |
-| `ContactGroup`       | Group metadata (name, description, owner)        |
-| `ContactGroupMember` | Membership with notification preferences         |
-| `SmsConsent`         | TCPA-required consent records (5-year retention) |
-| `EmailSuppression`   | Hard bounces, complaints, unsubscribes           |
-| `Message`            | Message history with delivery counts             |
-| `MessageRecipient`   | Per-recipient delivery status tracking           |
-
-**Compliance Requirements:**
-
-- **SMS (TCPA + A2P 10DLC):** Double opt-in, quiet hours (8 AM - 9 PM), 5-year consent retention
-- **Email (CAN-SPAM):** One-click unsubscribe, physical address required
-- **Retention:** Messages 3 years, consent 5 years, members duration + 3 years
+- SMS (TCPA + A2P 10DLC): explicit consent with timestamp, method, and text; quiet hours 8 AM to 9 PM; consent retention.
+- Email (CAN-SPAM): one-click unsubscribe, a physical mailing address, and honored opt-outs.
 
 ## Security
 
-- **Rate limiting** via Upstash Redis on all endpoints
-- **CSRF protection** for state-changing requests
-- **Idempotency keys** prevent duplicate submissions
-- **Zod validation** on all inputs
-- **Security headers** set in `next.config.ts` (CSP, HSTS, X-Frame-Options)
+- Field-level AES-256-GCM encryption for referral, SMS-consent, and email-suppression PII, with HMAC blind indexes.
+- Nonce-based CSP and security headers set in `src/proxy.ts`.
+- Rate limiting, idempotency keys, and a daily email quota through Upstash Redis (required in production).
+- Origin checks and `verifySession()` on state-changing routes and actions.
 
 ## Related Docs
 

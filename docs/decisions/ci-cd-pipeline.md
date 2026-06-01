@@ -4,15 +4,15 @@
 
 ## Context
 
-The project needed automated checks to catch issues before code reaches the main branch. With 10-12 student developers, manual verification doesn't scale.
+The project needed automated checks to catch issues before code reaches the shared branches (`develop` and `main`). With 10-12 student developers, manual verification doesn't scale.
 
 ## Decision
 
-Use GitHub Actions with this pipeline order:
+Use GitHub Actions. After installing dependencies, applying migrations (`prisma migrate deploy`), and generating the Prisma client, run the checks in order:
 
 1. **Lint** - ESLint catches style and syntax issues
 2. **Type check** - TypeScript catches type errors
-3. **Build** - Verifies production build works
+3. **Build** - verifies the production build works
 4. **Test** - Vitest runs unit and integration tests
 
 Checks run on every push and pull request. Cheap checks run first so failures are caught quickly.

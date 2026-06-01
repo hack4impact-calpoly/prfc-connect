@@ -2,7 +2,6 @@
 
 - [Getting Started](getting-started.md) - Local development setup
 - [Contributing](contributing.md) - Development workflow and PR process
-- [First Exercise](first-exercise.md) - Onboarding task for new developers
 - [Architecture](architecture.md) - System overview and patterns
 - [Style Guide](style-guide.md) - Naming conventions and code patterns
 

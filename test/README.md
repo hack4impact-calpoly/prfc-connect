@@ -15,12 +15,14 @@ npm run test:e2e:ui   # Interactive Playwright UI
 
 ```
 test/
-├── mocks/        # Mock implementations
+├── mocks/        # Mock implementations and fixtures
 ├── actions/      # Server Action tests
 ├── api/          # API route tests
+├── auth/         # Auth and session tests
+├── components/   # React component tests (jsdom)
+├── lib/          # Library tests (encryption, dal, tokens, ...)
 ├── schema/       # Zod schema tests
 ├── services/     # Service layer tests
-├── team/         # Onboarding exercise tests
 └── utils/        # Utility function tests
 
 e2e/              # Playwright end-to-end tests
@@ -28,18 +30,17 @@ e2e/              # Playwright end-to-end tests
 
 ## Mocks
 
-Database and external services are mocked in `test/mocks/`:
+Database and external services are mocked in `test/mocks/`. The main ones:
 
-- `prisma.ts` - Database mock with DeepMockProxy
-- `email.ts` - Email service mock
-- `rate-limit.ts` - Rate limiter mock
-- `csrf.ts` - CSRF protection mock
-- `idempotency.ts` - Idempotency key mock
+- `prisma.ts` - Prisma client mock (vitest-mock-extended)
+- `dal.ts` - `verifySession` and `requireAdmin`
+- `email.ts` - email send mock
+- `rate-limit.ts`, `idempotency.ts`, `csrf.ts` - request-guard mocks
+- `encryption.ts` - identity encrypt/decrypt for deterministic tests
 - `request.ts` - NextRequest factory for API tests
-- `referrals.ts` - Test fixtures (Peanuts characters)
-- `index.ts` - Re-exports all mocks
+- `referrals.ts`, `members.ts`, `events.ts` - fixtures
 
-Import mocks at the top of test files:
+Most service and lib modules have a matching mock here. Import the specific ones a test needs:
 
 ```typescript
 import { prismaMock } from "../mocks/prisma";

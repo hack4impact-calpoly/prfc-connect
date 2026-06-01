@@ -1,15 +1,15 @@
-flowchart TD
+flowchart LR
     Browser["Browser"]
-    Middleware["Next.js Middleware<br/>(rate limiting, auth)"]
+    Proxy["src/proxy.ts<br/>(cookie-presence gate)"]
     Router["App Router<br/>(pages, layouts)"]
-    Actions["Server Actions / API Routes"]
-    Services["Services<br/>(business logic)"]
+    Handler["Server Actions / API Routes<br/>(verifySession via DAL)"]
+    Services["Services<br/>(business logic, server-only)"]
     Prisma["Prisma ORM"]
     MySQL[("MySQL")]
 
-    Browser --> Middleware
-    Middleware --> Router
-    Router --> Actions
-    Actions --> Services
+    Browser --> Proxy
+    Proxy --> Router
+    Router --> Handler
+    Handler --> Services
     Services --> Prisma
     Prisma --> MySQL

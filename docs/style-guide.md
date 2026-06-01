@@ -55,10 +55,10 @@ import { Button } from "@/components/ui/button"; // 4. Internal (@/)
 
 ## Types
 
-Infer types from Zod schemas. Don't create separate type files.
+Two sources, split by purpose. For anything validated at runtime, define a Zod schema in `schema/` and infer the type with `z.infer`. For plain interfaces that cross layers (services to actions to components) and carry no validation, put them in `types/`, which holds no runtime code.
 
 ```typescript
-// schema/referral.ts
+// schema/referral.ts - validated input, type inferred from the schema
 export const ReferralSchema = z.object({
   id: z.number(),
   memberName: z.string(),
@@ -66,6 +66,12 @@ export const ReferralSchema = z.object({
 });
 
 export type Referral = z.infer<typeof ReferralSchema>;
+
+// types/member.ts - shared shape, no validation
+export interface MemberSummary {
+  ownerid: number;
+  ownername: string;
+}
 ```
 
 ## Error Handling

@@ -74,20 +74,18 @@ This starts MySQL on port 3306 and Adminer (database UI) on port 8080.
 
 ### 5. Set Up Environment Variables
 
-Copy the example file and get secrets from a tech lead:
+Copy the example file:
 
 ```bash
 cp .env.local.example .env.local
 ```
 
-Required variables:
+The example fills in the database connection and feature flags for local dev. A few values are placeholders you must replace with real ones, or the app fails its startup validation:
 
-- `DATABASE_URL` - MySQL connection string
-- SMTP settings for email
+- `FIELD_ENCRYPTION_KEY`, `BLIND_INDEX_KEY` - 64-character hex keys. Generate each with `openssl rand -hex 32`.
+- `UNSUBSCRIBE_SECRET` - at least 32 characters. Generate with `openssl rand -base64 32`.
 
-Optional (for production):
-
-- `PRFC_PORTAL_SECRET` - Shared HMAC secret with PRFC portal (uses dev fallback locally)
+Email and SMS are off locally (`EMAIL_ENABLED=false`, `SMS_ENABLED=false`), and `USE_MOCK_MEMBER_API=true` uses the in-repo mock member list, so you do not need Brevo, Upstash, or portal credentials to run locally. `PRFC_PORTAL_SECRET` uses a dev fallback when unset.
 
 ### 6. Run Migrations
 
@@ -103,9 +101,9 @@ npx prisma migrate dev
 npm run dev
 ```
 
-Visit [http://localhost:3000](http://localhost:3000). You should see the referral form.
+Visit [http://localhost:3000](http://localhost:3000). You should see the public referral form.
 
-To access protected pages (like the referral database), use the mock portal at [http://localhost:3000/dev/mock-portal](http://localhost:3000/dev/mock-portal). This simulates the PRFC member portal login flow.
+**Logging in for protected pages is currently a gap.** The app gates protected pages (home, groups, events, messages) behind a signed portal token. The local mock-portal that used to mint dev tokens was removed during production hardening, and a replacement local-login flow is not wired up yet (the authenticated e2e suite is skipped for the same reason). Until that lands, you can run the public referral form locally, but reaching protected pages needs either a real portal token or a restored guarded dev-login. This is a known item for the next team.
 
 ## IDE Setup
 
@@ -151,10 +149,12 @@ prfc-connect/
 │   ├── actions/       # Server Actions
 │   ├── components/    # React components
 │   ├── hooks/         # Custom React hooks
-│   ├── lib/           # Utilities (db, dal, rate-limit)
+│   ├── lib/           # Server integrations (db, dal, rate-limit)
 │   ├── schema/        # Zod validation schemas
 │   ├── services/      # Business logic
-│   └── utils/         # Helper functions
+│   ├── types/         # Shared cross-layer interfaces
+│   ├── utils/         # Helper functions
+│   └── proxy.ts       # Cookie gate for protected paths
 └── test/              # Test files
 ```
 

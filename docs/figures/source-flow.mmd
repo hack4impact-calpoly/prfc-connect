@@ -1,11 +1,11 @@
 flowchart TD
     Page["Page<br/>(app/)"]
-    Action["Server Action<br/>(actions/)"]
-    Service["Service<br/>(services/)"]
+    Action["Server Action<br/>(actions/: verifySession + Zod)"]
+    Service["Service<br/>(services/: server-only)"]
     Prisma["Prisma<br/>(lib/db.ts)"]
     MySQL[("MySQL")]
 
     Page -->|calls| Action
-    Action -->|calls| Service
-    Service -->|calls| Prisma
+    Action -->|validates, then calls| Service
+    Service -->|queries| Prisma
     Prisma --> MySQL
