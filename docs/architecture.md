@@ -4,9 +4,7 @@ PRFC Connect is a Next.js application for the Paso Robles Food Co-op. It handles
 
 ## System Diagram
 
-<img src="figures/architecture.png" alt="Architecture diagram" width="600" />
-
-The diagram predates the contact-groups and messaging work and is due for a refresh.
+<img src="figures/architecture.png" alt="Architecture diagram" width="900" />
 
 ## Tech Stack
 
