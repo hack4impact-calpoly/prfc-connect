@@ -2,7 +2,9 @@
 
 <div align="center">
 
-<img src="public/assets/logo.png" alt="PRFC Connect" />
+<br />
+
+<img src="public/assets/logo-white.png" alt="PRFC Connect" />
 
 <br />
 <br />
