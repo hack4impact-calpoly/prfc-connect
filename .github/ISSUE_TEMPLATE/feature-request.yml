@@ -18,7 +18,7 @@ body:
       label: Documentation
       description: Links to relevant docs, examples, or references
       placeholder: |
-        - [React Select](https://react.dev/reference/react-dom/components/select)
+        - [TanStack Table](https://tanstack.com/table)
         - See `src/components/referral/data-table-toolbar.tsx` for existing filter pattern
     validations:
       required: false
