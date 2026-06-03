@@ -140,6 +140,14 @@ describe("validateToken", () => {
   });
 });
 
+function restoreEnv(key: string, value: string | undefined) {
+  if (value === undefined) {
+    delete process.env[key];
+  } else {
+    process.env[key] = value;
+  }
+}
+
 describe("getSecret", () => {
   it("throws in production when PRFC_PORTAL_SECRET is unset", () => {
     const originalSecret = process.env.PRFC_PORTAL_SECRET;
@@ -149,8 +157,8 @@ describe("getSecret", () => {
 
     expect(() => getSecret()).toThrow("PRFC_PORTAL_SECRET required in production");
 
-    process.env.PRFC_PORTAL_SECRET = originalSecret;
-    (process.env as Record<string, string | undefined>).NODE_ENV = originalNodeEnv;
+    restoreEnv("PRFC_PORTAL_SECRET", originalSecret);
+    restoreEnv("NODE_ENV", originalNodeEnv);
   });
 
   it("returns dev secret in non-production when PRFC_PORTAL_SECRET is unset", () => {
@@ -162,7 +170,7 @@ describe("getSecret", () => {
     expect(secret).toBeDefined();
     expect(secret.length).toBeGreaterThanOrEqual(32);
 
-    process.env.PRFC_PORTAL_SECRET = originalSecret;
+    restoreEnv("PRFC_PORTAL_SECRET", originalSecret);
   });
 });
 
