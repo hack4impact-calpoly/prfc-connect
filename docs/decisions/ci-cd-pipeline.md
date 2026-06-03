@@ -17,6 +17,8 @@ Use GitHub Actions. After installing dependencies, applying migrations (`prisma 
 
 Checks run on every push and pull request. Cheap checks run first so failures are caught quickly.
 
+CI applies migrations as its own step against the MySQL service container. The production build command (`npm run build`) runs only `prisma generate` and `next build`, since the production schema lives on the co-op's MariaDB server and is created by hand, not migrated by the deploy.
+
 ## Alternatives Considered
 
 - **Vercel CI only**: Handles preview deployments but doesn't run tests or type checking. Not enough.

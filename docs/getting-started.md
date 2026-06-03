@@ -103,7 +103,7 @@ npm run dev
 
 Visit [http://localhost:3000](http://localhost:3000). You should see the public referral form.
 
-**Logging in for protected pages is currently a gap.** The app gates protected pages (home, groups, events, messages) behind a signed portal token. The local mock-portal that used to mint dev tokens was removed during production hardening, and a replacement local-login flow is not wired up yet (the authenticated e2e suite is skipped for the same reason). Until that lands, you can run the public referral form locally, but reaching protected pages needs either a real portal token or a restored guarded dev-login. This is a known item for the next team.
+**Logging in for protected pages is currently a gap.** The app gates protected pages (home, groups, events, messages) behind a signed portal session. The local mock-portal that used to mint dev tokens was removed during production hardening, and a human-facing local-login flow is not wired up yet. The e2e suite works around this by minting the `prfc_auth` session cookie directly in `e2e/auth.setup.ts`, so the authenticated tests still run, but there is no dev UI for a person to log in. Until one lands, you can run the public referral form locally, while reaching protected pages in a browser needs either a real portal click-through or a manually set session cookie. This is a known item for the next team.
 
 ## IDE Setup
 

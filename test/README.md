@@ -50,4 +50,4 @@ import { prismaMock } from "../mocks/prisma";
 
 Mirror the `src/` structure. If you're testing `src/services/referral.ts`, create `test/services/referral.test.ts`.
 
-Server-side tests (services, API routes, actions) run in node environment automatically via `environmentMatchGlobs` in `vitest.config.mts`. Components use the default jsdom environment.
+Server-side tests run in the node environment and component tests run in jsdom. `vitest.config.mts` defines two Vitest projects: the `node` project includes `test/services`, `test/actions`, `test/api`, `test/auth`, `test/lib`, and `test/utils/errors.test.ts`, and the `jsdom` project covers the rest.

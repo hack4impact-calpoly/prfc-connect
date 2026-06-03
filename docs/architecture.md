@@ -63,11 +63,12 @@ API routes cover external integrations and reads, not the in-app group, message,
 | `/api/cron/process-email-queue`     | GET            | Drain the email queue (Vercel cron, Bearer secret) |
 | `/api/sms/inbound`                  | POST           | Twilio inbound webhook (STOP handling)             |
 | `/api/unsubscribe`                  | GET / POST     | Email unsubscribe                                  |
-| `/api/checksum`                     | POST           | Referral code validation                           |
 
 ### Token Authentication
 
-Members authenticate through the PRFC member portal, which signs a token on click-through:
+Login starts at the PRFC member portal. On click-through the portal hands a signed token to `POST /api/auth/callback`. The callback does not trust that token directly. It posts the token back to the portal's `validatetoken` endpoint, which returns the `ownerid`, the admin flag, and the seconds left. Validation is delegated to the portal, so this code never has to match the portal's exact token format, timezone, or signing.
+
+On a valid response the callback mints the app's own session cookie, `prfc_auth`:
 
 ```
 ownerid|isAdmin|timestamp|signature
@@ -75,10 +76,10 @@ ownerid|isAdmin|timestamp|signature
 
 - `ownerid` - member id from the portal
 - `isAdmin` - `1` for admin, `0` otherwise
-- `timestamp` - creation time (60-minute expiry)
-- `signature` - the first 8 hex characters of an HMAC-SHA256 (32-bit), with the shared secret
+- `timestamp` - mint time in epoch milliseconds (60-minute expiry)
+- `signature` - the first 8 hex characters of an HMAC-SHA256 over `ownerid|isAdmin|timestamp`, keyed with the shared `PRFC_PORTAL_SECRET`
 
-The token arrives via POST to `/api/auth/callback`, is validated, and is stored in an httpOnly cookie (`prfc_auth`). The public referral URL carries the same style of signature in a `cs` parameter, verified before any referral is accepted.
+Every later request validates this cookie in the DAL, so most requests need no portal round-trip. The callback also stores the raw portal token in a second cookie, `prfc_portal_token`, which the member-roster read (`listmembers`) sends back to the portal. The public referral URL carries the same 8-hex signature scheme in a `cs` parameter, over `name|email|code` with the same secret, verified before any referral is accepted.
 
 ### Routing and the Auth Boundary
 
@@ -102,7 +103,7 @@ Member identity (name, email, phone) lives in the co-op's MySQL `tblowner` table
 
 **Compliance:**
 
-- SMS (TCPA + A2P 10DLC): explicit consent with timestamp, method, and text; quiet hours 8 AM to 9 PM; consent retention.
+- SMS (TCPA + A2P 10DLC): explicit consent (timestamp, method, and text), quiet hours from 8 AM to 9 PM, and consent retention.
 - Email (CAN-SPAM): one-click unsubscribe, a physical mailing address, and honored opt-outs.
 
 ## Security

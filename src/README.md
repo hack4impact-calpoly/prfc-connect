@@ -13,7 +13,6 @@ src/
 │   ├── ui/           # shadcn/ui primitives
 │   ├── layout/       # Header, sidebar, navigation
 │   └── ...           # referral, groups, events, messages, dashboard, profile, settings
-├── config/           # Static config (navigation)
 ├── generated/        # Prisma client (auto-generated)
 ├── hooks/            # Generic shared React hooks
 ├── lib/              # Server integrations (db, dal, encryption, rate-limit, csrf, ...)
