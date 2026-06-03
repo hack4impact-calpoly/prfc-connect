@@ -1,6 +1,6 @@
-import type { MockMember } from "@/lib/mock-members";
+import type { Member } from "@/types/member";
 
-export const memberKermit: MockMember = {
+export const memberKermit: Member = {
   ownerid: 100001,
   ownername: "Kermit Komm",
   owneremail: "kermit@coop.org",
@@ -8,7 +8,7 @@ export const memberKermit: MockMember = {
   owneraltphone: "805-555-5678",
 };
 
-export const memberAngelica: MockMember = {
+export const memberAngelica: Member = {
   ownerid: 100003,
   ownername: "Angelica Allison",
   owneremail: "angelica@email.com",

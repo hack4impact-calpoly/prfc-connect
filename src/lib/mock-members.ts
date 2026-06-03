@@ -1,13 +1,6 @@
 import "server-only";
 import { faker } from "@faker-js/faker";
-
-export interface MockMember {
-  ownerid: number;
-  ownername: string;
-  owneremail: string;
-  ownerphone: string;
-  owneraltphone?: string;
-}
+import type { Member } from "@/types/member";
 
 const SEED = 12345;
 const START_ID = 100001;
@@ -17,7 +10,7 @@ const EMAIL_PROVIDERS = ["gmail.com", "yahoo.com", "outlook.com", "icloud.com", 
 faker.seed(SEED);
 faker.setDefaultRefDate("2025-12-01T00:00:00.000Z");
 
-function generateMember(ownerid: number): MockMember {
+function generateMember(ownerid: number): Member {
   const firstName = faker.person.firstName();
   const lastName = faker.person.lastName();
   const fullName = `${firstName} ${lastName}`;
@@ -43,7 +36,7 @@ function generateMember(ownerid: number): MockMember {
   };
 }
 
-export const mockMembers: readonly MockMember[] = Array.from({ length: MEMBER_COUNT }, (_, i) =>
+export const mockMembers: readonly Member[] = Array.from({ length: MEMBER_COUNT }, (_, i) =>
   generateMember(START_ID + i),
 );
 
@@ -53,7 +46,7 @@ export const mockAdmin1 = mockMembers[0];
 
 export const mockAdmin2 = mockMembers[1];
 
-export function findMemberById(ownerid: number): MockMember | undefined {
+export function findMemberById(ownerid: number): Member | undefined {
   return mockMembers.find((m) => m.ownerid === ownerid);
 }
 

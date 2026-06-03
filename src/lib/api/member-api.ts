@@ -2,16 +2,15 @@ import "server-only";
 import { env } from "@/env";
 import { AppError } from "@/utils/errors";
 import { fetchListMembers, fetchMemberContacts, getPortalToken } from "@/lib/api/portal-api";
-import type { MockMember } from "@/lib/mock-members";
-import type { MemberSummary } from "@/types/member";
+import type { Member, MemberSummary } from "@/types/member";
 export type { MemberSummary } from "@/types/member";
 
-async function getMockMemberDetails(memberIds: number[]): Promise<MockMember[]> {
+async function getMockMemberDetails(memberIds: number[]): Promise<Member[]> {
   const { findMemberById } = await import("@/lib/mock-members");
-  return memberIds.map((id) => findMemberById(id)).filter((m): m is MockMember => m !== undefined);
+  return memberIds.map((id) => findMemberById(id)).filter((m): m is Member => m !== undefined);
 }
 
-async function getRealMemberDetails(memberIds: number[]): Promise<MockMember[]> {
+async function getRealMemberDetails(memberIds: number[]): Promise<Member[]> {
   return fetchMemberContacts(memberIds);
 }
 
@@ -38,17 +37,17 @@ async function getRealAllMembers(): Promise<MemberSummary[]> {
   return fetchListMembers(token);
 }
 
-async function getMockMemberById(id: number): Promise<MockMember | null> {
+async function getMockMemberById(id: number): Promise<Member | null> {
   const { findMemberById } = await import("@/lib/mock-members");
   return findMemberById(id) ?? null;
 }
 
-async function getRealMemberById(id: number): Promise<MockMember | null> {
+async function getRealMemberById(id: number): Promise<Member | null> {
   const members = await fetchMemberContacts([id]);
   return members[0] ?? null;
 }
 
-export async function getMemberDetails(memberIds: number[]): Promise<MockMember[]> {
+export async function getMemberDetails(memberIds: number[]): Promise<Member[]> {
   if (env.USE_MOCK_MEMBER_API) {
     return getMockMemberDetails(memberIds);
   }
@@ -69,7 +68,7 @@ export async function getAllMembers(): Promise<MemberSummary[]> {
   return getRealAllMembers();
 }
 
-export async function getMemberById(id: number): Promise<MockMember | null> {
+export async function getMemberById(id: number): Promise<Member | null> {
   if (env.USE_MOCK_MEMBER_API) {
     return getMockMemberById(id);
   }

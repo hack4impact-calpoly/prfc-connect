@@ -9,7 +9,7 @@ import { sendGroupSms, validateSmsAllowed } from "@/services/sms";
 import { getConsentedPhones } from "@/services/sms-consent";
 import { getMemberDetails, getAllActiveMemberIds } from "@/lib/api/member-api";
 import type { ComposeMessage, BlastMessage } from "@/schema/contact-group";
-import type { MockMember } from "@/lib/mock-members";
+import type { Member } from "@/types/member";
 import type {
   MessageResult,
   MessageSummary,
@@ -68,7 +68,7 @@ export { isQuietHours, validateSmsAllowed } from "@/services/sms";
 
 async function sendEmailsForMessage(
   messageId: number,
-  recipients: MockMember[],
+  recipients: Member[],
   subject: string,
   body: string,
 ): Promise<{ sent: number; failed: number }> {

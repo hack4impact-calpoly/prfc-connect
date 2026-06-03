@@ -8,8 +8,7 @@ import {
   ValidateTokenResponseSchema,
 } from "@/schema/member-portal";
 import type { Session } from "@/lib/dal";
-import type { MemberSummary } from "@/types/member";
-import type { MockMember } from "@/lib/mock-members";
+import type { Member, MemberSummary } from "@/types/member";
 
 export const PORTAL_TOKEN_COOKIE = "prfc_portal_token";
 
@@ -85,7 +84,7 @@ export async function fetchListMembers(token: string): Promise<MemberSummary[]> 
   return data.map((m) => ({ ownerid: Number(m.ownerid), ownername: m.ownername }));
 }
 
-export async function fetchMemberContacts(ownerids: number[]): Promise<MockMember[]> {
+export async function fetchMemberContacts(ownerids: number[]): Promise<Member[]> {
   if (ownerids.length === 0) return [];
 
   const raw = await postForm("getmembercontacts", {
