@@ -24,7 +24,10 @@ export default async function ProtectedLayout({ children }: { children: React.Re
   const [unseenCount, lastSeenAt, photoUrl] = await Promise.all([
     getUnseenNotificationCount(session.ownerid),
     getLastNotificationSeenAt(session.ownerid),
-    getProfilePhotoUrl(session.ownerid).catch(() => null),
+    getProfilePhotoUrl(session.ownerid).catch((error) => {
+      console.warn("[PROFILE_PHOTO] failed to load", error instanceof Error ? error.message : error);
+      return null;
+    }),
   ]);
 
   return (

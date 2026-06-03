@@ -60,14 +60,19 @@ export async function validatePortalToken(token: string): Promise<Session | null
   let raw: string;
   try {
     raw = await postForm("validatetoken", { token });
-  } catch {
+  } catch (error) {
+    console.warn("[PORTAL] validatetoken request failed", error instanceof Error ? error.message : error);
     return null;
   }
 
   let parsed;
   try {
     parsed = ValidateTokenResponseSchema.safeParse(extractObject(raw));
-  } catch {
+  } catch (error) {
+    console.warn(
+      "[PORTAL] validatetoken returned an unparseable response",
+      error instanceof Error ? error.message : error,
+    );
     return null;
   }
   if (!parsed.success) return null;
