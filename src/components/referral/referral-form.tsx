@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Plus } from "lucide-react";
@@ -36,8 +36,11 @@ export function ReferralForm() {
   // Idempotency key persists across retries, regenerated only on success
   const idempotencyKeyRef = useRef<string>(crypto.randomUUID());
 
-  const handleSubmit = async (event: React.SyntheticEvent) => {
+  const [isPending, startTransition] = useTransition();
+
+  const handleSubmit = (event: React.SyntheticEvent) => {
     event.preventDefault();
+    if (isPending) return;
     setErrorMessage("");
 
     for (let i = 0; i < prospects.length; i++) {
@@ -50,39 +53,41 @@ export function ReferralForm() {
 
     const memberFullName = `${referrerFirstName} ${referrerLastName}`;
 
-    try {
-      const referralData = {
-        memberName: memberFullName.trim(),
-        memberEmail: referrerEmail,
-        referralCode,
-        signature,
-        prospects: prospects.map((prospect) => ({
-          prospectName: prospect.fullName.trim(),
-          prospectEmail: prospect.email,
-        })),
-      };
+    startTransition(async () => {
+      try {
+        const referralData = {
+          memberName: memberFullName.trim(),
+          memberEmail: referrerEmail,
+          referralCode,
+          signature,
+          prospects: prospects.map((prospect) => ({
+            prospectName: prospect.fullName.trim(),
+            prospectEmail: prospect.email,
+          })),
+        };
 
-      const response = await fetch("/api/referrals", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Idempotency-Key": idempotencyKeyRef.current,
-        },
-        body: JSON.stringify(referralData),
-      });
+        const response = await fetch("/api/referrals", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Idempotency-Key": idempotencyKeyRef.current,
+          },
+          body: JSON.stringify(referralData),
+        });
 
-      if (response.ok) {
-        setProspects([{ email: "", fullName: "" }]);
-        setYourEmail("");
-        setShowConfirmation(true);
-        idempotencyKeyRef.current = crypto.randomUUID();
-      } else {
-        const errorBody = await response.json();
-        setErrorMessage(errorBody.error?.message || "Failed to submit the form. Please try again!");
+        if (response.ok) {
+          setProspects([{ email: "", fullName: "" }]);
+          setYourEmail("");
+          setShowConfirmation(true);
+          idempotencyKeyRef.current = crypto.randomUUID();
+        } else {
+          const errorBody = await response.json();
+          setErrorMessage(errorBody.error?.message || "Failed to submit the form. Please try again!");
+        }
+      } catch {
+        setErrorMessage("An error occurred while submitting the form.");
       }
-    } catch {
-      setErrorMessage("An error occurred while submitting the form.");
-    }
+    });
   };
 
   const handleProspectChange = (index: number, field: "email" | "fullName", value: string) => {
@@ -185,9 +190,17 @@ export function ReferralForm() {
           ))}
         </div>
 
-        <Button type="submit" className="self-end px-6 py-2 bg-prfc-red text-white rounded-lg hover:bg-prfc-red/90">
-          Invite
+        <Button
+          type="submit"
+          aria-disabled={isPending}
+          className="self-end px-6 py-2 bg-prfc-red text-white rounded-lg hover:bg-prfc-red/90 aria-disabled:opacity-60 aria-disabled:cursor-not-allowed aria-disabled:hover:bg-prfc-red"
+        >
+          {isPending ? "Sending..." : "Invite"}
         </Button>
+
+        <p aria-live="polite" className="sr-only">
+          {isPending ? "Sending your referral, please wait." : ""}
+        </p>
 
         {errorMessage && <p className="text-red-500 font-bold self-end -mt-6">{errorMessage}</p>}
 
