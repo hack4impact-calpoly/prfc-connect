@@ -32,11 +32,7 @@
     "db:deploy": "prisma migrate deploy",
     "db:status": "prisma migrate status",
     "db:studio": "prisma studio",
-    "db:reset": "prisma migrate reset",
-    "db:seed": "tsx --env-file=.env.local prisma/seed.ts"
-  },
-  "prisma": {
-    "seed": "tsx --env-file=.env.local prisma/seed.ts"
+    "db:reset": "prisma migrate reset"
   },
   "dependencies": {
     "@prisma/adapter-mariadb": "^7.0.1",

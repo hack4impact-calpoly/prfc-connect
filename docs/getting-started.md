@@ -132,7 +132,6 @@ Enable format on save:
 
 - `npm run docker:up` - Start MySQL container
 - `npm run docker:down` - Stop MySQL container
-- `npm run db:seed` - Populate test data
 - `npx prisma studio` - Open database GUI
 - `npx prisma migrate dev` - Run migrations
 
