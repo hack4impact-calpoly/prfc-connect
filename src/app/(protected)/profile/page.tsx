@@ -12,7 +12,10 @@ export default async function ProfilePage() {
   const session = await getSessionWithName();
   const [profile, photoUrl] = await Promise.all([
     getMemberProfile(session.ownerid, session.isAdmin),
-    getProfilePhotoUrl(session.ownerid).catch(() => null),
+    getProfilePhotoUrl(session.ownerid).catch((error) => {
+      console.warn("[PROFILE_PHOTO] failed to load", error instanceof Error ? error.message : error);
+      return null;
+    }),
   ]);
 
   return (
