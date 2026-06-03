@@ -1,4 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
+import { E2E_PORTAL_SECRET, E2E_PORTAL_LOGIN_URL } from "./e2e/auth-constants";
 
 export default defineConfig({
   testDir: "./e2e",
@@ -14,17 +15,11 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   projects: [
-    // Authenticated e2e is disabled. The mock-portal dev login was removed for
-    // production hardening, so there is no local way to mint a session cookie.
-    // Only the unauthenticated specs (home.spec.ts) run. Re-enable the `setup`
-    // project and the storageState projects below once the real member-portal
-    // login flow can issue a prfc_auth cookie that auth.setup.ts can capture.
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
       testMatch: /home\.spec\.ts/,
     },
-    /*
     { name: "setup", testMatch: /.*\.setup\.ts/ },
     {
       name: "groups-admin",
@@ -80,12 +75,15 @@ export default defineConfig({
       testMatch: /user-menu|sidebar|navigation|search/,
       dependencies: ["setup"],
     },
-    */
   ],
   webServer: {
     command: "npm run dev",
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
+    env: {
+      PRFC_PORTAL_SECRET: E2E_PORTAL_SECRET,
+      PRFC_PORTAL_LOGIN_URL: E2E_PORTAL_LOGIN_URL,
+    },
   },
 });

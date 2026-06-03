@@ -66,13 +66,13 @@ test.describe("User menu dropdown", () => {
 });
 
 test.describe("Logout flow", () => {
-  test("Sign out redirects to /dev/mock-portal", async ({ page }) => {
+  test("Sign out redirects to the portal login", async ({ page }) => {
     await page.goto("/home");
 
     await openUserMenu(page);
     await page.getByRole("menuitem", { name: "Sign out" }).click();
 
-    await expect(page).toHaveURL("/dev/mock-portal");
+    await expect(page).toHaveURL(/unauthorized/);
   });
 
   test("protected page inaccessible after sign out", async ({ page }) => {
@@ -80,7 +80,7 @@ test.describe("Logout flow", () => {
 
     await openUserMenu(page);
     await page.getByRole("menuitem", { name: "Sign out" }).click();
-    await expect(page).toHaveURL("/dev/mock-portal");
+    await expect(page).toHaveURL(/unauthorized/);
 
     const response = await page.goto("/home");
     const url = page.url();
