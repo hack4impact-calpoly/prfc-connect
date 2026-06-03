@@ -29,6 +29,18 @@ vi.mock("@/lib/rate-limit", () => ({
   authRateLimiter: { limit: mockAuthLimit },
 }));
 
+const { mockValidatePortalToken } = vi.hoisted(() => ({
+  mockValidatePortalToken: vi.fn(),
+}));
+
+vi.mock("@/lib/api/portal-api", () => ({
+  PORTAL_TOKEN_COOKIE: "prfc_portal_token",
+  validatePortalToken: mockValidatePortalToken,
+  getPortalToken: vi.fn(),
+  fetchListMembers: vi.fn(),
+  fetchMemberContacts: vi.fn(),
+}));
+
 // Make React cache() a passthrough so tests get fresh results
 vi.mock("react", async () => {
   const actual = await vi.importActual("react");
@@ -155,10 +167,16 @@ describe("getSecret", () => {
 });
 
 describe("POST /api/auth/callback", () => {
-  it("sets auth cookie for valid token", async () => {
-    const token = generateToken(100001, true);
+  beforeEach(() => {
+    mockValidatePortalToken.mockReset();
+    mockValidatePortalToken.mockResolvedValue(null);
+  });
+
+  it("mints our session cookie and stores the portal token for a valid token", async () => {
+    mockValidatePortalToken.mockResolvedValueOnce({ ownerid: 100001, isAdmin: true });
+    const portalToken = "portal-base64-token";
     const formData = new FormData();
-    formData.set("token", token);
+    formData.set("token", portalToken);
 
     const request = new NextRequest("http://localhost:3000/api/auth/callback", {
       method: "POST",
@@ -167,15 +185,17 @@ describe("POST /api/auth/callback", () => {
 
     const response = await callbackPOST(request);
     const cookie = response.cookies.get(AUTH_COOKIE);
+    const portalCookie = response.cookies.get("prfc_portal_token");
 
     expect(response.status).toBe(307);
     expect(cookie).toBeDefined();
-    expect(cookie!.value).toBe(token);
+    expect(validateToken(cookie!.value, getSecret())).toEqual({ ownerid: 100001, isAdmin: true });
     expect(cookie!.httpOnly).toBe(true);
     expect(cookie!.sameSite).toBe("lax");
     expect(cookie!.path).toBe("/");
     expect(cookie!.secure).toBe(process.env.NODE_ENV === "production");
     expect(cookie!.maxAge).toBe(3600);
+    expect(portalCookie?.value).toBe(portalToken);
   });
 
   it("redirects without cookie for invalid token", async () => {
@@ -283,10 +303,10 @@ describe("POST /api/auth/callback", () => {
   });
 
   it("logs successful login with ownerid", async () => {
+    mockValidatePortalToken.mockResolvedValueOnce({ ownerid: 100001, isAdmin: true });
     const spy = vi.spyOn(console, "info").mockImplementation(() => {});
-    const token = generateToken(100001, true);
     const formData = new FormData();
-    formData.set("token", token);
+    formData.set("token", "portal-base64-token");
 
     const request = new NextRequest("http://localhost:3000/api/auth/callback", {
       method: "POST",

@@ -16,6 +16,10 @@ export const envSchema = z
 
     PRFC_PORTAL_LOGIN_URL: z.url().optional(),
 
+    // Member Portal API: the PHP actions endpoint and the service secret for getmembercontacts
+    PRFC_PORTAL_API_URL: z.url().optional(),
+    MEMBER_API_SECRET: z.string().min(1).optional(),
+
     // SMS feature flag (disabled by default)
     EMAIL_ENABLED: z
       .string()
@@ -65,6 +69,14 @@ export const envSchema = z
           message: "UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are required in production",
         });
       }
+    }
+
+    if (!parsed.USE_MOCK_MEMBER_API && (!parsed.PRFC_PORTAL_API_URL || !parsed.MEMBER_API_SECRET)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["PRFC_PORTAL_API_URL"],
+        message: "PRFC_PORTAL_API_URL and MEMBER_API_SECRET are required when USE_MOCK_MEMBER_API is false",
+      });
     }
 
     if (parsed.EMAIL_ENABLED && (!parsed.BREVO_API_KEY || !parsed.FROM_EMAIL)) {

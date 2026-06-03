@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { AUTH_COOKIE, validateToken, getSecret } from "@/lib/dal";
+import { AUTH_COOKIE, generateToken, getSecret } from "@/lib/dal";
+import { PORTAL_TOKEN_COOKIE, validatePortalToken } from "@/lib/api/portal-api";
 import { authRateLimiter } from "@/lib/rate-limit";
 import { AuthCallbackSchema } from "@/schema/auth";
 
@@ -15,9 +16,8 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  let secret: string;
   try {
-    secret = getSecret();
+    getSecret();
   } catch {
     return NextResponse.redirect(new URL("/home", req.url));
   }
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
 
   const { token } = parsed.data;
 
-  const session = validateToken(token, secret);
+  const session = await validatePortalToken(token);
   if (!session) {
     console.warn("[AUTH_CALLBACK] invalid or expired token", ip);
     return NextResponse.redirect(new URL("/home", req.url));
@@ -41,14 +41,16 @@ export async function POST(req: NextRequest) {
   console.info("[AUTH_CALLBACK] login success", session.ownerid, ip);
 
   const response = NextResponse.redirect(new URL("/home", req.url));
-
-  response.cookies.set(AUTH_COOKIE, token, {
+  const cookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: "lax" as const,
     maxAge: 3600,
     path: "/",
-  });
+  };
+
+  response.cookies.set(AUTH_COOKIE, generateToken(session.ownerid, session.isAdmin), cookieOptions);
+  response.cookies.set(PORTAL_TOKEN_COOKIE, token, cookieOptions);
 
   return response;
 }

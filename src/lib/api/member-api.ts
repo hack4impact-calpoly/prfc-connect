@@ -1,6 +1,7 @@
 import "server-only";
 import { env } from "@/env";
 import { AppError } from "@/utils/errors";
+import { fetchListMembers, fetchMemberContacts, getPortalToken } from "@/lib/api/portal-api";
 import type { MockMember } from "@/lib/mock-members";
 import type { MemberSummary } from "@/types/member";
 export type { MemberSummary } from "@/types/member";
@@ -10,8 +11,8 @@ async function getMockMemberDetails(memberIds: number[]): Promise<MockMember[]> 
   return memberIds.map((id) => findMemberById(id)).filter((m): m is MockMember => m !== undefined);
 }
 
-async function getRealMemberDetails(_memberIds: number[]): Promise<MockMember[]> {
-  throw new AppError("INTERNAL_ERROR", "Service temporarily unavailable");
+async function getRealMemberDetails(memberIds: number[]): Promise<MockMember[]> {
+  return fetchMemberContacts(memberIds);
 }
 
 async function getMockAllActiveMemberIds(): Promise<number[]> {
@@ -20,7 +21,10 @@ async function getMockAllActiveMemberIds(): Promise<number[]> {
 }
 
 async function getRealAllActiveMemberIds(): Promise<number[]> {
-  throw new AppError("INTERNAL_ERROR", "Service temporarily unavailable");
+  const token = await getPortalToken();
+  if (!token) throw new AppError("UNAUTHORIZED", "Member portal session required");
+  const members = await fetchListMembers(token);
+  return members.map((m) => m.ownerid);
 }
 
 async function getMockAllMembers(): Promise<MemberSummary[]> {
@@ -29,7 +33,9 @@ async function getMockAllMembers(): Promise<MemberSummary[]> {
 }
 
 async function getRealAllMembers(): Promise<MemberSummary[]> {
-  throw new AppError("INTERNAL_ERROR", "Service temporarily unavailable");
+  const token = await getPortalToken();
+  if (!token) throw new AppError("UNAUTHORIZED", "Member portal session required");
+  return fetchListMembers(token);
 }
 
 async function getMockMemberById(id: number): Promise<MockMember | null> {
@@ -37,8 +43,9 @@ async function getMockMemberById(id: number): Promise<MockMember | null> {
   return findMemberById(id) ?? null;
 }
 
-async function getRealMemberById(_id: number): Promise<MockMember | null> {
-  throw new AppError("INTERNAL_ERROR", "Service temporarily unavailable");
+async function getRealMemberById(id: number): Promise<MockMember | null> {
+  const members = await fetchMemberContacts([id]);
+  return members[0] ?? null;
 }
 
 export async function getMemberDetails(memberIds: number[]): Promise<MockMember[]> {
