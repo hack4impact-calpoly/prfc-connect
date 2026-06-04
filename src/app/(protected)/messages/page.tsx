@@ -5,7 +5,7 @@ import { env } from "@/env";
 import { MessagesContent } from "./messages-content";
 
 export const metadata: Metadata = {
-  title: "Messages | PRFC Connect",
+  title: "Messages | PRFC Outreach",
 };
 
 export default async function MessagesPage() {

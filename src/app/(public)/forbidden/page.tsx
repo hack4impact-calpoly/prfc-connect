@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "No Permission | PRFC Connect",
+  title: "No Permission | PRFC Outreach",
 };
 
 export default function ForbiddenPage() {

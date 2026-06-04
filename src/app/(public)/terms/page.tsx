@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Terms and Conditions | PRFC Connect",
+  title: "Terms and Conditions | PRFC Outreach",
 };
 
 export default function TermsPage() {
@@ -13,7 +13,7 @@ export default function TermsPage() {
       <div className="mt-8 space-y-6 text-base leading-relaxed text-foreground">
         <h2 className="font-semibold text-lg text-prfc-brown">Program</h2>
         <p>
-          Paso Robles Food Cooperative, Inc. ("the Co-op") sends SMS notifications to members through PRFC Connect, an
+          Paso Robles Food Cooperative, Inc. ("the Co-op") sends SMS notifications to members through PRFC Outreach, an
           internal communication tool. Messages include event reminders, group messages, and operational notifications.
         </p>
 
@@ -28,9 +28,9 @@ export default function TermsPage() {
 
         <h2 className="font-semibold text-lg text-prfc-brown">Opt-in</h2>
         <p>
-          Members opt in to SMS notifications by toggling the SMS preference in their PRFC Connect account settings. The
-          opt-in screen displays the following disclosure before consent is recorded: "Up to 8 msgs/month. Msg & data
-          rates may apply. Reply STOP to cancel."
+          Members opt in to SMS notifications by toggling the SMS preference in their PRFC Outreach account settings.
+          The opt-in screen displays the following disclosure before consent is recorded: "Up to 8 msgs/month. Msg &
+          data rates may apply. Reply STOP to cancel."
         </p>
 
         <h2 className="font-semibold text-lg text-prfc-brown">Opt-out</h2>

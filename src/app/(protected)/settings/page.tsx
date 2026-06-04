@@ -7,7 +7,7 @@ import { env } from "@/env";
 import { SettingsContent } from "./settings-content";
 
 export const metadata: Metadata = {
-  title: "Settings | PRFC Connect",
+  title: "Settings | PRFC Outreach",
 };
 
 export default async function SettingsPage() {

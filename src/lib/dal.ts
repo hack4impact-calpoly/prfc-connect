@@ -7,7 +7,7 @@ import { getMemberById } from "@/lib/api/member-api";
 
 export const AUTH_COOKIE = "prfc_auth";
 const TOKEN_EXPIRY_MS = 3600000;
-const DEV_SECRET = "dev-only-prfc-connect-hmac-secret-32ch";
+const DEV_SECRET = "dev-only-prfc-outreach-hmac-secret-32ch";
 
 export function getSecret(): string {
   const secret = process.env.PRFC_PORTAL_SECRET;

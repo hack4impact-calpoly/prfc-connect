@@ -5,7 +5,7 @@ export const activeConsentKermit: SmsConsentRecord = {
   memberId: 100001,
   consentedAt: new Date("2026-01-15T10:00:00Z"),
   consentMethod: "web_form",
-  consentText: "I agree to receive SMS messages from PRFC Connect",
+  consentText: "I agree to receive SMS messages from PRFC Outreach",
   consentPurpose: "group_notifications",
   revokedAt: null,
   revokeMethod: null,

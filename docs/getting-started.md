@@ -1,6 +1,6 @@
 # Getting Started
 
-This guide walks you through setting up PRFC Connect for local development.
+This guide walks you through setting up PRFC Outreach for local development.
 
 ## Prerequisites
 
@@ -37,8 +37,8 @@ eval "$(fnm env --use-on-cd)"
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/hack4impact-calpoly/prfc-connect.git
-cd prfc-connect
+git clone https://github.com/hack4impact-calpoly/prfc-outreach.git
+cd prfc-outreach
 ```
 
 ### 2. Install Node.js
@@ -138,7 +138,7 @@ Enable format on save:
 ## Project Structure
 
 ```
-prfc-connect/
+prfc-outreach/
 ├── .github/           # GitHub Actions and templates
 ├── docs/              # Documentation
 ├── prisma/            # Database schema and migrations

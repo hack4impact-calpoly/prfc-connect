@@ -5,7 +5,7 @@ import { getProfilePhotoUrl } from "@/services/user-preference";
 import { ProfileContent } from "./profile-content";
 
 export const metadata: Metadata = {
-  title: "Profile | PRFC Connect",
+  title: "Profile | PRFC Outreach",
 };
 
 export default async function ProfilePage() {

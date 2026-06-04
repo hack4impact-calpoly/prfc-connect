@@ -1,6 +1,6 @@
 # Architecture
 
-PRFC Connect is a Next.js application for the Paso Robles Food Co-op. It handles member referrals, contact groups, group and blast messaging, calendar events, and member notifications.
+PRFC Outreach is a Next.js application for the Paso Robles Food Co-op. It handles member referrals, contact groups, group and blast messaging, calendar events, and member notifications.
 
 ## System Diagram
 

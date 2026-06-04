@@ -4,7 +4,7 @@
 
 ## Context
 
-PRFC Connect needs to authenticate two types of users:
+PRFC Outreach needs to authenticate two types of users:
 
 1. **Admins** accessing the referral database
 2. **Members** accessing Contact Groups

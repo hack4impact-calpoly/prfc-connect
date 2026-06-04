@@ -7,7 +7,7 @@ import { coopStartOfWeek } from "@/utils/time";
 import { EventsContent } from "./events-content";
 
 export const metadata: Metadata = {
-  title: "Events | PRFC Connect",
+  title: "Events | PRFC Outreach",
 };
 
 export default async function EventsPage() {

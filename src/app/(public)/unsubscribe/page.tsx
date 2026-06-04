@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { UnsubscribeForm } from "./unsubscribe-form";
 
 export const metadata: Metadata = {
-  title: "Unsubscribe | PRFC Connect",
+  title: "Unsubscribe | PRFC Outreach",
 };
 
 export default async function UnsubscribePage({ searchParams }: { searchParams: Promise<{ token?: string }> }) {

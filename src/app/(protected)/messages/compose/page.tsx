@@ -6,7 +6,7 @@ import { env } from "@/env";
 import { ComposeContent } from "./compose-content";
 
 export const metadata: Metadata = {
-  title: "Compose Message | PRFC Connect",
+  title: "Compose Message | PRFC Outreach",
 };
 
 export default async function ComposeMessagePage() {

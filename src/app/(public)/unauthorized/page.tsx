@@ -3,7 +3,7 @@ import Link from "next/link";
 import { getPortalLoginUrl } from "@/lib/portal";
 
 export const metadata: Metadata = {
-  title: "Sign In Required | PRFC Connect",
+  title: "Sign In Required | PRFC Outreach",
 };
 
 export default function UnauthorizedPage() {
@@ -12,7 +12,7 @@ export default function UnauthorizedPage() {
     <div className="fixed inset-0 flex flex-col items-center justify-center px-4 text-center">
       <h1 className="font-angkor text-3xl text-prfc-brown sm:text-4xl">Sign in required</h1>
       <p className="mt-4 max-w-md text-lg text-muted-foreground">
-        Paso Robles Food Co-op Connect requires authentication. Sign in through the member portal to continue.
+        Paso Robles Food Co-op Outreach requires authentication. Sign in through the member portal to continue.
       </p>
       <Link
         href={portalUrl}

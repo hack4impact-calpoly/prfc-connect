@@ -1,6 +1,6 @@
 # Contributing
 
-This guide covers everything you need to contribute to PRFC Connect.
+This guide covers everything you need to contribute to PRFC Outreach.
 
 ## Prerequisites
 

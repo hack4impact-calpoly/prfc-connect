@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | PRFC Connect",
+  title: "Privacy Policy | PRFC Outreach",
 };
 
 export default function PrivacyPolicyPage() {
@@ -12,14 +12,14 @@ export default function PrivacyPolicyPage() {
 
       <div className="mt-8 space-y-6 text-base leading-relaxed text-foreground">
         <p>
-          Paso Robles Food Cooperative, Inc. ("the Co-op") operates PRFC Connect, an internal communication tool for
+          Paso Robles Food Cooperative, Inc. ("the Co-op") operates PRFC Outreach, an internal communication tool for
           co-op members and staff. This policy describes what data the tool collects, how it is used, and how it is
           protected.
         </p>
 
         <h2 className="font-semibold text-lg text-prfc-brown">Data collected</h2>
         <p>
-          PRFC Connect stores member names, email addresses, and phone numbers provided through the co-op's member
+          PRFC Outreach stores member names, email addresses, and phone numbers provided through the co-op's member
           portal. When a member opts in to SMS notifications, the phone number and the date of consent are recorded. The
           tool also stores message history, event data, and group membership.
         </p>
