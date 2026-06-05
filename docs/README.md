@@ -4,6 +4,7 @@
 - [Contributing](contributing.md) - Development workflow and PR process
 - [Architecture](architecture.md) - System overview and patterns
 - [Style Guide](style-guide.md) - Naming conventions and code patterns
+- [Future Work](future-work.md) - Deferred items and known issues for the next team
 
 ## Decisions
 
