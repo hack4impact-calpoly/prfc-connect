@@ -85,6 +85,14 @@ Every later request validates this cookie in the DAL, so most requests need no p
 
 Next.js 16 uses `src/proxy.ts`, not `middleware.ts`. The proxy checks for the auth cookie on protected paths and redirects when it is missing, which is a fast UX guard. The real security boundary is `verifySession()` in `src/lib/dal.ts`, which verifies the HMAC and expiry, and `requireAdmin()` gates admin-only features. See the [Auth Patterns ADR](decisions/auth-patterns.md).
 
+### Member data and the portal
+
+Member identity comes from the co-op's member portal over HTTP, not from our database. Contact reads (`getmembercontacts`) authenticate with the `MEMBER_API_SECRET`; the roster read (`listmembers`) sends the member's portal token. Both go through `src/lib/api/portal-api.ts`.
+
+The portal is a single dependency, so the integration is defensive. Each call carries an 8-second `AbortSignal.timeout`, so a hung portal fails fast instead of holding a serverless function open. The portal answers `200` even on failure (an `INVALID_KEY` sentinel for a bad secret, a PHP notice for a missing token), so the client treats those shapes as errors and logs a truncated raw snippet rather than failing opaquely.
+
+We memoize reads per request with React `cache()`, so one request makes at most one portal call per distinct member read. We do not cache member data across requests. It is PII (name, email, phone), a Redis copy would be a new exposure surface for little gain at this roster size, and a stale entry could show wrong contact info.
+
 ## Data Model
 
 The Prisma schema defines the app's tables. Referral PII and SMS/email PII are encrypted at the service layer with AES-256-GCM, alongside HMAC blind-index columns for lookup without decryption.

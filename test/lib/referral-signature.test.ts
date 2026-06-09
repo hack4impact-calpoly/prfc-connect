@@ -81,4 +81,23 @@ describe("verifyReferralSignature", () => {
 
     expect(result).toBe(false);
   });
+
+  it("rejects a legacy calculateChecksum signature that carries no secret", () => {
+    const legacyChecksum = (value: string): string => {
+      let checksum = 0x12345678;
+      for (let i = 0; i < value.length; i++) checksum += value.charCodeAt(i) * (i + 1);
+      return (checksum >>> 0).toString(16);
+    };
+    const signature = legacyChecksum("charlie@example.comCharlieBrownREF001");
+
+    const result = verifyReferralSignature({
+      memberName: "Charlie Brown",
+      memberEmail: "charlie@example.com",
+      referralCode: "REF001",
+      signature,
+    });
+
+    expect(signature).toHaveLength(8);
+    expect(result).toBe(false);
+  });
 });

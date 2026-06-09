@@ -19,12 +19,21 @@ export async function updateUserPreferencesAction(input: {
   try {
     const session = await verifySession();
     const validated = UpdatePreferencesSchema.parse(input);
+
+    let consentPhone: string | undefined;
+    if (env.SMS_ENABLED && validated.notifySmsDefault === true) {
+      const profile = await getMemberProfile(session.ownerid, session.isAdmin);
+      if (!profile.phone || profile.phone.trim() === "") {
+        return { success: false, error: "Add a phone number to your member account before enabling text messages." };
+      }
+      consentPhone = profile.phone;
+    }
+
     const updated = await updateUserPreferences(session.ownerid, validated);
 
     if (env.SMS_ENABLED) {
-      if (validated.notifySmsDefault === true) {
-        const profile = await getMemberProfile(session.ownerid, session.isAdmin);
-        await grantSmsConsent(session.ownerid, profile.phone);
+      if (validated.notifySmsDefault === true && consentPhone) {
+        await grantSmsConsent(session.ownerid, consentPhone);
       } else if (validated.notifySmsDefault === false) {
         await revokeSmsConsent(session.ownerid, "web_settings_toggle", null);
       }

@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
   try {
     getSecret();
   } catch {
-    return NextResponse.redirect(new URL("/home", req.url));
+    return NextResponse.redirect(new URL("/home", req.url), 303);
   }
 
   const formData = await req.formData();
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
 
   if (!parsed.success) {
     console.warn("[AUTH_CALLBACK] missing or malformed token", ip);
-    return NextResponse.redirect(new URL("/home", req.url));
+    return NextResponse.redirect(new URL("/home", req.url), 303);
   }
 
   const { token } = parsed.data;
@@ -35,12 +35,12 @@ export async function POST(req: NextRequest) {
   const session = await validatePortalToken(token);
   if (!session) {
     console.warn("[AUTH_CALLBACK] invalid or expired token", ip);
-    return NextResponse.redirect(new URL("/home", req.url));
+    return NextResponse.redirect(new URL("/home", req.url), 303);
   }
 
   console.info("[AUTH_CALLBACK] login success", session.ownerid, ip);
 
-  const response = NextResponse.redirect(new URL("/home", req.url));
+  const response = NextResponse.redirect(new URL("/home", req.url), 303);
   const cookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

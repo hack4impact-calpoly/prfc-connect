@@ -17,18 +17,47 @@ export async function getPortalToken(): Promise<string | null> {
   return cookieStore.get(PORTAL_TOKEN_COOKIE)?.value ?? null;
 }
 
+const PORTAL_TIMEOUT_MS = 8000;
+
 async function postForm(task: string, body: Record<string, string>): Promise<string> {
-  const res = await fetch(`${env.PRFC_PORTAL_API_URL}?task=${task}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams(body).toString(),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${env.PRFC_PORTAL_API_URL}?task=${task}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams(body).toString(),
+      signal: AbortSignal.timeout(PORTAL_TIMEOUT_MS),
+    });
+  } catch (error) {
+    const name = error instanceof Error ? error.name : "";
+    if (name === "TimeoutError" || name === "AbortError") {
+      throw new AppError("INTERNAL_ERROR", `Member portal ${task} timed out after ${PORTAL_TIMEOUT_MS}ms`);
+    }
+    throw new AppError("INTERNAL_ERROR", `Member portal ${task} request failed`);
+  }
 
   if (!res.ok) {
     throw new AppError("INTERNAL_ERROR", `Member portal ${task} responded ${res.status}`);
   }
 
-  return res.text();
+  const text = await res.text();
+  assertNoPortalError(text, task);
+  return text;
+}
+
+function rawSnippet(raw: string): string {
+  return raw.replace(/\s+/g, " ").trim().slice(0, 200);
+}
+
+function assertNoPortalError(raw: string, task: string): void {
+  if (raw.includes("INVALID_KEY")) {
+    throw new AppError("INTERNAL_ERROR", `Member portal ${task} rejected the request (invalid secret or token)`, {
+      raw: rawSnippet(raw),
+    });
+  }
+  if (/Undefined index|<b>\s*(Notice|Warning|Fatal error)\s*<\/b>/i.test(raw)) {
+    throw new AppError("INTERNAL_ERROR", `Member portal ${task} returned a server error`, { raw: rawSnippet(raw) });
+  }
 }
 
 function extractObject(raw: string): unknown {
@@ -36,23 +65,31 @@ function extractObject(raw: string): unknown {
   const start = stripped.indexOf("{");
   const end = stripped.lastIndexOf("}");
   if (start === -1 || end === -1) {
-    throw new AppError("INTERNAL_ERROR", "Member portal returned no JSON object");
+    throw new AppError("INTERNAL_ERROR", "Member portal returned no JSON object", { raw: rawSnippet(raw) });
   }
-  return JSON.parse(stripped.slice(start, end + 1));
+  try {
+    return JSON.parse(stripped.slice(start, end + 1));
+  } catch {
+    throw new AppError("INTERNAL_ERROR", "Member portal returned an unparseable JSON object", { raw: rawSnippet(raw) });
+  }
 }
 
 function extractArray(raw: string): unknown {
   const start = raw.indexOf("[");
   const end = raw.lastIndexOf("]");
   if (start === -1 || end === -1) {
-    throw new AppError("INTERNAL_ERROR", "Member portal returned no JSON array");
+    throw new AppError("INTERNAL_ERROR", "Member portal returned no JSON array", { raw: rawSnippet(raw) });
   }
   const body = raw
     .slice(start, end + 1)
     .replace(/<[^>]+>/g, "")
     .replace(/}\s*{/g, "},{")
     .replace(/,\s*]/g, "]");
-  return JSON.parse(body);
+  try {
+    return JSON.parse(body);
+  } catch {
+    throw new AppError("INTERNAL_ERROR", "Member portal returned an unparseable JSON array", { raw: rawSnippet(raw) });
+  }
 }
 
 export async function validatePortalToken(token: string): Promise<Session | null> {

@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { env } from "@/env";
 import { AppError } from "@/utils/errors";
 import { fetchListMembers, fetchMemberContacts, getPortalToken } from "@/lib/api/portal-api";
@@ -54,23 +55,23 @@ export async function getMemberDetails(memberIds: number[]): Promise<Member[]> {
   return getRealMemberDetails(memberIds);
 }
 
-export async function getAllActiveMemberIds(): Promise<number[]> {
+export const getAllActiveMemberIds = cache(async (): Promise<number[]> => {
   if (env.USE_MOCK_MEMBER_API) {
     return getMockAllActiveMemberIds();
   }
   return getRealAllActiveMemberIds();
-}
+});
 
-export async function getAllMembers(): Promise<MemberSummary[]> {
+export const getAllMembers = cache(async (): Promise<MemberSummary[]> => {
   if (env.USE_MOCK_MEMBER_API) {
     return getMockAllMembers();
   }
   return getRealAllMembers();
-}
+});
 
-export async function getMemberById(id: number): Promise<Member | null> {
+export const getMemberById = cache(async (id: number): Promise<Member | null> => {
   if (env.USE_MOCK_MEMBER_API) {
     return getMockMemberById(id);
   }
   return getRealMemberById(id);
-}
+});

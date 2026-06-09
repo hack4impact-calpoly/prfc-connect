@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: { code: "FORBIDDEN", message: "Invalid origin" } }, { status: 403 });
   }
 
-  const response = NextResponse.redirect(new URL("/", req.url));
+  const response = NextResponse.redirect(new URL("/", req.url), 303);
   response.cookies.delete(AUTH_COOKIE);
   response.cookies.delete(PORTAL_TOKEN_COOKIE);
   return response;

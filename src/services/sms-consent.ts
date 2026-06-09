@@ -1,6 +1,6 @@
 import "server-only";
 import prisma from "@/lib/db";
-import { transformError } from "@/utils/errors";
+import { AppError, transformError } from "@/utils/errors";
 import { encrypt, decrypt, blindIndex } from "@/lib/encryption";
 
 import type { SmsConsentRecord } from "@/types/settings";
@@ -31,6 +31,9 @@ export async function getMemberSmsConsent(memberId: number): Promise<SmsConsentR
 }
 
 export async function grantSmsConsent(memberId: number, phone: string): Promise<void> {
+  if (!phone || phone.trim() === "") {
+    throw new AppError("VALIDATION_ERROR", "A phone number is required to record SMS consent");
+  }
   try {
     const existing = await prisma.smsConsent.findFirst({
       where: { memberId, revokedAt: null },

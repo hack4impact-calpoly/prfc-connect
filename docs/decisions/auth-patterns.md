@@ -17,6 +17,8 @@ Use a single token-based session for both user types, validated in two steps. Th
 
 On a valid response the callback mints the app's own session cookie, `prfc_auth`, and stores the raw portal token in a second cookie (`prfc_portal_token`) for the member-roster read.
 
+The callback answers with a **303 (See Other)** redirect to `/home`, not the framework default of 307. The login POST arrives cross-site from the portal, and `prfc_auth` is `SameSite=Lax`. A 307 preserves the method, so the browser re-POSTs to `/home`, and a Lax cookie is not sent on a cross-site POST navigation, so the just-set session is dropped and the proxy bounces the user to `/unauthorized`. A 303 makes the browser GET `/home` instead, and Lax cookies ride along on top-level GET navigations, so the session holds. Keep the explicit 303.
+
 **Session cookie format:**
 
 ```
@@ -56,3 +58,4 @@ ownerid|isAdmin|timestamp|hmac_signature
 
 - Login depends on the portal's `validatetoken` endpoint being reachable and reporting the admin flag
 - `PRFC_PORTAL_SECRET` must be coordinated with PRFC infrastructure, since the same secret signs the session cookie and the public referral `cs` parameter
+- Sessions last one hour with no refresh. The portal issues one-hour tokens and has no refresh endpoint, and `listmembers` needs that same token, so a usable session cannot outlive the portal token without portal changes. Both cookies expire together, so `verifySession()` redirects to sign-in at the hour, and `handleActionError` treats a missing portal token (`"Member portal session required"`) the same way. Extending sessions would require a refresh endpoint on the portal side.

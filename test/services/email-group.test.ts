@@ -140,36 +140,38 @@ describe("sendGroupEmails", () => {
   });
 
   describe("batching", () => {
+    let sleepMs: number[];
+    let realSetTimeout: typeof globalThis.setTimeout;
+
     beforeEach(() => {
-      vi.useFakeTimers();
+      sleepMs = [];
+      realSetTimeout = globalThis.setTimeout;
+      vi.spyOn(globalThis, "setTimeout").mockImplementation(((cb: () => void, ms?: number) => {
+        if (ms === 1000) sleepMs.push(ms);
+        return realSetTimeout(cb, 0);
+      }) as typeof globalThis.setTimeout);
     });
 
     afterEach(() => {
-      vi.useRealTimers();
+      vi.restoreAllMocks();
     });
 
-    it("sends in batches of 10 with delay between batches", async () => {
-      const batchDelayMs = 1000;
+    it("sends every recipient with no artificial per-batch delay, so it stays within the function budget", async () => {
+      const recipients = Array.from({ length: 50 }, (_, i) => ({
+        email: `m${i}@example.com`,
+        memberId: i,
+        name: `M${i}`,
+      }));
       mockFilterSuppressedEmails.mockResolvedValue({
-        valid: allRecipients.map((r) => r.email),
+        valid: recipients.map((r) => r.email),
         suppressed: [],
       });
 
-      const promise = sendGroupEmails({ ...defaultParams, recipients: allRecipients });
+      const { sent, failed, suppressed } = await sendGroupEmails({ ...defaultParams, recipients });
 
-      await vi.advanceTimersByTimeAsync(0);
-      expect(mockBrevoSend).toHaveBeenCalledTimes(10);
-
-      await vi.advanceTimersByTimeAsync(batchDelayMs - 1);
-      await Promise.resolve();
-      expect(mockBrevoSend).toHaveBeenCalledTimes(10);
-
-      await vi.advanceTimersByTimeAsync(1);
-      await Promise.resolve();
-      expect(mockBrevoSend).toHaveBeenCalledTimes(12);
-
-      const { sent, failed, suppressed } = await promise;
-      expect(sent).toBe(12);
+      expect(sleepMs).toHaveLength(0);
+      expect(mockBrevoSend).toHaveBeenCalledTimes(50);
+      expect(sent).toBe(50);
       expect(failed).toBe(0);
       expect(suppressed).toBe(0);
     });

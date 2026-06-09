@@ -195,7 +195,7 @@ describe("POST /api/auth/callback", () => {
     const cookie = response.cookies.get(AUTH_COOKIE);
     const portalCookie = response.cookies.get("prfc_portal_token");
 
-    expect(response.status).toBe(307);
+    expect(response.status).toBe(303);
     expect(cookie).toBeDefined();
     expect(validateToken(cookie!.value, getSecret())).toEqual({ ownerid: 100001, isAdmin: true });
     expect(cookie!.httpOnly).toBe(true);
@@ -204,6 +204,22 @@ describe("POST /api/auth/callback", () => {
     expect(cookie!.secure).toBe(process.env.NODE_ENV === "production");
     expect(cookie!.maxAge).toBe(3600);
     expect(portalCookie?.value).toBe(portalToken);
+  });
+
+  it("uses 303 See Other on success so the cross-site portal POST lands on a GET and the SameSite=lax cookie is sent", async () => {
+    mockValidatePortalToken.mockResolvedValueOnce({ ownerid: 100001, isAdmin: true });
+    const formData = new FormData();
+    formData.set("token", "portal-base64-token");
+
+    const request = new NextRequest("http://localhost:3000/api/auth/callback", {
+      method: "POST",
+      body: formData,
+    });
+
+    const response = await callbackPOST(request);
+
+    expect(response.status).toBe(303);
+    expect(new URL(response.headers.get("location")!).pathname).toBe("/home");
   });
 
   it("redirects without cookie for invalid token", async () => {
@@ -218,7 +234,7 @@ describe("POST /api/auth/callback", () => {
     const response = await callbackPOST(request);
     const cookie = response.cookies.get(AUTH_COOKIE);
 
-    expect(response.status).toBe(307);
+    expect(response.status).toBe(303);
     expect(cookie).toBeUndefined();
   });
 
@@ -233,7 +249,7 @@ describe("POST /api/auth/callback", () => {
     const response = await callbackPOST(request);
     const cookie = response.cookies.get(AUTH_COOKIE);
 
-    expect(response.status).toBe(307);
+    expect(response.status).toBe(303);
     expect(cookie).toBeUndefined();
   });
 
@@ -369,7 +385,7 @@ describe("POST /api/auth/logout", () => {
     const response = await logoutPOST(request);
     const setCookies = response.headers.getSetCookie();
 
-    expect(response.status).toBe(307);
+    expect(response.status).toBe(303);
     expect(setCookies.some((c) => c.includes(AUTH_COOKIE) && c.includes("Expires=Thu, 01 Jan 1970"))).toBe(true);
   });
 

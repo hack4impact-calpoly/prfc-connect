@@ -189,8 +189,7 @@ export function wrapInEmailTemplate(bodyHtml: string, footerHtml: string): strin
 </table>`;
 }
 
-const BATCH_SIZE = 10;
-const BATCH_DELAY_MS = 1000;
+const BATCH_SIZE = 25;
 
 export type { EmailRecipient as Recipient } from "@/types/message";
 
@@ -279,10 +278,6 @@ export async function sendGroupEmails(
         recipientResults.push({ memberId: r.memberId, status: "queued" });
       }
       break;
-    }
-
-    if (i + BATCH_SIZE < validRecipients.length) {
-      await new Promise((resolve) => setTimeout(resolve, BATCH_DELAY_MS));
     }
   }
 

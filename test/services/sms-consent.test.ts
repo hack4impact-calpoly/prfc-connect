@@ -192,6 +192,12 @@ describe("grantSmsConsent", () => {
 
     await expect(grantSmsConsent(100001, "+15551234567")).rejects.toMatchObject({ code: "INTERNAL_ERROR" });
   });
+
+  it("rejects an empty phone without writing a consent record", async () => {
+    await expect(grantSmsConsent(100001, "")).rejects.toMatchObject({ code: "VALIDATION_ERROR" });
+    await expect(grantSmsConsent(100001, "   ")).rejects.toMatchObject({ code: "VALIDATION_ERROR" });
+    expect(mockPrisma.smsConsent.create).not.toHaveBeenCalled();
+  });
 });
 
 describe("revokeConsentByPhone", () => {
