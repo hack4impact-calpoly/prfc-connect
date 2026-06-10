@@ -20,6 +20,7 @@ PRFC Outreach is a Next.js application for the Paso Robles Food Co-op. It handle
 | Email         | Brevo                                 | Transactional email over REST              |
 | SMS           | Twilio                                | A2P 10DLC SMS (disabled at launch)         |
 | Rate limiting | Upstash Redis                         | Throttling, daily email quota, idempotency |
+| File storage  | Vercel Blob                           | Profile photo uploads                      |
 | Tables/lists  | @tanstack/react-table + react-virtual | Large referral and member tables           |
 | Search        | fuse.js                               | Client-side fuzzy search                   |
 | Calendar      | Schedule-X                            | Events week and month views                |
@@ -108,6 +109,8 @@ The Prisma schema defines the app's tables. Referral PII and SMS/email PII are e
 | `UserPreference`                              | Per-member notification defaults, photo, notification watermark |
 
 Member identity (name, email, phone) lives in the co-op's MySQL `tblowner` table and is read through the member-portal API, not stored here. In local development it is backed by a 389-row mock in `src/lib/mock-members.ts`.
+
+Profile photos upload to Vercel Blob through `src/services/user-preference.ts`, and `UserPreference.photoUrl` stores the returned URL. Production needs a `BLOB_READ_WRITE_TOKEN`, which Vercel injects into the project when a Blob store is created in its Storage tab.
 
 **Compliance:**
 
