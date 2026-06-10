@@ -1,0 +1,62 @@
+erDiagram
+    ContactGroup ||--o{ ContactGroupMember : "has"
+    ContactGroup ||--o{ MessageGroup : "targeted by"
+    ContactGroup |o--o{ Event : "scopes"
+    Message ||--o{ MessageGroup : "targets"
+    Message ||--o{ MessageRecipient : "sent to"
+    Event ||--o{ EventInvitee : "invites"
+    Event ||--o{ EventRsvp : "receives"
+
+    ContactGroup {
+        int id PK
+        int ownerid "portal member id"
+        string name
+        string description
+    }
+    ContactGroupMember {
+        int id PK
+        int groupId FK
+        int memberId "portal member id"
+        bool notifyEmail
+        bool notifySms
+        datetime unsubscribedAt "null until opt-out"
+    }
+    Message {
+        int id PK
+        int senderId "portal member id"
+        string subject
+        bool isBlast
+        int emailCount
+    }
+    MessageGroup {
+        int id PK
+        int messageId FK
+        int groupId FK
+    }
+    MessageRecipient {
+        int id PK
+        int messageId FK
+        int memberId "portal member id"
+        string channel "email or sms"
+        string status "queued sent delivered failed"
+    }
+    Event {
+        int id PK
+        int groupId FK "nullable"
+        int ownerid "portal member id"
+        string title
+        datetime startDate
+        datetime endDate
+        EventType eventType
+    }
+    EventInvitee {
+        int id PK
+        int eventId FK
+        int memberId "portal member id"
+    }
+    EventRsvp {
+        int id PK
+        int eventId FK
+        int memberId "portal member id"
+        RsvpStatus status
+    }

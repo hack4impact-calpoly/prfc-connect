@@ -1,0 +1,26 @@
+erDiagram
+    Referral {
+        int id PK
+        string memberEmail "encrypted PII"
+        string prospectEmail "encrypted PII"
+        string referralCode
+        bool redeemed
+    }
+    SmsConsent {
+        int id PK
+        int memberId "portal member id"
+        string phone "encrypted PII"
+        string phoneHash "blind index"
+    }
+    EmailSuppression {
+        int id PK
+        string email "encrypted PII"
+        string emailHash "blind index, unique"
+        EmailSuppressionReason reason
+    }
+    UserPreference {
+        int id PK
+        int memberId UK "portal member id"
+        string photoUrl "Vercel Blob URL"
+        datetime lastNotificationSeenAt
+    }

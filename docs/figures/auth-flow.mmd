@@ -1,0 +1,20 @@
+sequenceDiagram
+    actor Member
+    participant Portal as PRFC Member Portal
+    participant Callback as POST /api/auth/callback
+    participant Proxy as src/proxy.ts
+    participant DAL as src/lib/dal.ts (verifySession)
+
+    Member->>Portal: log in, click "Open PRFC Outreach"
+    Portal->>+Callback: POST token (cross-site form)
+    Callback->>+Portal: validatetoken(token)
+    Portal-->>-Callback: ownerid, isAdmin, secondsleft
+    Note over Callback: mint prfc_auth cookie<br/>HMAC over ownerid|isAdmin|timestamp
+    Callback-->>-Member: 303 See Other -> /home + Set-Cookie
+    Note over Member,Callback: 303 makes the browser GET /home,<br/>so the SameSite=Lax cookie rides the top-level navigation.<br/>A 307 would re-POST and the cookie would be dropped.
+    Member->>+Proxy: GET /home (Cookie: prfc_auth)
+    Note over Proxy: cookie present on protected path? yes
+    Proxy->>+DAL: page/action calls verifySession()
+    Note over DAL: validateToken: HMAC + 1-hour expiry check
+    DAL-->>-Proxy: session (ownerid, isAdmin)
+    Proxy-->>-Member: dashboard renders

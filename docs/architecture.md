@@ -81,6 +81,10 @@ ownerid|isAdmin|timestamp|signature
 
 Every later request validates this cookie in the DAL, so most requests need no portal round-trip. The callback also stores the raw portal token in a second cookie, `prfc_portal_token`, which the member-roster read (`listmembers`) sends back to the portal. The public referral URL carries the same 8-hex signature scheme in a `cs` parameter, over `name|email|code` with the same secret, verified before any referral is accepted.
 
+<img src="figures/auth-flow.png" alt="Token authentication sequence from portal to callback to 303 redirect to cookie to DAL" width="800" />
+
+The callback answers with a 303, not the framework-default 307, so the `SameSite=Lax` cookie survives the cross-site hop to `/home`. The [Auth Patterns ADR](decisions/auth-patterns.md) explains why.
+
 ### Routing and the Auth Boundary
 
 Next.js 16 uses `src/proxy.ts`, not `middleware.ts`. The proxy checks for the auth cookie on protected paths and redirects when it is missing, which is a fast UX guard. The real security boundary is `verifySession()` in `src/lib/dal.ts`, which verifies the HMAC and expiry, and `requireAdmin()` gates admin-only features. See the [Auth Patterns ADR](decisions/auth-patterns.md).
@@ -96,6 +100,12 @@ We memoize reads per request with React `cache()`, so one request makes at most 
 ## Data Model
 
 The Prisma schema defines the app's tables. Referral PII and SMS/email PII are encrypted at the service layer with AES-256-GCM, alongside HMAC blind-index columns for lookup without decryption.
+
+<img src="figures/data-model.png" alt="Entity-relationship diagram of the related tables: contact groups, messages, and events with their members, recipients, invitees, and RSVPs" width="760" />
+
+The four remaining tables - `Referral`, `SmsConsent`, `EmailSuppression`, and `UserPreference` - have no foreign keys. They key off the portal `memberId` rather than a local table, so they sit in their own diagram below.
+
+<img src="figures/data-model-standalone.png" alt="The four standalone tables with no relations: Referral, SmsConsent, EmailSuppression, and UserPreference" width="900" />
 
 | Model                                         | Purpose                                                         |
 | --------------------------------------------- | --------------------------------------------------------------- |

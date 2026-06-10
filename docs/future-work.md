@@ -49,3 +49,19 @@ The repo shows a long list of Dependabot alerts, and almost all of them are stal
 The co-op runs the app against MariaDB 5.5.62, which sits below the version Prisma documents as supported. We tested it and it works. But three constraints follow from that version, and the next team should keep them in mind.
 
 First, the schema is hand-created from our DDL with every `DATETIME(3)` changed to plain `TIMESTAMP`, so the production build drops `prisma migrate deploy` and there is no migration ledger on that server. Second, `TIMESTAMP` truncates sub-second precision and rejects dates past 2038-01-19, which is the column's ceiling. Third, the server has SSL disabled, so `DATABASE_URL` must not include `?ssl=true`. Add it and every connection fails with `ER_SERVER_SSL_DISABLED` and every database page returns 500.
+
+## Repository access and handoff
+
+This repo lives in the `hack4impact-calpoly` GitHub org, and GitHub does not let anyone self-assign admin. Each year, the Hack4Impact Cal Poly president adds the two incoming tech leads as admin collaborators on this repo.
+
+The `develop` branch requires a reviewed pull request and a passing CI build to merge, and only repo admins can bypass that.
+
+## Remaining co-op handoff items
+
+Three operational items sit on the co-op's side, none of them in this codebase:
+
+- The member portal's Referrals-tab link still points at the retired referral app and signs the `cs` parameter with the old scheme, so it errors when a member clicks it. Repoint it at the signed prfc-outreach referral URL.
+- Profile photo upload needs a Vercel Blob store created in the project's Storage tab, which injects `BLOB_READ_WRITE_TOKEN`. Without it, uploads fail with "Vercel Blob: No token found."
+- One test referral row remains in the production referral table and should be deleted.
+
+The co-op owns the production accounts (the Vercel project, the MariaDB database, Brevo, Upstash). Their credentials and the account-ownership map stay outside version control, with the departing lead.
