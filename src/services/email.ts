@@ -64,7 +64,7 @@ export async function sendReferralEmails({
       const unsubscribeApiUrl = `${env.APP_URL}/api/unsubscribe?token=${unsubscribeToken}`;
 
       const joinUrl = `https://www.pasofoodcooperative.com/join-now1.html?enterReferral=${referralCode}`;
-      const textContent = `Hi ${prospect.prospectName},\n\n${memberName} thinks you'd be a great fit for the Paso Robles Food Co-op. We are a member-owned grocery cooperative in Paso Robles, and each new member gets a vote in how we run the store.\n\nMembers shop at the Co-op, attend monthly meetings on the 4th Wednesday at 6 pm, and help choose which local farms and producers we carry. Annual membership is $25.\n\nUse referral code ${referralCode} when you register: ${joinUrl}\n\nQuestions? Reach us at info@pasofoodcooperative.com or visit pasofoodcooperative.com.\n\n---\nThis email was sent on behalf of a Co-op member who thought you might be interested.\nPaso Robles Food Cooperative, Inc. P.O. Box 922, Paso Robles, CA 93447\nUnsubscribe: ${unsubscribeUrl}`;
+      const textContent = `Hello ${prospect.prospectName},\n\nWe're excited to let you know that ${memberName}, thinks you'd love being a part of the Paso Robles Food Co-op!\n\nAt the Co-op, we're all about building a stronger community by connecting members to fresh, healthy, and locally-sourced food. As a member owner, you'll enjoy:\n\n- Supporting local farmers and food producers 🌱\n- A say in how the Co-op operates (yes, you're an owner!) 🗳️\n- Exclusive discounts and special events 🎉\n\nIt's easy to join the Co-op and start making an impact in our community! Just click the link below to complete your membership registration:\n\n👉 Join Now: ${joinUrl}\n\nYour referral code is ${referralCode}—be sure to confirm/enter it during registration.\n\nFeel free to reach out if you have any questions or want to learn more about what makes the Paso Robles Food Co-op special. Our monthly meeting is every 4th Wednesday at 6pm. All details and info at our website: www.pasofoodcooperative.com\n\nLooking forward to welcoming you into our growing Co-op family!\n\nWarm regards,\n${memberName} and The Paso Robles Food Co-op Member Owners\n\n📧 info@pasofoodcooperative.com\n🌐 www.pasofoodcooperative.com\n\n---\nThis email was sent on behalf of a Co-op member who thought you might be interested.\nPaso Robles Food Cooperative, Inc. P.O. Box 922, Paso Robles, CA 93447\nUnsubscribe: ${unsubscribeUrl}`;
 
       await sendBrevoEmail({
         sender: { name: "Paso Robles Food Co-op", email: env.FROM_EMAIL ?? "noreply@example.com" },
@@ -112,23 +112,30 @@ export function generateReferralEmailHtml(
           </td>
         </tr>
         <tr>
+          <td style="padding: 0 24px 16px; ${cellStyle}">
+            Hello ${safeName},
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 0 24px 16px; ${cellStyle}">
+            We're excited to let you know that <strong>${safeMember}</strong>, thinks you'd love being a part of the Paso Robles Food Co-op!
+          </td>
+        </tr>
+        <tr>
           <td style="padding: 0 24px 8px; ${cellStyle}">
-            Hi ${safeName},
+            At the Co-op, we're all about building a stronger community by connecting members to fresh, healthy, and locally-sourced food. As a member owner, you'll enjoy:
           </td>
         </tr>
         <tr>
           <td style="padding: 0 24px 16px; ${cellStyle}">
-            ${safeMember} thinks you'd be a great fit for the Paso Robles Food Co-op. We are a member-owned grocery cooperative in Paso Robles, and each new member gets a vote in how we run the store.
-          </td>
-        </tr>
-        <tr>
-          <td style="padding: 0 24px 16px; ${cellStyle}">
-            Members shop at the Co-op, attend monthly meetings on the 4th Wednesday at 6 pm, and help choose which local farms and producers we carry. Annual membership is $25.
+            &bull; Supporting local farmers and food producers 🌱<br>
+            &bull; A say in how the Co-op operates (yes, you're an owner!) 🗳️<br>
+            &bull; Exclusive discounts and special events 🎉
           </td>
         </tr>
         <tr>
           <td style="padding: 0 24px 24px; ${cellStyle}">
-            Use referral code <strong>${safeCode}</strong> when you register:
+            It's easy to join the Co-op and start making an impact in our community! Just click the link below to complete your membership registration:
           </td>
         </tr>
         <tr>
@@ -136,15 +143,27 @@ export function generateReferralEmailHtml(
             <table role="presentation" cellpadding="0" cellspacing="0" border="0">
               <tr>
                 <td align="center" bgcolor="#831002" style="background-color: #831002; border-radius: 6px;">
-                  <a href="${joinUrl}" style="${font} font-size: 16px; font-weight: bold; color: #ffffff; text-decoration: none; display: inline-block; padding: 14px 32px;">Join the Co-op</a>
+                  <a href="${joinUrl}" style="${font} font-size: 16px; font-weight: bold; color: #ffffff; text-decoration: none; display: inline-block; padding: 14px 32px;">Join Now</a>
                 </td>
               </tr>
             </table>
           </td>
         </tr>
         <tr>
+          <td style="padding: 0 24px 16px; ${cellStyle}">
+            Your referral code is <strong>${safeCode}</strong>—be sure to confirm/enter it during registration.
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 0 24px 16px; ${cellStyle}">
+            Feel free to reach out if you have any questions or want to learn more about what makes the Paso Robles Food Co-op special. Our monthly meeting is every 4th Wednesday at 6pm. All details and info at our website: <a href="https://www.pasofoodcooperative.com" style="color: #831002;">www.pasofoodcooperative.com</a>.
+          </td>
+        </tr>
+        <tr>
           <td style="padding: 0 24px 24px; ${cellStyle}">
-            Questions? Reach us at <a href="mailto:info@pasofoodcooperative.com" style="color: #831002;">info@pasofoodcooperative.com</a> or visit <a href="https://www.pasofoodcooperative.com" style="color: #831002;">pasofoodcooperative.com</a>.
+            Looking forward to welcoming you into our growing Co-op family!<br><br>
+            Warm regards,<br>
+            ${safeMember} and The Paso Robles Food Co-op Member Owners
           </td>
         </tr>
         <tr>
@@ -152,6 +171,8 @@ export function generateReferralEmailHtml(
         </tr>
         <tr>
           <td style="padding: 8px 24px 16px; ${font} font-size: 12px; line-height: 1.5; color: #888888;">
+            📧 info@pasofoodcooperative.com<br>
+            🌐 www.pasofoodcooperative.com<br>
             This email was sent on behalf of a Co-op member who thought you might be interested.<br>
             Paso Robles Food Cooperative, Inc. P.O. Box 922, Paso Robles, CA 93447<br>
             <a href="${unsubscribeUrl}" style="color: #831002;">Unsubscribe</a>

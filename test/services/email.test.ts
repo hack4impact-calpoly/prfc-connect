@@ -127,8 +127,8 @@ describe("sendReferralEmails", () => {
     });
 
     const html = mockBrevoSend.mock.calls[0][0].htmlContent;
-    expect(html).toContain("Hi &lt;script&gt;");
-    expect(html).not.toContain("Hi <script>");
+    expect(html).toContain("Hello &lt;script&gt;");
+    expect(html).not.toContain("Hello <script>");
   });
 
   it("escapes HTML in member name", async () => {
@@ -188,7 +188,7 @@ describe("sendReferralEmails", () => {
     });
 
     const textContent = mockBrevoSend.mock.calls[0][0].textContent;
-    expect(textContent).toContain("Hi Lucy Van Pelt");
+    expect(textContent).toContain("Hello Lucy Van Pelt");
     expect(textContent).toContain("REF-7F3A9B");
     expect(textContent).toContain("pasofoodcooperative.com");
   });
