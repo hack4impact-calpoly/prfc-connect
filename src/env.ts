@@ -8,9 +8,6 @@ export const envSchema = z
     FROM_EMAIL: z.email().optional(),
     DAILY_EMAIL_LIMIT: z.coerce.number().int().positive().default(300),
 
-    UPSTASH_REDIS_REST_URL: z.url().optional(),
-    UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
-
     // Shared secret for HMAC token validation with PRFC portal
     PRFC_PORTAL_SECRET: z.string().min(32).optional(),
 
@@ -61,16 +58,6 @@ export const envSchema = z
     NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   })
   .superRefine((parsed, ctx) => {
-    if (parsed.NODE_ENV === "production") {
-      if (!parsed.UPSTASH_REDIS_REST_URL || !parsed.UPSTASH_REDIS_REST_TOKEN) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["UPSTASH_REDIS_REST_URL"],
-          message: "UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN are required in production",
-        });
-      }
-    }
-
     if (!parsed.USE_MOCK_MEMBER_API && (!parsed.PRFC_PORTAL_API_URL || !parsed.MEMBER_API_SECRET)) {
       ctx.addIssue({
         code: "custom",

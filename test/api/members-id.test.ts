@@ -1,7 +1,6 @@
-import "../mocks/rate-limit";
 import "../mocks/dal";
 import "../mocks/member-api";
-import { mockVerifySession, mockMembersRateLimiter, mockGetMemberById } from "../mocks";
+import { mockVerifySession, mockGetMemberById } from "../mocks";
 import { GET } from "@/app/api/members/[id]/route";
 import { NextRequest } from "next/server";
 import { AppError } from "@/utils/errors";
@@ -36,21 +35,6 @@ describe("GET /api/members/[id]", () => {
     const res = await GET(req, { params: Promise.resolve({ id: "1" }) });
 
     expect(res.status).toBe(401);
-  });
-
-  it("returns 429 when rate limited", async () => {
-    mockMembersRateLimiter.mockResolvedValueOnce({
-      success: false,
-      remaining: 0,
-      reset: Date.now() + 60000,
-    });
-
-    const req = new NextRequest("http://localhost/api/members/1", {
-      headers: { "x-forwarded-for": "1.1.1.1" },
-    });
-    const res = await GET(req, { params: Promise.resolve({ id: "1" }) });
-
-    expect(res.status).toBe(429);
   });
 
   it("returns 400 for invalid ID format", async () => {

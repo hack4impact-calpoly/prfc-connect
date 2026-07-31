@@ -1,9 +1,6 @@
 import "../mocks/email";
 import "../mocks/email-suppression";
 import "../mocks/unsubscribe-tokens";
-import "../mocks/email-quota";
-import "../mocks/rate-limit";
-import "../mocks/idempotency";
 import "../mocks/csrf";
 import "../mocks/dal";
 import "../mocks/encryption";
@@ -12,9 +9,6 @@ import { mockPrisma } from "../mocks/prisma";
 import { createMockRequest } from "../mocks/request";
 import { allReferrals, formWithTwoProspects, referralCharlie } from "../mocks/referrals";
 import { mockBrevoSend } from "../mocks/email";
-import { mockReserveEmailQuota } from "../mocks/email-quota";
-import { mockRateLimiter } from "../mocks/rate-limit";
-import { mockClaimIdempotencyKey } from "../mocks/idempotency";
 import { mockValidateOrigin } from "../mocks/csrf";
 import { mockVerifySession, mockRequireAdmin } from "../mocks/dal";
 import { mockVerifyReferralSignature } from "../mocks/referral-signature";
@@ -138,22 +132,6 @@ describe("POST /api/referrals", () => {
     expect(mockPrisma.$transaction).toHaveBeenCalled();
   });
 
-  it("returns 429 when rate limited", async () => {
-    mockRateLimiter.mockResolvedValueOnce({
-      success: false,
-      remaining: 0,
-      reset: Date.now() + 60000,
-    });
-    const req = createMockRequest({
-      body: formWithTwoProspects,
-      headers: { "x-forwarded-for": "203.0.113.42" },
-    });
-
-    const response = await POST(req);
-
-    expect(response.status).toBe(429);
-  });
-
   it("returns 403 for cross-origin request", async () => {
     mockValidateOrigin.mockReturnValueOnce(false);
 
@@ -164,64 +142,6 @@ describe("POST /api/referrals", () => {
     const response = await POST(req);
 
     expect(response.status).toBe(403);
-    expect(mockBrevoSend).not.toHaveBeenCalled();
-  });
-
-  it("returns cached response for duplicate idempotency key", async () => {
-    const cachedBody = { message: "Referrals created successfully!", referrals: [referralCharlie] };
-    mockClaimIdempotencyKey.mockResolvedValueOnce({ claimed: false, response: { status: 201, body: cachedBody } });
-
-    const req = createMockRequest({
-      body: formWithTwoProspects,
-      headers: { "idempotency-key": "dup-key-7f3a9b2c" },
-    });
-    const response = await POST(req);
-    const data = await response.json();
-
-    expect(response.status).toBe(201);
-    expect(data.referrals).toHaveLength(1);
-    expect(mockBrevoSend).not.toHaveBeenCalled();
-    expect(mockPrisma.$transaction).not.toHaveBeenCalled();
-  });
-
-  it("rejects concurrent submission when idempotency key is already claimed", async () => {
-    mockClaimIdempotencyKey.mockResolvedValueOnce({ claimed: true }).mockResolvedValueOnce({
-      claimed: false,
-      response: { status: 409, body: { error: { code: "CONFLICT", message: "Request is already being processed" } } },
-    });
-    const createdReferrals = [{ ...referralCharlie, id: 11 }];
-    mockPrisma.$transaction.mockResolvedValue(createdReferrals);
-
-    const req1 = createMockRequest({
-      body: formWithTwoProspects,
-      headers: { "idempotency-key": "same-key" },
-    });
-    const req2 = createMockRequest({
-      body: formWithTwoProspects,
-      headers: { "idempotency-key": "same-key" },
-    });
-
-    const [res1, res2] = await Promise.all([POST(req1), POST(req2)]);
-
-    expect(res1.status).toBe(201);
-    expect(res2.status).toBe(409);
-    expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
-  });
-
-  it("creates referrals even when email quota is exhausted", async () => {
-    mockReserveEmailQuota.mockResolvedValue({ allowed: 0, total: 300 });
-    const createdReferrals = [
-      { ...referralCharlie, id: 9 },
-      { ...referralCharlie, id: 10, prospectName: "Marcie Johnson", prospectEmail: "marcie.johnson@yahoo.com" },
-    ];
-    mockPrisma.$transaction.mockResolvedValue(createdReferrals);
-
-    const req = createMockRequest({ body: formWithTwoProspects });
-    const response = await POST(req);
-    const data = await response.json();
-
-    expect(response.status).toBe(201);
-    expect(data.referrals).toHaveLength(2);
     expect(mockBrevoSend).not.toHaveBeenCalled();
   });
 });

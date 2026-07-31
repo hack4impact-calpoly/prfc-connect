@@ -7,7 +7,6 @@ import type { EmailRecipient, RecipientSendResult } from "@/types/message";
 import { env } from "@/env";
 import { sendBrevoEmail } from "@/lib/brevo";
 import { generateEmailUnsubscribeToken } from "@/lib/unsubscribe-tokens";
-import { reserveEmailQuota } from "@/lib/email-quota";
 import { filterSuppressedEmails, isEmailSuppressed } from "./email-suppression";
 
 export function validateEmailAllowed(): void {
@@ -48,12 +47,6 @@ export async function sendReferralEmails({
     for (const prospect of prospects) {
       const suppressed = await isEmailSuppressed(prospect.prospectEmail);
       if (suppressed) {
-        skipped++;
-        continue;
-      }
-
-      const { allowed } = await reserveEmailQuota(1);
-      if (allowed === 0) {
         skipped++;
         continue;
       }

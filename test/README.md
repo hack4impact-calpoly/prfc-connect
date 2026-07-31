@@ -35,7 +35,7 @@ Database and external services are mocked in `test/mocks/`. The main ones:
 - `prisma.ts` - Prisma client mock (vitest-mock-extended)
 - `dal.ts` - `verifySession` and `requireAdmin`
 - `email.ts` - email send mock
-- `rate-limit.ts`, `idempotency.ts`, `csrf.ts` - request-guard mocks
+- `csrf.ts` - request-guard mock
 - `encryption.ts` - identity encrypt/decrypt for deterministic tests
 - `request.ts` - NextRequest factory for API tests
 - `referrals.ts`, `members.ts`, `events.ts` - fixtures

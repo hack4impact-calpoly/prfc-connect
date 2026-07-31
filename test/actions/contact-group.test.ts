@@ -1,6 +1,5 @@
 import "../mocks/next-cache";
 import "../mocks/dal";
-import "../mocks/rate-limit";
 import "../mocks/contact-group-service";
 import "../mocks/message-service";
 
@@ -17,7 +16,6 @@ import {
   mockUpdateMemberNotifications,
   mockSendGroupMessage,
   mockSendBlastMessage,
-  mockMessageSendLimiter,
 } from "../mocks";
 import {
   fetchEnrichedGroup,
@@ -468,23 +466,6 @@ describe("sendMessage", () => {
     expect(result.success).toBe(false);
     expect(result.error).toContain("Email delivery failed");
   });
-
-  it("rejects send when rate limited", async () => {
-    mockVerifySession.mockResolvedValue({ ownerid: 10, isAdmin: false });
-    mockMessageSendLimiter.mockResolvedValue({ success: false, remaining: 0, reset: Date.now() + 60000 });
-
-    const result = await sendMessage({
-      groupIds: [3],
-      subject: "Hello",
-      body: "Body text",
-      sendEmail: true,
-      sendSms: false,
-    });
-
-    expect(result.success).toBe(false);
-    expect(result.error).toContain("Too many messages");
-    expect(mockSendGroupMessage).not.toHaveBeenCalled();
-  });
 });
 
 describe("sendBlast", () => {
@@ -566,22 +547,5 @@ describe("sendBlast", () => {
 
     expect(result.success).toBe(false);
     expect(result.error).toContain("Blast delivery failed");
-  });
-
-  it("rejects blast when rate limited", async () => {
-    mockVerifySession.mockResolvedValue({ ownerid: 99, isAdmin: true });
-    mockMessageSendLimiter.mockResolvedValue({ success: false, remaining: 0, reset: Date.now() + 60000 });
-
-    const result = await sendBlast({
-      subject: "Update",
-      body: "Blast body",
-      sendEmail: true,
-      sendSms: false,
-      confirmationText: "SEND TO ALL",
-    });
-
-    expect(result.success).toBe(false);
-    expect(result.error).toContain("Too many messages");
-    expect(mockSendBlastMessage).not.toHaveBeenCalled();
   });
 });

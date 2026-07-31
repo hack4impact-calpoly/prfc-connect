@@ -4,7 +4,6 @@ import { env } from "@/env";
 import { AppError, transformError } from "@/utils/errors";
 import { getGroupRecipients } from "@/services/contact-group";
 import { sendGroupEmails, validateEmailAllowed } from "@/services/email";
-import { reserveEmailQuota } from "@/lib/email-quota";
 import { sendGroupSms, validateSmsAllowed } from "@/services/sms";
 import { getConsentedPhones } from "@/services/sms-consent";
 import { getMemberDetails, getAllActiveMemberIds } from "@/lib/api/member-api";
@@ -71,7 +70,7 @@ async function sendEmailsForMessage(
   recipients: Member[],
   subject: string,
   body: string,
-): Promise<{ sent: number; failed: number }> {
+): Promise<{ sent: number; failed: number; queued: number }> {
   try {
     const emailResult = await sendGroupEmails({
       recipients: recipients.map((r) => ({
@@ -100,10 +99,11 @@ async function sendEmailsForMessage(
       ),
     );
 
-    return { sent: emailResult.sent, failed: emailResult.failed };
+    const queued = emailResult.results.filter((r) => r.status === "queued").length;
+    return { sent: emailResult.sent, failed: emailResult.failed, queued };
   } catch (error) {
     console.error("[sendEmailsForMessage] Failed:", error);
-    return { sent: 0, failed: recipients.length };
+    return { sent: 0, failed: recipients.length, queued: 0 };
   }
 }
 
@@ -224,24 +224,11 @@ export async function sendGroupMessage(input: ComposeMessage, senderId: number):
     let smsFailed = 0;
 
     if (sendEmail && emailRecipientIds.length > 0) {
-      const { allowed } = await reserveEmailQuota(emailRecipientIds.length);
-      const sendNowIds = emailRecipientIds.slice(0, allowed);
-      const queueIds = emailRecipientIds.slice(allowed);
-
-      if (sendNowIds.length > 0) {
-        const sendNowRecipients = members.filter((m) => sendNowIds.includes(m.ownerid));
-        const emailResult = await sendEmailsForMessage(result.id, sendNowRecipients, subject, body);
-        emailsSent = emailResult.sent;
-        emailsFailed = emailResult.failed;
-      }
-
-      if (queueIds.length > 0) {
-        await prisma.messageRecipient.updateMany({
-          where: { messageId: result.id, channel: "email", memberId: { in: queueIds } },
-          data: { status: "queued" },
-        });
-        emailsQueued = queueIds.length;
-      }
+      const emailRecipients = members.filter((m) => emailRecipientIds.includes(m.ownerid));
+      const emailResult = await sendEmailsForMessage(result.id, emailRecipients, subject, body);
+      emailsSent = emailResult.sent;
+      emailsFailed = emailResult.failed;
+      emailsQueued = emailResult.queued;
     }
 
     if (sendSms && smsRecipientIds.length > 0 && smsBody) {
@@ -349,24 +336,11 @@ export async function sendBlastMessage(input: BlastMessage, senderId: number): P
     let smsFailed = 0;
 
     if (sendEmail && emailRecipientIds.length > 0) {
-      const { allowed } = await reserveEmailQuota(emailRecipientIds.length);
-      const sendNowIds = emailRecipientIds.slice(0, allowed);
-      const queueIds = emailRecipientIds.slice(allowed);
-
-      if (sendNowIds.length > 0) {
-        const sendNowMembers = members.filter((m) => sendNowIds.includes(m.ownerid));
-        const emailResult = await sendEmailsForMessage(result.id, sendNowMembers, subject, body);
-        emailsSent = emailResult.sent;
-        emailsFailed = emailResult.failed;
-      }
-
-      if (queueIds.length > 0) {
-        await prisma.messageRecipient.updateMany({
-          where: { messageId: result.id, channel: "email", memberId: { in: queueIds } },
-          data: { status: "queued" },
-        });
-        emailsQueued = queueIds.length;
-      }
+      const emailRecipients = members.filter((m) => emailRecipientIds.includes(m.ownerid));
+      const emailResult = await sendEmailsForMessage(result.id, emailRecipients, subject, body);
+      emailsSent = emailResult.sent;
+      emailsFailed = emailResult.failed;
+      emailsQueued = emailResult.queued;
     }
 
     if (sendSms && smsRecipientIds.length > 0 && smsBody) {
@@ -406,14 +380,8 @@ export async function processEmailQueue(): Promise<{ sent: number; failed: numbe
       return { sent: 0, failed: 0, remaining: 0 };
     }
 
-    const { allowed } = await reserveEmailQuota(queued.length);
-    if (allowed === 0) {
-      return { sent: 0, failed: 0, remaining: queued.length };
-    }
-
-    const toProcess = queued.slice(0, allowed);
     const messageGroups = new Map<number, Array<{ id: number; messageId: number; memberId: number }>>();
-    for (const r of toProcess) {
+    for (const r of queued) {
       const existing = messageGroups.get(r.messageId) ?? [];
       existing.push(r);
       messageGroups.set(r.messageId, existing);
@@ -421,6 +389,7 @@ export async function processEmailQueue(): Promise<{ sent: number; failed: numbe
 
     let totalSent = 0;
     let totalFailed = 0;
+    let totalQueued = 0;
 
     for (const messageId of Array.from(messageGroups.keys())) {
       const recipients = messageGroups.get(messageId)!;
@@ -436,6 +405,7 @@ export async function processEmailQueue(): Promise<{ sent: number; failed: numbe
       const emailResult = await sendEmailsForMessage(messageId, memberDetails, message.subject, message.body);
       totalSent += emailResult.sent;
       totalFailed += emailResult.failed;
+      totalQueued += emailResult.queued;
 
       if (emailResult.failed > 0) {
         await prisma.message.update({
@@ -445,7 +415,7 @@ export async function processEmailQueue(): Promise<{ sent: number; failed: numbe
       }
     }
 
-    return { sent: totalSent, failed: totalFailed, remaining: queued.length - toProcess.length };
+    return { sent: totalSent, failed: totalFailed, remaining: totalQueued };
   } catch (error) {
     throw transformError(error);
   }

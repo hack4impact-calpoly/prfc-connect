@@ -1,20 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AUTH_COOKIE, generateToken, getSecret } from "@/lib/dal";
 import { PORTAL_TOKEN_COOKIE, validatePortalToken } from "@/lib/api/portal-api";
-import { authRateLimiter } from "@/lib/rate-limit";
 import { AuthCallbackSchema } from "@/schema/auth";
 
 export async function POST(req: NextRequest) {
   const rawIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "127.0.0.1";
   const ip = /^[\d.:a-f]+$/i.test(rawIp) ? rawIp : "invalid";
-
-  if (authRateLimiter) {
-    const { success } = await authRateLimiter.limit(ip);
-
-    if (!success) {
-      return new NextResponse("Too many login attempts", { status: 429 });
-    }
-  }
 
   try {
     getSecret();

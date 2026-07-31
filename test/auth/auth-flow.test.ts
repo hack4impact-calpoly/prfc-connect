@@ -21,14 +21,6 @@ vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
 
-const { mockAuthLimit } = vi.hoisted(() => ({
-  mockAuthLimit: vi.fn().mockResolvedValue({ success: true, remaining: 4, reset: Date.now() + 60000 }),
-}));
-
-vi.mock("@/lib/rate-limit", () => ({
-  authRateLimiter: { limit: mockAuthLimit },
-}));
-
 const { mockValidatePortalToken } = vi.hoisted(() => ({
   mockValidatePortalToken: vi.fn(),
 }));
@@ -277,27 +269,9 @@ describe("POST /api/auth/callback", () => {
     expect(validUrl.pathname).toBe(invalidUrl.pathname);
   });
 
-  it("returns 429 when rate limited", async () => {
-    mockAuthLimit.mockResolvedValueOnce({ success: false, remaining: 0, reset: Date.now() + 60000 });
-
-    const token = generateToken(100001, true);
-    const formData = new FormData();
-    formData.set("token", token);
-
-    const request = new NextRequest("http://localhost:3000/api/auth/callback", {
-      method: "POST",
-      body: formData,
-    });
-
-    const response = await callbackPOST(request);
-    const cookie = response.cookies.get(AUTH_COOKIE);
-
-    expect(response.status).toBe(429);
-    expect(cookie).toBeUndefined();
-    expect(mockAuthLimit).toHaveBeenCalledWith("127.0.0.1");
-  });
-
-  it("extracts client IP from x-forwarded-for header for rate limiting", async () => {
+  it("extracts client IP from x-forwarded-for header for logging", async () => {
+    mockValidatePortalToken.mockResolvedValueOnce({ ownerid: 100001, isAdmin: true });
+    const spy = vi.spyOn(console, "info").mockImplementation(() => {});
     const token = generateToken(100001, true);
     const formData = new FormData();
     formData.set("token", token);
@@ -310,7 +284,8 @@ describe("POST /api/auth/callback", () => {
 
     await callbackPOST(request);
 
-    expect(mockAuthLimit).toHaveBeenCalledWith("203.0.113.42");
+    expect(spy).toHaveBeenCalledWith("[AUTH_CALLBACK] login success", 100001, "203.0.113.42");
+    spy.mockRestore();
   });
 
   it("replaces malformed IP with 'invalid' to prevent log injection", () => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Plus } from "lucide-react";
@@ -32,9 +32,6 @@ export function ReferralForm() {
   const [prospects, setProspects] = useState<ProspectFormFields[]>([{ email: "", fullName: "" }]);
   const [errorMessage, setErrorMessage] = useState("");
   const [showConfirmation, setShowConfirmation] = useState(false);
-
-  // Idempotency key persists across retries, regenerated only on success
-  const idempotencyKeyRef = useRef<string>(crypto.randomUUID());
 
   const [isPending, startTransition] = useTransition();
 
@@ -70,7 +67,6 @@ export function ReferralForm() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Idempotency-Key": idempotencyKeyRef.current,
           },
           body: JSON.stringify(referralData),
         });
@@ -79,7 +75,6 @@ export function ReferralForm() {
           setProspects([{ email: "", fullName: "" }]);
           setYourEmail("");
           setShowConfirmation(true);
-          idempotencyKeyRef.current = crypto.randomUUID();
         } else {
           const errorBody = await response.json();
           setErrorMessage(errorBody.error?.message || "Failed to submit the form. Please try again!");

@@ -2,12 +2,10 @@ import { vi } from "vitest";
 import "../mocks/contact-group-service";
 import "../mocks/member-api";
 import "../mocks/email-service";
-import "../mocks/email-quota";
 import { mockPrisma, mockInteractiveTransaction } from "../mocks/prisma";
 import { mockGetGroupRecipients } from "../mocks/contact-group-service";
 import { mockGetMemberDetails, mockGetAllActiveMemberIds } from "../mocks/member-api";
 import { mockValidateEmailAllowed, mockSendGroupEmails } from "../mocks/email-service";
-import { mockReserveEmailQuota } from "../mocks/email-quota";
 import { mockMembers } from "@/lib/mock-members";
 import { isQuietHours, validateSmsAllowed, sendGroupMessage, sendBlastMessage } from "@/services/message";
 import { AppError } from "@/utils/errors";
@@ -307,7 +305,7 @@ describe("sendBlastMessage", () => {
   });
 });
 
-describe("daily quota split-send", () => {
+describe("send with email-service overflow queue", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockEnv.EMAIL_ENABLED = true;
@@ -316,14 +314,22 @@ describe("daily quota split-send", () => {
     mockInteractiveTransaction();
   });
 
-  it("queues excess recipients when over daily quota", async () => {
+  it("reports queued overflow returned by the email service", async () => {
     mockGetGroupRecipients.mockResolvedValue([100001, 100002, 100003]);
     mockGetMemberDetails.mockResolvedValue([...mockMembers.slice(0, 3)]);
-    mockSendGroupEmails.mockResolvedValue({ sent: 1, failed: 0, suppressed: 0, results: [] });
-    mockReserveEmailQuota.mockResolvedValue({ allowed: 1, total: 1 });
+    mockSendGroupEmails.mockResolvedValue({
+      sent: 1,
+      failed: 0,
+      suppressed: 0,
+      results: [
+        { memberId: 100001, status: "sent", externalId: "ext1" },
+        { memberId: 100002, status: "queued" },
+        { memberId: 100003, status: "queued" },
+      ],
+    });
     mockPrisma.message.create.mockResolvedValue({ ...testMessage, id: 1 });
     mockPrisma.messageRecipient.createMany.mockResolvedValue({ count: 3 });
-    mockPrisma.messageRecipient.updateMany.mockResolvedValue({ count: 2 });
+    mockPrisma.messageRecipient.updateMany.mockResolvedValue({ count: 1 });
     mockPrisma.message.update.mockResolvedValue(testMessage);
 
     const result = await sendGroupMessage(
@@ -333,16 +339,12 @@ describe("daily quota split-send", () => {
 
     expect(result.queuedCount).toBe(2);
     expect(result.emailCount).toBe(1);
-    expect(mockPrisma.messageRecipient.updateMany).toHaveBeenCalledWith(
-      expect.objectContaining({ data: { status: "queued" } }),
-    );
   });
 
-  it("sends all when under daily quota with queuedCount 0", async () => {
+  it("sends all with queuedCount 0 when the email service queues nothing", async () => {
     mockGetGroupRecipients.mockResolvedValue([100001, 100002, 100003]);
     mockGetMemberDetails.mockResolvedValue([...mockMembers.slice(0, 3)]);
     mockSendGroupEmails.mockResolvedValue({ sent: 3, failed: 0, suppressed: 0, results: [] });
-    mockReserveEmailQuota.mockResolvedValue({ allowed: 300, total: 300 });
     mockPrisma.message.create.mockResolvedValue({ ...testMessage, id: 1 });
     mockPrisma.messageRecipient.createMany.mockResolvedValue({ count: 3 });
     mockPrisma.message.update.mockResolvedValue(testMessage);
@@ -373,7 +375,7 @@ describe("processEmailQueue", () => {
     expect(result).toEqual({ sent: 0, failed: 0, remaining: 0 });
   });
 
-  it("returns remaining count when quota is zero", async () => {
+  it("re-queues recipients when the email service reports overflow", async () => {
     mockPrisma.messageRecipient.findMany.mockResolvedValue([
       {
         id: 1,
@@ -398,7 +400,20 @@ describe("processEmailQueue", () => {
         error: null,
       },
     ]);
-    mockReserveEmailQuota.mockResolvedValue({ allowed: 0, total: 300 });
+    mockPrisma.message.findUnique.mockResolvedValue({ subject: "S", body: "B", groups: [] } as never);
+    mockGetMemberDetails.mockResolvedValue([
+      { ownerid: 100001, ownername: "A", owneremail: "a@example.com", ownerphone: "" },
+      { ownerid: 100002, ownername: "B", owneremail: "b@example.com", ownerphone: "" },
+    ]);
+    mockSendGroupEmails.mockResolvedValue({
+      sent: 0,
+      failed: 0,
+      suppressed: 0,
+      results: [
+        { memberId: 100001, status: "queued" },
+        { memberId: 100002, status: "queued" },
+      ],
+    });
 
     const { processEmailQueue } = await import("@/services/message");
     const result = await processEmailQueue();
@@ -431,7 +446,6 @@ describe("processEmailQueue", () => {
         error: null,
       },
     ]);
-    mockReserveEmailQuota.mockResolvedValue({ allowed: 2, total: 300 });
     mockPrisma.message.findUnique.mockResolvedValue({
       subject: "Queued subject",
       body: "Queued body",
@@ -484,7 +498,6 @@ describe("processEmailQueue", () => {
         error: null,
       },
     ]);
-    mockReserveEmailQuota.mockResolvedValue({ allowed: 2, total: 300 });
     mockPrisma.message.findUnique.mockResolvedValue({ subject: "S", body: "B", groups: [] } as never);
     mockGetMemberDetails.mockResolvedValue([
       { ownerid: 100001, ownername: "A", owneremail: "a@example.com", ownerphone: "" },
